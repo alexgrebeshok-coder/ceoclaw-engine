@@ -18,7 +18,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="h-[100dvh] min-h-[100dvh] overflow-hidden bg-[var(--surface)] text-[var(--ink)]">
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex min-h-0 flex-1 overflow-hidden">
-          <aside className="app-shell-sidebar hidden min-h-0 shrink-0 overflow-y-auto lg:block">
+          <aside className="app-shell-sidebar hidden min-h-0 shrink-0 overflow-hidden lg:block">
             <Sidebar pathname={pathname} />
           </aside>
 
