@@ -14,6 +14,7 @@ import {
   subWeeks,
 } from "date-fns";
 import { AlertTriangle, CheckCircle2, Flag, ListTodo } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { useDashboard } from "@/components/dashboard-provider";
 import { Badge } from "@/components/ui/badge";
@@ -153,16 +154,18 @@ export function CalendarPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
-        <Card>
-          <CardContent
-            className={
-              view === "week"
-                ? "grid auto-rows-fr grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7"
-                : "grid auto-rows-fr grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7"
-            }
-          >
-            {dayCells.map((day) => {
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_340px]">
+        <Card className="min-w-0">
+          <CardContent className="overflow-x-auto p-4 xl:p-5">
+            <div
+              className={cn(
+                "grid auto-rows-fr gap-3",
+                view === "week"
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:min-w-[980px] xl:grid-cols-7 2xl:min-w-0"
+                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:min-w-[980px] xl:grid-cols-7 2xl:min-w-0"
+              )}
+            >
+              {dayCells.map((day) => {
               const dayKey = format(day, "yyyy-MM-dd");
               const events = eventsByDate[dayKey] ?? [];
               const visibleEvents = events.slice(0, view === "week" ? 3 : 2);
@@ -175,14 +178,14 @@ export function CalendarPage() {
                   aria-label={`${formatDateLocalized(dayKey, "d MMM yyyy")} — ${events.length}`}
                   key={dayKey}
                   className={`
-                    flex min-h-[188px] flex-col overflow-hidden rounded-[12px] border p-4 text-left transition-all duration-200
+                    flex min-h-[188px] min-w-0 flex-col overflow-hidden rounded-[12px] border p-3.5 text-left transition-all duration-200
                     ${isActive ? "border-[var(--brand)] bg-[color:var(--surface-panel)]" : "border-[var(--line)] bg-[var(--panel-soft)]"}
                     ${muted ? "opacity-55" : "opacity-100"}
                   `}
                   onClick={() => setSelectedDay(dayKey)}
                   type="button"
                 >
-                  <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="mb-3 flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
                         {formatDateLocalized(dayKey, view === "week" ? "EEEE" : "EEE")}
@@ -199,8 +202,8 @@ export function CalendarPage() {
                         key={event.id}
                         className={
                           event.type === "milestone"
-                            ? "min-w-0 rounded-[10px] border border-[var(--brand)]/25 bg-[color:var(--surface-panel)] p-3"
-                            : "min-w-0 rounded-[10px] border border-[var(--line)] bg-[color:var(--surface-panel)] p-3"
+                            ? "min-w-0 rounded-[10px] border border-[var(--brand)]/25 bg-[color:var(--surface-panel)] p-2.5"
+                            : "min-w-0 rounded-[10px] border border-[var(--line)] bg-[color:var(--surface-panel)] p-2.5"
                         }
                       >
                         <div className="flex items-center gap-2">
@@ -226,8 +229,8 @@ export function CalendarPage() {
                         <p
                           className={
                             event.type === "milestone"
-                              ? "mt-2 overflow-hidden text-[13px] font-semibold leading-5 text-[var(--ink)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
-                              : "mt-2 overflow-hidden text-[13px] font-semibold leading-5 text-[var(--ink)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
+                              ? "mt-1.5 overflow-hidden break-words text-[13px] font-semibold leading-5 text-[var(--ink)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]"
+                              : "mt-1.5 overflow-hidden break-words text-[13px] font-semibold leading-5 text-[var(--ink)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]"
                           }
                         >
                           {event.title}
@@ -235,8 +238,8 @@ export function CalendarPage() {
                         <p
                           className={
                             event.type === "milestone"
-                              ? "mt-1 overflow-hidden text-[11px] leading-4 text-[var(--ink-soft)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:1]"
-                              : "mt-1 overflow-hidden text-[11px] leading-4 text-[var(--ink-soft)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:1]"
+                              ? "mt-1 overflow-hidden break-words text-[11px] leading-4 text-[var(--ink-soft)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
+                              : "mt-1 overflow-hidden break-words text-[11px] leading-4 text-[var(--ink-soft)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
                           }
                         >
                           {event.subtitle}
@@ -252,10 +255,11 @@ export function CalendarPage() {
                 </button>
               );
             })}
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="xl:self-start">
           <CardHeader>
             <CardTitle>{t("calendar.selectedDay")}</CardTitle>
           </CardHeader>
