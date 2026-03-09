@@ -1,0 +1,247 @@
+// Prisma Schema for SEOClaw Dashboard
+// Created during local prototyping
+// Sprint 2: Backend API
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// PROJECT MODEL
+// ============================================
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  
+  // Status & Classification
+  status      String   // "active", "planning", "at_risk", "completed", "on_hold"
+  direction   String   // "metallurgy", "logistics", "trade", "construction"
+  priority    String   @default("medium") // "low", "medium", "high", "critical"
+  health      String   @default("good") // "good", "warning", "critical"
+  
+  // Dates
+  start       DateTime
+  end         DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Budget
+  budgetPlan  Float?
+  budgetFact  Float?   @default(0)
+  
+  // Progress (0-100)
+  progress    Int      @default(0)
+  
+  // Location
+  location    String?
+  
+  // Relations
+  tasks       Task[]
+  risks       Risk[]
+  documents   Document[]
+  milestones  Milestone[]
+  team        TeamMember[]
+  
+  @@index([status])
+  @@index([direction])
+  @@index([health])
+}
+
+// ============================================
+// TASK MODEL
+// ============================================
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  
+  // Status & Priority
+  status      String    @default("todo") // "todo", "in_progress", "blocked", "done", "cancelled"
+  priority    String    @default("medium") // "low", "medium", "high", "critical"
+  order       Int       @default(0)
+  
+  // Dates
+  dueDate     DateTime
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  assigneeId  String?
+  assignee    TeamMember? @relation(fields: [assigneeId], references: [id])
+  
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@index([projectId])
+  @@index([projectId, status, order])
+}
+
+// ============================================
+// TEAM MEMBER MODEL
+// ============================================
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  initials  String?  // "С", "ИА", "МП" etc.
+  role      String
+  email     String?
+  avatar    String?  // URL to avatar image
+  
+  // Capacity (0-100)
+  capacity  Int      @default(100)
+  
+  // Relations
+  tasks     Task[]
+  projects  Project[]
+  risks     Risk[]     @relation("RiskOwner")
+  documents Document[] @relation("DocumentOwner")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([name])
+}
+
+// ============================================
+// RISK MODEL
+// ============================================
+
+model Risk {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  
+  // Assessment
+  probability String   @default("medium") // "low", "medium", "high"
+  impact      String   @default("medium") // "low", "medium", "high"
+  severity    Int      @default(3) // 1-5
+  
+  // Status
+  status      String   @default("open") // "open", "mitigated", "closed"
+  
+  // Owner
+  ownerId     String?
+  owner       TeamMember? @relation("RiskOwner", fields: [ownerId], references: [id])
+  
+  // Relations
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([status])
+  @@index([severity])
+  @@index([projectId])
+}
+
+// ============================================
+// MILESTONE MODEL
+// ============================================
+
+model Milestone {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  
+  // Date
+  date        DateTime
+  
+  // Status
+  status      String   @default("upcoming") // "upcoming", "in_progress", "completed", "overdue"
+  
+  // Relations
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([date])
+  @@index([status])
+  @@index([projectId])
+}
+
+// ============================================
+// DOCUMENT MODEL
+// ============================================
+
+model Document {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  
+  // File info
+  filename    String
+  url         String   // URL to file
+  type        String   // "pdf", "docx", "xlsx", "other"
+  size        Int?     // in bytes
+  
+  // Owner
+  ownerId     String?
+  owner       TeamMember? @relation("DocumentOwner", fields: [ownerId], references: [id])
+  
+  // Relations
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([type])
+  @@index([projectId])
+}
+
+// ============================================
+// USAGE EXAMPLES
+// ============================================
+
+// Create Project:
+// const project = await prisma.project.create({
+//   data: {
+//     name: "ЧЭМК — переработка дунита",
+//     description: "Запуск цепочки переработки дунита",
+//     status: "active",
+//     direction: "metallurgy",
+//     start: new Date("2026-01-01"),
+//     end: new Date("2026-12-31"),
+//     budgetPlan: 5000000,
+//     budgetFact: 1800000,
+//     progress: 35,
+//     location: "Харп, ЯНАО"
+//   }
+// });
+
+// Get all projects with tasks:
+// const projects = await prisma.project.findMany({
+//   include: {
+//     tasks: true,
+//     team: true,
+//     risks: true,
+//     milestones: true
+//   }
+// });
+
+// Update task status:
+// await prisma.task.update({
+//   where: { id: "task_id" },
+//   data: { status: "done", completedAt: new Date() }
+// });
+
+// Delete project (cascade):
+// await prisma.project.delete({
+//   where: { id: "project_id" }
+// });
