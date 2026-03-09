@@ -24,8 +24,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           {mobileOpen ? (
             <div className="fixed inset-0 z-modal bg-black/60 lg:hidden">
-              <div className="h-full w-[86vw] max-w-[320px] border-r border-[var(--line-strong)] bg-[color:var(--surface-sidebar-mobile)] shadow-xl">
-                <div className="flex justify-end p-4">
+              <div className="flex h-full w-[86vw] max-w-[320px] min-h-0 flex-col overflow-hidden border-r border-[var(--line-strong)] bg-[color:var(--surface-sidebar-mobile)] shadow-xl">
+                <div className="shrink-0 flex justify-end p-4">
                   <Button
                     aria-label="Close navigation"
                     onClick={() => setMobileOpen(false)}
@@ -35,16 +35,18 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
-                <Sidebar pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+                <div className="min-h-0 flex-1 overflow-hidden">
+                  <Sidebar pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+                </div>
               </div>
             </div>
           ) : null}
 
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <Topbar onOpenMenu={() => setMobileOpen(true)} />
             <main
               className={cn(
-                "app-shell-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto",
+                "app-shell-main app-shell-scroll-region min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto",
                 pathname === "/chat" && "px-0 pb-0 pt-0 sm:px-0 lg:px-0"
               )}
               id="main-content"

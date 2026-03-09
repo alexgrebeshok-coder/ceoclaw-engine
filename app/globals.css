@@ -241,6 +241,11 @@ textarea {
     var(--shell-main-padding-bottom);
 }
 
+.app-shell-scroll-region {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 .app-shell-surface {
   background: var(--desktop-panel);
   border-color: var(--desktop-divider);

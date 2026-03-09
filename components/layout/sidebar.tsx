@@ -59,7 +59,7 @@ export function Sidebar({
 
   return (
     <div
-      className="app-shell-sidebar-content flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain text-[var(--ink)]"
+      className="app-shell-sidebar-content app-shell-scroll-region flex h-full min-h-0 flex-col overflow-y-auto text-[var(--ink)]"
       style={{
         background: "linear-gradient(180deg,var(--surface-sidebar-start) 0%, var(--surface-sidebar-end) 100%)",
         boxShadow: "var(--sidebar-shadow)",

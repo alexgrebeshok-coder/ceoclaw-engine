@@ -224,7 +224,7 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
 
   return (
     <>
-      <header className="border-b border-[color:var(--line-strong)] bg-[color:var(--surface-panel)]">
+      <header className="shrink-0 border-b border-[color:var(--line-strong)] bg-[color:var(--surface-panel)]">
         <div className="app-shell-topbar-stack flex flex-col px-4 py-5 sm:px-6 lg:px-7">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
