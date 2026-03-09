@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -22,6 +22,7 @@ import { KpiDetailModal, type KpiBreakdownItem, type KpiAction } from "@/compone
 import { ProjectFormModal } from "@/components/projects/project-form-modal";
 import { ProjectCard } from "@/components/projects/project-card";
 import { TaskFormModal } from "@/components/tasks/task-form-modal";
+import { EVMMetricsCard } from "@/components/analytics/evm-metrics-card";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ClientChart } from "@/components/ui/client-chart";
@@ -45,6 +46,7 @@ import { DataErrorState } from "@/components/ui/data-error-state";
 import { useLocale } from "@/contexts/locale-context";
 import { downloadProjectsCsv } from "@/lib/export";
 import { useDashboardSnapshot } from "@/lib/hooks/use-api";
+import { useEVMMetrics } from "@/lib/hooks/use-evm-metrics";
 import { Project } from "@/lib/types";
 import { safePercent } from "@/lib/utils";
 
@@ -144,6 +146,18 @@ export function DashboardHome() {
     : 0;
   const activeProjects = projects.filter((project) => project.status === "active").length;
   const nextMilestones = projects.filter((project) => project.nextMilestone).slice(0, 2);
+
+  // EVM Metrics: select project with largest budget for EVM display
+  const evmProject = useMemo(() => {
+    if (!projects.length) return null;
+    // Prefer active project with largest budget
+    const activeWithBudget = projects
+      .filter((p) => p.status === "active" && p.budget.planned > 0)
+      .sort((a, b) => b.budget.planned - a.budget.planned);
+    return activeWithBudget[0] ?? projects[0];
+  }, [projects]);
+
+  const evmMetrics = useEVMMetrics(evmProject);
 
   const trendData = buildPortfolioTrend(projects, formatDateLocalized);
   const budgetData = projects.map((project) => ({
@@ -450,6 +464,17 @@ export function DashboardHome() {
             })}
           />
         </section>
+
+        {/* EVM Metrics Section */}
+        {evmProject && evmMetrics && (
+          <section className="grid gap-6 xl:grid-cols-[1fr]">
+            <EVMMetricsCard
+              metrics={evmMetrics}
+              budget={evmProject.budget}
+              isLoading={isLoading}
+            />
+          </section>
+        )}
 
         <section className="grid gap-6 xl:grid-cols-[1.2fr_.8fr]">
           <Card className="overflow-hidden">
