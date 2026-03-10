@@ -48,6 +48,8 @@ export async function GET(request: NextRequest) {
           totalTasks,
         });
 
+        const status = healthScore >= 70 ? "healthy" as const : healthScore >= 40 ? "at_risk" as const : "critical" as const;
+
         return {
           projectId: project.id,
           projectName: project.name,
@@ -57,8 +59,13 @@ export async function GET(request: NextRequest) {
           progress: Math.round(avgProgress),
           overdueTasks,
           healthScore,
+          status,
         };
       });
+
+      const completedTasks = tasks.filter(t => t.status === "done").length;
+      const activeProjects = projects.filter(p => p.status === "active").length;
+      const completedProjects = projects.filter(p => p.status === "completed").length;
 
       const summary = {
         totalProjects: analytics.length,
@@ -68,6 +75,15 @@ export async function GET(request: NextRequest) {
           : 0,
         totalOverdue: analytics.reduce((sum, p) => sum + p.overdueTasks, 0),
         avgHealthScore: analytics.length > 0
+          ? Math.round(analytics.reduce((sum, p) => sum + p.healthScore, 0) / analytics.length)
+          : 0,
+        // Additional fields for AnalyticsSummary interface
+        activeProjects,
+        completedProjects,
+        completedTasks,
+        overdueTasks: analytics.reduce((sum, p) => sum + p.overdueTasks, 0),
+        teamSize: 6,
+        averageHealth: analytics.length > 0
           ? Math.round(analytics.reduce((sum, p) => sum + p.healthScore, 0) / analytics.length)
           : 0,
       };
