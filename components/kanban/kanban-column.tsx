@@ -57,4 +57,4 @@ export const KanbanColumn = React.memo(function KanbanColumn({ column, tasks }: 
       </div>
     </Card>
   );
-}
+});

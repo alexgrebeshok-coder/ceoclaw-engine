@@ -90,4 +90,4 @@ export const KanbanTaskCard = React.memo(function KanbanTaskCard({ task, isDragg
       </div>
     </Card>
   );
-}
+});

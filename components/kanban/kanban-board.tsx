@@ -44,20 +44,6 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
     fetchBoard();
   }, [fetchBoard]);
 
-  async function handleDragStart(event: DragStartEvent) {
-    const { active } = event;
-    const taskId = active.id as string;
-
-    // Find task in columns
-    const task = board?.columns
-      .flatMap((col) => col.tasks)
-      .find((t) => t.id === taskId);
-
-    if (task) {
-      setActiveTask(task);
-    }
-  }
-
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTask(null);
