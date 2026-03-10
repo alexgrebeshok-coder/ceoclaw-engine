@@ -23,7 +23,7 @@ export type ApiTeamMember = {
   capacity: number;
   activeTasks?: number;
   capacityUsed?: number;
-  projects?: Array<{ id: string; name: string }>;
+  projects?: Array<{ id: string; name?: string | null } | string>;
 };
 
 export type ApiTask = {
@@ -80,14 +80,14 @@ export type ApiDocument = {
 
 export type ApiProject = {
   id: string;
-  name: string;
+  name?: string | null;
   description?: string | null;
   status: string;
   direction: string;
   priority: string;
-  health: string;
-  start: string;
-  end: string;
+  health: string | number;
+  start?: string;
+  end?: string;
   createdAt: string;
   updatedAt: string;
   budgetPlan?: number | null;
@@ -95,10 +95,24 @@ export type ApiProject = {
   progress: number;
   location?: string | null;
   tasks?: ApiTask[];
-  team?: ApiTeamMember[];
-  risks?: ApiRisk[];
+  team?: Array<ApiTeamMember | string>;
+  risks?: ApiRisk[] | number;
   milestones?: ApiMilestone[];
   documents?: ApiDocument[];
+  budget?: {
+    planned?: number | null;
+    actual?: number | null;
+    currency?: string | null;
+  };
+  dates?: {
+    start?: string | null;
+    end?: string | null;
+  };
+  nextMilestone?: {
+    name?: string | null;
+    date?: string | null;
+  } | null;
+  history?: Project["history"];
 };
 
 const TASK_STATUS_DB_TO_UI: Record<string, TaskStatus> = {
@@ -276,7 +290,12 @@ export function normalizeTeamMember(member: ApiTeamMember): TeamMember {
     email: member.email ?? "",
     capacity: member.capacity ?? 100,
     allocated,
-    projects: member.projects?.map((project) => project.name) ?? [],
+    projects:
+      member.projects
+        ?.map((project) =>
+          typeof project === "string" ? project : project.name ?? null
+        )
+        .filter((projectName): projectName is string => typeof projectName === "string" && projectName.trim().length > 0) ?? [],
     location: "Remote",
   };
 }
@@ -329,48 +348,74 @@ export function normalizeDocument(document: ApiDocument): ProjectDocument {
 
 export function normalizeProject(project: ApiProject): Project {
   const milestones = (project.milestones ?? []).map(normalizeMilestone);
-  const nextMilestone = milestones
+  const derivedNextMilestone = milestones
     .slice()
     .sort((left, right) => left.end.localeCompare(right.end))[0];
   const projectStatus = normalizeProjectStatus(project.status);
-  const teamNames = project.team?.map((member) => member.name) ?? [];
-  const riskCount = project.risks?.length ?? 0;
+  const teamNames =
+    project.team
+      ?.map((member) =>
+        typeof member === "string" ? member : member.name
+      )
+      .filter((memberName): memberName is string => typeof memberName === "string" && memberName.trim().length > 0) ?? [];
+  const riskCount = Array.isArray(project.risks) ? project.risks.length : project.risks ?? 0;
   const progress = typeof project.progress === "number" ? project.progress : 0;
+  const startDate = project.start ?? project.dates?.start ?? project.createdAt;
+  const endDate = project.end ?? project.dates?.end ?? project.updatedAt;
+  const plannedBudget = project.budgetPlan ?? project.budget?.planned ?? 0;
+  const actualBudget = project.budgetFact ?? project.budget?.actual ?? 0;
+  const nextMilestone = derivedNextMilestone
+    ? { name: derivedNextMilestone.name, date: derivedNextMilestone.end }
+    : project.nextMilestone?.name && project.nextMilestone?.date
+      ? { name: project.nextMilestone.name, date: asDateOnly(project.nextMilestone.date) }
+      : null;
+  const health =
+    typeof project.health === "number"
+      ? clamp(Math.round(project.health), 0, 100)
+      : HEALTH_TO_SCORE[project.health] ?? 68;
+  const history =
+    project.history && project.history.length > 0
+      ? project.history.map((point) => ({
+          date: asDateOnly(point.date),
+          progress: typeof point.progress === "number" ? point.progress : progress,
+          budgetPlanned:
+            typeof point.budgetPlanned === "number"
+              ? point.budgetPlanned
+              : plannedBudget,
+          budgetActual:
+            typeof point.budgetActual === "number"
+              ? point.budgetActual
+              : actualBudget,
+        }))
+      : buildSyntheticHistory(startDate, progress, plannedBudget, actualBudget);
 
   return {
     id: project.id,
-    name: project.name,
+    name: project.name?.trim() || "Untitled project",
     description: project.description ?? "",
     status: projectStatus,
     progress,
     direction: (project.direction as Project["direction"]) ?? "construction",
     budget: {
-      planned: project.budgetPlan ?? 0,
-      actual: project.budgetFact ?? 0,
-      currency: "RUB",
+      planned: plannedBudget,
+      actual: actualBudget,
+      currency: project.budget?.currency ?? "RUB",
     },
     dates: {
-      start: asDateOnly(project.start),
-      end: asDateOnly(project.end),
+      start: asDateOnly(startDate),
+      end: asDateOnly(endDate),
     },
-    nextMilestone: nextMilestone
-      ? { name: nextMilestone.name, date: nextMilestone.end }
-      : null,
+    nextMilestone,
     team: teamNames,
     risks: riskCount,
     location: project.location ?? "TBD",
     priority: (project.priority as Project["priority"]) ?? "medium",
-    health: HEALTH_TO_SCORE[project.health] ?? 68,
+    health,
     objectives: buildDefaultObjectives(project),
     materials: deriveMaterials(progress, riskCount),
     laborProductivity: deriveLaborProductivity(progress, teamNames.length),
     safety: deriveSafety(projectStatus, riskCount),
-    history: buildSyntheticHistory(
-      project.start,
-      progress,
-      project.budgetPlan ?? 0,
-      project.budgetFact ?? 0
-    ),
+    history,
   };
 }
 
@@ -382,7 +427,16 @@ export function buildDashboardStateFromApi(input: {
 }): DashboardState {
   const projects = input.projects.map(normalizeProject);
   const tasks = input.tasks.map(normalizeTask);
-  const team = input.team.map(normalizeTeamMember);
+  const projectNameById = new Map(projects.map((project) => [project.id, project.name]));
+  const team = input.team.map((member) => {
+    const normalizedMember = normalizeTeamMember(member);
+    return {
+      ...normalizedMember,
+      projects: normalizedMember.projects.map(
+        (projectRef) => projectNameById.get(projectRef) ?? projectRef
+      ),
+    };
+  });
   const risks = input.risks.map(normalizeRisk);
   const documents = input.projects.flatMap((project) =>
     (project.documents ?? []).map(normalizeDocument)

@@ -3,6 +3,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { leadingLabel } from "@/lib/utils";
 import {
   BarChart,
   Bar,
@@ -62,7 +63,7 @@ export const TeamPerformance = React.memo(function TeamPerformance({
 
   // Prepare chart data
   const chartData = members.map((m: any) => ({
-    name: m.memberInitials || m.memberName?.split(" ")[0],
+    name: m.memberInitials || leadingLabel(m.memberName),
     score: m.performanceScore,
     tasks: m.metrics.totalTasks,
     completed: m.metrics.completedTasks,

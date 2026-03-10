@@ -56,7 +56,7 @@ import { useAIInsights } from "@/lib/hooks/use-ai-insights";
 import { usePortfolioHealth } from "@/lib/hooks/use-portfolio-health";
 import { useRecommendations } from "@/lib/hooks/use-recommendations";
 import { Project } from "@/lib/types";
-import { safePercent } from "@/lib/utils";
+import { leadingLabel, safePercent } from "@/lib/utils";
 
 const DashboardTrendChart = dynamic(
   () =>
@@ -230,7 +230,7 @@ export function DashboardHome() {
 
   const trendData = buildPortfolioTrend(projects, formatDateLocalized);
   const budgetData = projects.map((project) => ({
-    name: project.name.split(" ")[0],
+    name: leadingLabel(project.name),
     planned: Math.round(project.budget.planned / 100000),
     actual: Math.round(project.budget.actual / 100000),
   }));

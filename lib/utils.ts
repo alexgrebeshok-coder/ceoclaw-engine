@@ -125,13 +125,30 @@ export function formatDate(value: string, pattern = "d MMM"): string {
   return format(parseISO(value), pattern, { locale: ru });
 }
 
-export function initials(value: string): string {
-  return value
-    .split(" ")
+export function initials(value?: string | null): string {
+  if (typeof value !== "string") return "—";
+
+  const parts = value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!parts.length) return "—";
+
+  return parts
     .map((part) => part[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
+}
+
+export function leadingLabel(value?: string | null, fallback = "—"): string {
+  if (typeof value !== "string") return fallback;
+
+  const normalized = value.trim();
+  if (!normalized) return fallback;
+
+  return normalized.split(/\s+/)[0] ?? fallback;
 }
 
 export function clamp(value: number, min = 0, max = 100): number {

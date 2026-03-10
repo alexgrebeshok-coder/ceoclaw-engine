@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { fieldStyles } from "@/components/ui/field";
 import { ChartSkeleton } from "@/components/ui/skeleton";
 import { useLocale } from "@/contexts/locale-context";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, leadingLabel } from "@/lib/utils";
 
 const AnalyticsTrendChart = dynamic(
   () =>
@@ -50,7 +50,7 @@ export function AnalyticsPage() {
   const [period, setPeriod] = useState("90d");
 
   const portfolioHealthData = projects.map((project) => ({
-    name: project.name.split(" ")[0],
+    name: leadingLabel(project.name),
     health: project.health,
     budgetVariance: Math.round(((project.budget.actual - project.budget.planned) / project.budget.planned) * 100),
   }));

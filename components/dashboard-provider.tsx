@@ -530,23 +530,27 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         }
       >(`/api/projects/${projectId}`);
 
+      const teamIds = (original.team ?? [])
+        .map((member) => (typeof member === "string" ? null : member.id))
+        .filter((memberId): memberId is string => typeof memberId === "string");
+
       const clonedProject = await api.post<ApiProject>("/api/projects", {
-        name: `${original.name} (копия)`,
+        name: `${original.name ?? source.name} (копия)`,
         description: original.description,
         direction: original.direction,
         status: "planning",
         priority: original.priority,
-        start: original.start,
-        end: original.end,
-        budgetPlan: original.budgetPlan,
+        start: original.start ?? original.dates?.start ?? source.dates.start,
+        end: original.end ?? original.dates?.end ?? source.dates.end,
+        budgetPlan: original.budgetPlan ?? original.budget?.planned ?? source.budget.planned,
         budgetFact: 0,
         progress: 0,
         location: original.location,
-        teamIds: (original.team ?? []).map((member) => member.id),
+        teamIds,
       });
 
       const sourceTasks = original.tasks ?? [];
-      const sourceRisks = original.risks ?? [];
+      const sourceRisks = Array.isArray(original.risks) ? original.risks : [];
       const sourceMilestones = original.milestones ?? [];
       const sourceDocuments = original.documents ?? [];
 
