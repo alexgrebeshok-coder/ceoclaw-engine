@@ -34,13 +34,20 @@ export const KanbanTaskCard = React.memo(function KanbanTaskCard({ task, isDragg
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: transition || "transform 200ms ease",
   };
 
   const priorityColor = PRIORITY_COLORS[task.priority] ?? PRIORITY_COLORS.medium;
 
   const isOverdue =
     task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "done";
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      // Allow keyboard activation
+      e.preventDefault();
+    }
+  }, []);
 
   return (
     <Card
@@ -49,11 +56,14 @@ export const KanbanTaskCard = React.memo(function KanbanTaskCard({ task, isDragg
       role="listitem"
       aria-label={`Задача: ${task.title}, приоритет: ${task.priority}`}
       tabIndex={0}
+      onKeyDown={handleKeyDown}
       {...attributes}
       {...listeners}
       className={cn(
-        "cursor-grab p-3 active:cursor-grabbing focus:ring-2 focus:ring-[var(--accent)] focus:outline-none",
-        (isDragging || isSortableDragging) && "opacity-50",
+        "cursor-grab p-3 transition-all duration-200",
+        "active:cursor-grabbing focus:ring-2 focus:ring-[var(--accent)] focus:outline-none",
+        "hover:shadow-md hover:scale-[1.02]",
+        (isDragging || isSortableDragging) && "opacity-50 scale-105 shadow-lg",
         isOverdue && "border-l-4 border-l-red-500"
       )}
     >
