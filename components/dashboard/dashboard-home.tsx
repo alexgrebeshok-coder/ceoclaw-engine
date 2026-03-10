@@ -118,8 +118,25 @@ function buildPortfolioTrend(
 
 export function DashboardHome() {
   const { enumLabel, formatDateLocalized, locale, t } = useLocale();
-  const { duplicateProject, notifications } = useDashboard();
-  const { documents, error, isLoading, projects, retry, risks, tasks, team } = useDashboardSnapshot();
+  const {
+    documents: providerDocuments,
+    duplicateProject,
+    notifications,
+    projects: providerProjects,
+    risks: providerRisks,
+    tasks: providerTasks,
+    team: providerTeam,
+  } = useDashboard();
+  const {
+    documents: snapshotDocuments,
+    error,
+    isLoading,
+    projects: snapshotProjects,
+    retry,
+    risks: snapshotRisks,
+    tasks: snapshotTasks,
+    team: snapshotTeam,
+  } = useDashboardSnapshot();
   const [statusFilter, setStatusFilter] = useState<"all" | Project["status"]>("all");
   const [directionFilter, setDirectionFilter] = useState<"all" | Project["direction"]>("all");
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -135,6 +152,18 @@ export function DashboardHome() {
     breakdown?: KpiBreakdownItem[];
     actions?: KpiAction[];
   } | null>(null);
+
+  const projects = snapshotProjects.length > 0 ? snapshotProjects : providerProjects;
+  const tasks = snapshotTasks.length > 0 ? snapshotTasks : providerTasks;
+  const team = snapshotTeam.length > 0 ? snapshotTeam : providerTeam;
+  const risks = snapshotRisks.length > 0 ? snapshotRisks : providerRisks;
+  const documents = snapshotDocuments.length > 0 ? snapshotDocuments : providerDocuments;
+  const hasFallbackData =
+    projects.length > 0 ||
+    tasks.length > 0 ||
+    team.length > 0 ||
+    risks.length > 0 ||
+    documents.length > 0;
 
   const filteredProjects = projects.filter((project) => {
     const statusMatch = statusFilter === "all" ? true : project.status === statusFilter;
@@ -358,7 +387,7 @@ export function DashboardHome() {
     );
   }
 
-  if (error && projects.length === 0 && tasks.length === 0) {
+  if (error && !hasFallbackData) {
     return (
       <DataErrorState
         actionLabel={t("action.retry")}
