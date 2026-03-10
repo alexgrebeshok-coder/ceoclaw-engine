@@ -2,68 +2,58 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { Card } from "@/components/ui/card";
+import { KanbanTaskCard } from "./kanban-task-card";
+import type { Column, Task } from "@/lib/types";
 
-import { KanbanAddCard } from "@/components/kanban/kanban-add-card";
-import { KanbanCard } from "@/components/kanban/kanban-card";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useLocale } from "@/contexts/locale-context";
-import type { Task, TaskStatus } from "@/lib/types";
-import { cn, taskStatusMeta } from "@/lib/utils";
-
-export function KanbanColumn({
-  columnId,
-  projectId,
-  tasks,
-  title,
-}: {
-  columnId: TaskStatus;
-  projectId: string | null;
+interface KanbanColumnProps {
+  column: Column;
   tasks: Task[];
-  title: string;
-}) {
-  const { t } = useLocale();
-  const { isOver, setNodeRef } = useDroppable({
-    id: `column-${columnId}`,
-    data: {
-      type: "column",
-      columnId,
-    },
+}
+
+export function KanbanColumn({ column, tasks }: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: column.id,
   });
 
   return (
     <Card
       ref={setNodeRef}
-      className={cn(
-        "flex min-h-[520px] flex-col bg-[color:var(--surface-panel)] transition",
-        isOver && "border-[var(--brand)] bg-[var(--panel-soft)]"
-      )}
+      className={`flex w-80 flex-col ${
+        isOver ? "ring-2 ring-[var(--accent)]" : ""
+      }`}
     >
-      <CardHeader className="border-b border-[var(--line)]">
-        <div className="flex items-center justify-between gap-3">
-          <CardTitle>{title}</CardTitle>
-          <Badge className={cn("ring-1", taskStatusMeta[columnId].className)}>
-            {tasks.length}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-3">
+      {/* Column Header */}
+      <div className="flex items-center gap-2 border-b border-[var(--line)] px-4 py-3">
+        <div
+          className="h-3 w-3 rounded-full"
+          style={{ backgroundColor: column.color || "#6b7280" }}
+        />
+        <h3 className="font-medium">{column.title}</h3>
+        <span className="ml-auto text-sm text-[var(--ink-muted)]">
+          {tasks.length}
+        </span>
+      </div>
+
+      {/* Tasks */}
+      <div className="flex-1 overflow-y-auto p-2">
         <SortableContext
-          items={tasks.map((task) => task.id)}
+          items={tasks.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="grid flex-1 content-start gap-3">
-            {tasks.length ? (
-              tasks.map((task) => <KanbanCard key={task.id} task={task} />)
-            ) : (
-              <div className="rounded-[10px] border border-dashed border-[var(--line)] bg-[var(--panel-soft)] px-4 py-8 text-center text-sm text-[var(--ink-muted)]">
-                {t("kanban.emptyDescription")}
-              </div>
-            )}
+          <div className="space-y-2">
+            {tasks.map((task) => (
+              <KanbanTaskCard key={task.id} task={task} />
+            ))}
           </div>
         </SortableContext>
-        <KanbanAddCard columnId={columnId} projectId={projectId} />
-      </CardContent>
+
+        {tasks.length === 0 && (
+          <p className="py-8 text-center text-sm text-[var(--ink-muted)]">
+            Нет задач
+          </p>
+        )}
+      </div>
     </Card>
   );
 }

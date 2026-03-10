@@ -48,6 +48,7 @@ model Project {
   documents   Document[]
   milestones  Milestone[]
   team        TeamMember[]
+  boards      Board[]
   
   @@index([status])
   @@index([direction])
@@ -81,11 +82,20 @@ model Task {
   assigneeId  String?
   assignee    TeamMember? @relation(fields: [assigneeId], references: [id])
   
+  // Kanban
+  columnId    String?
+  column      Column?    @relation(fields: [columnId], references: [id])
+  
+  // Dependencies
+  dependencies TaskDependency[] @relation("TaskDependencies")
+  dependents   TaskDependency[] @relation("TaskDependents")
+  
   @@index([status])
   @@index([priority])
   @@index([dueDate])
   @@index([projectId])
   @@index([projectId, status, order])
+  @@index([columnId])
 }
 
 // ============================================
@@ -203,6 +213,60 @@ model Document {
   
   @@index([type])
   @@index([projectId])
+}
+
+// ============================================
+// KANBAN BOARD MODEL
+// ============================================
+
+model Board {
+  id          String   @id @default(cuid())
+  name        String
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns     Column[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([projectId])
+}
+
+model Column {
+  id          String   @id @default(cuid())
+  title       String   // "To Do", "In Progress", "Review", "Done"
+  order       Int      @default(0)
+  color       String?  // "#3b82f6" etc.
+  
+  boardId     String
+  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([boardId])
+  @@index([boardId, order])
+}
+
+// ============================================
+// TASK DEPENDENCY MODEL
+// ============================================
+
+model TaskDependency {
+  id               String   @id @default(cuid())
+  type             String   @default("FINISH_TO_START") // "FINISH_TO_START", "START_TO_START", etc.
+  
+  taskId           String
+  task             Task     @relation("TaskDependencies", fields: [taskId], references: [id], onDelete: Cascade)
+  
+  dependsOnTaskId  String
+  dependsOnTask    Task     @relation("TaskDependents", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+  
+  createdAt        DateTime @default(now())
+  
+  @@unique([taskId, dependsOnTaskId])
+  @@index([taskId])
+  @@index([dependsOnTaskId])
 }
 
 // ============================================

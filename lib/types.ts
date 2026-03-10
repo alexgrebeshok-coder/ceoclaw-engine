@@ -287,3 +287,39 @@ export interface PortfolioHealth {
   /** AI-generated insights */
   insights: string[];
 }
+
+// ============================================
+// KANBAN TYPES
+// ============================================
+
+export interface Board {
+  id: string;
+  name: string;
+  projectId: string;
+  project?: {
+    id: string;
+    name: string;
+  };
+  columns: Column[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Column {
+  id: string;
+  title: string;
+  order: number;
+  color?: string;
+  boardId: string;
+  tasks: Task[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TaskDependency {
+  id: string;
+  type: "FINISH_TO_START" | "START_TO_START" | "FINISH_TO_FINISH" | "START_TO_FINISH";
+  taskId: string;
+  dependsOnTaskId: string;
+  createdAt: string;
+}
