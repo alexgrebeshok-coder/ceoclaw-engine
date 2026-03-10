@@ -1,21 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DndContext, DragOverlay, closestCorners, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { KanbanColumn } from "./kanban-column";
 import { KanbanTaskCard } from "./kanban-task-card";
+import { ErrorFallbackCard } from "@/components/error-fallback-card";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/contexts/locale-context";
+import { api } from "@/lib/client/api-error";
 import { Plus } from "lucide-react";
-import type { Board, Column, Task } from "@/lib/types";
+import type { Board, Task } from "@/lib/types";
 
 interface KanbanBoardProps {
   boardId: string;
 }
 
 export function KanbanBoard({ boardId }: KanbanBoardProps) {
+  const { t } = useLocale();
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const sensors = useSensors(
@@ -29,16 +34,25 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
 
   // Fetch board data
   const fetchBoard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      const response = await fetch(`/api/boards/${boardId}`);
-      const data = await response.json();
+      const data = await api.get<Board>(`/api/boards/${boardId}`);
+      if (!data || !Array.isArray(data.columns)) {
+        throw new Error(t("error.loadDescription"));
+      }
       setBoard(data);
     } catch (error) {
       console.error("[KanbanBoard] Error fetching board:", error);
+      setBoard(null);
+      setError(
+        error instanceof Error ? error : new Error(t("error.loadDescription"))
+      );
     } finally {
       setLoading(false);
     }
-  }, [boardId]);
+  }, [boardId, t]);
 
   useEffect(() => {
     fetchBoard();
@@ -123,15 +137,26 @@ export function KanbanBoard({ boardId }: KanbanBoardProps) {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-[var(--ink-muted)]">Загрузка доски...</p>
+        <p className="text-[var(--ink-muted)]">{t("loading.label")}</p>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorFallbackCard
+        error={error}
+        onRetry={() => {
+          void fetchBoard();
+        }}
+      />
     );
   }
 
   if (!board) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-[var(--ink-muted)]">Доска не найдена</p>
+        <p className="text-[var(--ink-muted)]">{t("error.loadDescription")}</p>
       </div>
     );
   }

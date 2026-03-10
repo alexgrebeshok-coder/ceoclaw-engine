@@ -9,8 +9,10 @@ import { useDashboard } from "@/components/dashboard-provider";
 import { footerNavigation, getProjectTone, navigation } from "@/components/layout/navigation-config";
 import { Input } from "@/components/ui/field";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useAIWorkspace } from "@/contexts/ai-context";
 import { useLocale } from "@/contexts/locale-context";
 import { usePreferences } from "@/contexts/preferences-context";
+import { useRisks, useTasks } from "@/lib/hooks/use-api";
 import { type MessageKey } from "@/lib/translations";
 import { cn } from "@/lib/utils";
 
@@ -34,12 +36,18 @@ export function Sidebar({
   const workspaceItemsRef = useRef<HTMLDivElement | null>(null);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const { notifications, projects, risks, tasks } = useDashboard();
+  const { projects, risks: cachedRisks, tasks: cachedTasks } = useDashboard();
+  const { sessions } = useAIWorkspace();
+  const { risks: liveRisks, isLoading: risksLoading } = useRisks();
+  const { tasks: liveTasks, isLoading: tasksLoading } = useTasks();
   const { activeWorkspace, availableWorkspaces, setWorkspaceId } = usePreferences();
   const { t } = useLocale();
   const featuredProjects = projects.slice(0, 4);
-  const openRiskCount = risks.filter((risk) => risk.status === "open").length;
-  const activeTaskCount = tasks.filter((task) => task.status !== "done").length;
+  const totalRiskCount =
+    liveRisks.length > 0 || !risksLoading ? liveRisks.length : cachedRisks.length;
+  const totalTaskCount =
+    liveTasks.length > 0 || !tasksLoading ? liveTasks.length : cachedTasks.length;
+  const totalChatCount = sessions.length;
 
   useEffect(() => {
     const focusSearch = () => {
@@ -160,7 +168,13 @@ export function Sidebar({
           const Icon = item.icon;
           const active = item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
           const badgeValue =
-            item.href === "/tasks" ? activeTaskCount : item.href === "/risks" ? openRiskCount : item.href === "/chat" ? notifications.length : 0;
+            item.href === "/tasks"
+              ? totalTaskCount
+              : item.href === "/risks"
+                ? totalRiskCount
+                : item.href === "/chat"
+                  ? totalChatCount
+                  : 0;
 
           return (
             <Link
@@ -175,7 +189,14 @@ export function Sidebar({
               <Icon className="h-4 w-4 shrink-0" />
               <span className="min-w-0 flex-1 truncate">{t(item.labelKey)}</span>
               {badgeValue > 0 ? (
-                <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", active ? "bg-white/20 text-white" : "bg-rose-500 text-white")}>
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-xs font-semibold",
+                    active
+                      ? "bg-white/20 text-white"
+                      : "bg-[var(--panel-soft)] text-[var(--brand)]"
+                  )}
+                >
                   {badgeValue}
                 </span>
               ) : null}
