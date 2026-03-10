@@ -37,7 +37,7 @@ async function testMalformedInput() {
   const client = getDashboardClient();
 
   try {
-    // @ts-ignore
+    // @ts-expect-error - testing invalid input
     await client.createProject({
       name: "",
       status: "invalid-status" as any,
