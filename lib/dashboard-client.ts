@@ -6,6 +6,7 @@
  */
 
 import type { Project, Task, TeamMember, Risk } from "./types";
+import { getCachedProject, setCachedProject } from "./cache/project-cache";
 
 // API base URL (dashboard server)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
@@ -297,9 +298,15 @@ export class DashboardClient {
   }
 
   /**
-   * Find project by name (fuzzy search)
+   * Find project by name (fuzzy search) with caching
    */
   async findProjectByName(name: string): Promise<Project | null> {
+    // Check cache first
+    const cached = getCachedProject(name);
+    if (cached) {
+    return cached;
+  }
+
     const projects = await this.listProjects();
     const lowerName = name.toLowerCase();
 
@@ -307,13 +314,21 @@ export class DashboardClient {
     const exactMatch = projects.find(
       (p) => p.name.toLowerCase() === lowerName
     );
-    if (exactMatch) return exactMatch;
+    if (exactMatch) {
+    setCachedProject(name, exactMatch);
+    return exactMatch;
+  }
 
     // Partial match
     const partialMatch = projects.find((p) =>
       p.name.toLowerCase().includes(lowerName)
     );
-    return partialMatch || null;
+  
+    if (partialMatch) {
+    setCachedProject(name, partialMatch);
+    }
+    
+    return null;
   }
 }
 
