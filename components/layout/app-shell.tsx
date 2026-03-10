@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { StatusBar } from "@/components/layout/status-bar";
 import { Topbar } from "@/components/layout/topbar";
 import { Button } from "@/components/ui/button";
+import { ChatWidget } from "@/components/chat/chat-widget";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -58,6 +59,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <StatusBar />
       </div>
+      
+      <ChatWidget />
     </div>
   );
 }
