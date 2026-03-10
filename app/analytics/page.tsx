@@ -1,10 +1,34 @@
-import { ErrorBoundary } from "@/components/error-boundary";
-import { AnalyticsPage } from "@/components/analytics/analytics-page";
+"use client";
 
-export default function AnalyticsRoute() {
+import React from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
+import { TeamPerformance } from "@/components/analytics/team-performance";
+
+export default function AnalyticsPage() {
   return (
-    <ErrorBoundary resetKey="analytics">
-      <AnalyticsPage />
-    </ErrorBoundary>
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Analytics</h1>
+        <p className="mt-2 text-[var(--ink-muted)]">
+          Project performance and team metrics
+        </p>
+      </div>
+
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="team">Team Performance</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <AnalyticsDashboard />
+        </TabsContent>
+
+        <TabsContent value="team">
+          <TeamPerformance />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
