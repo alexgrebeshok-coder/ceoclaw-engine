@@ -90,6 +90,9 @@ model Task {
   dependencies TaskDependency[] @relation("TaskDependencies")
   dependents   TaskDependency[] @relation("TaskDependents")
   
+  // Time tracking
+  timeEntries  TimeEntry[]
+  
   @@index([status])
   @@index([priority])
   @@index([dueDate])
@@ -118,6 +121,7 @@ model TeamMember {
   projects  Project[]
   risks     Risk[]     @relation("RiskOwner")
   documents Document[] @relation("DocumentOwner")
+  timeEntries TimeEntry[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -268,6 +272,51 @@ model TaskDependency {
   @@index([taskId])
   @@index([dependsOnTaskId])
 }
+
+// ============================================
+// TIME ENTRY MODEL
+// ============================================
+
+model TimeEntry {
+  id          String   @id @default(cuid())
+  
+  // Relations
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  memberId    String?
+  member      TeamMember? @relation(fields: [memberId], references: [id])
+  
+  // Time tracking
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?     // Duration in seconds (calculated)
+  
+  // Metadata
+  description String?
+  billable    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([taskId])
+  @@index([memberId])
+  @@index([startTime])
+}
+
+// ============================================
+// TASK MODEL (updated)
+// ============================================
+
+// Add to Task model:
+// timeEntries TimeEntry[]
+
+// ============================================
+// TEAM MEMBER MODEL (updated)
+// ============================================
+
+// Add to TeamMember model:
+// timeEntries TimeEntry[]
 
 // ============================================
 // USAGE EXAMPLES
