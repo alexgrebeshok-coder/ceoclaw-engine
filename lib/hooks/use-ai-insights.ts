@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useDashboardSnapshot } from "./use-api";
 import { generateInsights, type AIInsight } from "@/lib/ai/insights-generator";
 import type { Project, Task, TeamMember, Risk, EVMMetrics, AutoRisk, Severity } from "@/lib/types";
@@ -222,23 +222,29 @@ export function useAIInsights(
   cacheDuration: number = 5 * 60 * 1000 // 5 minutes default
 ) {
   const { projects, tasks, team, risks } = useDashboardSnapshot();
-  const [cachedInsights, setCachedInsights] = useState<{
-    insights: AIInsight[];
-    timestamp: number;
-  } | null>(null);
+  const [insights, setInsights] = useState<AIInsight[]>([]);
+  const [lastGenerated, setLastGenerated] = useState<number>(0);
+  const generatingRef = useRef(false);
 
-  // Check if cache is still valid
-  const isCacheValid = useMemo(() => {
-    if (!cachedInsights) return false;
-    const now = Date.now();
-    return now - cachedInsights.timestamp < cacheDuration;
-  }, [cachedInsights, cacheDuration]);
-
-  // Generate insights (use cache if valid)
-  const insights = useMemo(() => {
-    if (isCacheValid && cachedInsights) {
-      return cachedInsights.insights;
+  // Generate insights when data changes
+  useEffect(() => {
+    // Skip if no projects
+    if (projects.length === 0) {
+      return;
     }
+
+    // Check cache validity
+    const now = Date.now();
+    if (insights.length > 0 && now - lastGenerated < cacheDuration) {
+      return;
+    }
+
+    // Prevent concurrent generation
+    if (generatingRef.current) {
+      return;
+    }
+
+    generatingRef.current = true;
 
     // Calculate EVM metrics for all projects
     const evmMetricsMap = new Map<string, EVMMetrics>();
@@ -273,22 +279,15 @@ export function useAIInsights(
     // Generate insights with real EVM and risks data
     const newInsights = generateInsights(projects, evmMetricsMap, autoRisksMap);
 
-    return newInsights;
-  }, [projects, tasks, team, risks, isCacheValid, cachedInsights]);
-
-  // Update cache in useEffect to avoid setState during render
-  useEffect(() => {
-    if (!isCacheValid && insights.length > 0) {
-      setCachedInsights({
-        insights,
-        timestamp: Date.now(),
-      });
-    }
-  }, [insights, isCacheValid]);
+    setInsights(newInsights);
+    setLastGenerated(now);
+    generatingRef.current = false;
+  }, [projects, tasks, team, risks, cacheDuration, insights.length, lastGenerated]);
 
   // Manual cache invalidation
   const invalidateCache = useCallback(() => {
-    setCachedInsights(null);
+    setInsights([]);
+    setLastGenerated(0);
   }, []);
 
   return {
