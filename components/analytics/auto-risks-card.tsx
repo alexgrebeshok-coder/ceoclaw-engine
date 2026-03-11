@@ -55,14 +55,14 @@ export function AutoRisksCard({
   }
 
   return (
-    <Card className="border-orange-200 dark:border-orange-900">
+    <Card className="min-w-0 border-orange-200 dark:border-orange-900">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <AlertTriangle className="h-4 w-4 text-orange-500" />
             {t("autoRisks.title")}
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {criticalCount > 0 && (
               <Badge variant="danger" className="text-xs">
                 {criticalCount} {t("autoRisks.critical")}
@@ -113,12 +113,9 @@ function RiskItem({ risk }: { risk: AutoRisk }) {
           <Icon className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
             <h4 className="text-sm font-medium truncate">{risk.title}</h4>
-            <Badge
-              variant="neutral"
-              className={`text-xs ${severityColors.badge}`}
-            >
+            <Badge variant={getSeverityVariant(risk.severity)} className="text-xs">
               {t(`autoRisks.types.${risk.type}`)}
             </Badge>
           </div>
@@ -157,6 +154,18 @@ function getRiskIcon(type: AutoRisk["type"]) {
   }
 }
 
+function getSeverityVariant(severity: Severity) {
+  switch (severity) {
+    case "critical":
+      return "danger" as const;
+    case "warning":
+      return "warning" as const;
+    case "info":
+    default:
+      return "info" as const;
+  }
+}
+
 function getSeverityColors(severity: Severity) {
   switch (severity) {
     case "critical":
@@ -164,16 +173,12 @@ function getSeverityColors(severity: Severity) {
         bg: "bg-red-50 dark:bg-red-950/50",
         border: "border-red-200 dark:border-red-900",
         icon: "text-red-600 dark:text-red-400",
-        badge:
-          "border-red-300 text-red-700 dark:border-red-700 dark:text-red-400",
       };
     case "warning":
       return {
         bg: "bg-orange-50 dark:bg-orange-950/50",
         border: "border-orange-200 dark:border-orange-900",
         icon: "text-orange-600 dark:text-orange-400",
-        badge:
-          "border-orange-300 text-orange-700 dark:border-orange-700 dark:text-orange-400",
       };
     case "info":
     default:
@@ -181,8 +186,6 @@ function getSeverityColors(severity: Severity) {
         bg: "bg-blue-50 dark:bg-blue-950/50",
         border: "border-blue-200 dark:border-blue-900",
         icon: "text-blue-600 dark:text-blue-400",
-        badge:
-          "border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400",
       };
   }
 }

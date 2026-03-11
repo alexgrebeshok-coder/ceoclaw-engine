@@ -9,37 +9,20 @@ import {
   type ReactNode,
 } from "react";
 
+import { readClientAccessProfile, type AccessProfile } from "@/lib/auth/access-profile";
+import {
+  getAvailableWorkspacesForRole,
+  resolveAccessibleWorkspace,
+  type PolicyWorkspaceOption,
+} from "@/lib/policy/access";
 import type { Locale, MessageKey } from "@/lib/translations";
 
 export const PREFERENCES_STORAGE_KEY = "ceoclaw-settings";
 
-export interface WorkspaceOption {
-  id: string;
-  initials: string;
+export type WorkspaceOption = PolicyWorkspaceOption & {
   nameKey: MessageKey;
   descriptionKey: MessageKey;
-}
-
-export const workspaceOptions: WorkspaceOption[] = [
-  {
-    id: "executive",
-    initials: "HQ",
-    nameKey: "workspace.executive.name",
-    descriptionKey: "workspace.executive.description",
-  },
-  {
-    id: "delivery",
-    initials: "DO",
-    nameKey: "workspace.delivery.name",
-    descriptionKey: "workspace.delivery.description",
-  },
-  {
-    id: "strategy",
-    initials: "SR",
-    nameKey: "workspace.strategy.name",
-    descriptionKey: "workspace.strategy.description",
-  },
-];
+};
 
 export interface AppPreferences {
   workspaceId: string;
@@ -51,6 +34,7 @@ export interface AppPreferences {
 }
 
 interface PreferencesContextValue {
+  accessProfile: AccessProfile;
   preferences: AppPreferences;
   availableWorkspaces: WorkspaceOption[];
   activeWorkspace: WorkspaceOption;
@@ -63,7 +47,7 @@ interface PreferencesContextValue {
 }
 
 const defaultPreferences: AppPreferences = {
-  workspaceId: workspaceOptions[0]?.id ?? "executive",
+  workspaceId: "delivery",
   compactMode: true,
   desktopNotifications: true,
   soundEffects: false,
@@ -77,17 +61,21 @@ function isLocale(value: unknown): value is Locale {
   return value === "ru" || value === "en" || value === "zh";
 }
 
-function normalizePreferences(raw: unknown): AppPreferences {
+function normalizePreferences(
+  raw: unknown,
+  availableWorkspaces: WorkspaceOption[],
+  fallbackWorkspaceId: string
+): AppPreferences {
   if (!raw || typeof raw !== "object") {
-    return defaultPreferences;
+    return { ...defaultPreferences, workspaceId: fallbackWorkspaceId };
   }
 
   const candidate = raw as Partial<AppPreferences>;
   const workspaceId =
     typeof candidate.workspaceId === "string" &&
-    workspaceOptions.some((item) => item.id === candidate.workspaceId)
+    availableWorkspaces.some((item) => item.id === candidate.workspaceId)
       ? candidate.workspaceId
-      : defaultPreferences.workspaceId;
+      : fallbackWorkspaceId;
 
   return {
     workspaceId,
@@ -116,15 +104,26 @@ function applyDensity(compactMode: boolean) {
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [preferences, setPreferences] = useState<AppPreferences>(defaultPreferences);
+  const [accessProfile, setAccessProfile] = useState<AccessProfile>(() => readClientAccessProfile());
+  const [preferences, setPreferences] = useState<AppPreferences>(() => ({
+    ...defaultPreferences,
+    workspaceId: resolveAccessibleWorkspace(readClientAccessProfile().role, "delivery").id,
+  }));
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     try {
+      const nextAccessProfile = readClientAccessProfile();
+      const nextAvailableWorkspaces = getAvailableWorkspacesForRole(nextAccessProfile.role);
+      const fallbackWorkspaceId = resolveAccessibleWorkspace(
+        nextAccessProfile.role,
+        nextAccessProfile.workspaceId
+      ).id;
       const raw = localStorage.getItem(PREFERENCES_STORAGE_KEY);
       const nextPreferences = raw
-        ? normalizePreferences(JSON.parse(raw))
-        : defaultPreferences;
+        ? normalizePreferences(JSON.parse(raw), nextAvailableWorkspaces, fallbackWorkspaceId)
+        : { ...defaultPreferences, workspaceId: fallbackWorkspaceId };
+      setAccessProfile(nextAccessProfile);
       setPreferences(nextPreferences);
       applyDensity(nextPreferences.compactMode);
     } catch {
@@ -146,15 +145,18 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   }, [isReady, preferences]);
 
   const value = useMemo<PreferencesContextValue>(() => {
+    const availableWorkspaces = getAvailableWorkspacesForRole(accessProfile.role);
     const activeWorkspace =
-      workspaceOptions.find((item) => item.id === preferences.workspaceId) ?? workspaceOptions[0];
+      availableWorkspaces.find((item) => item.id === preferences.workspaceId) ??
+      availableWorkspaces[0];
 
     return {
+      accessProfile,
       preferences,
-      availableWorkspaces: workspaceOptions,
+      availableWorkspaces,
       activeWorkspace,
       setWorkspaceId: (workspaceId) => {
-        if (!workspaceOptions.some((item) => item.id === workspaceId)) return;
+        if (!availableWorkspaces.some((item) => item.id === workspaceId)) return;
         setPreferences((current) => ({ ...current, workspaceId }));
       },
       setCompactMode: (compactMode) => {
@@ -173,7 +175,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         setPreferences((current) => ({ ...current, aiResponseLocale }));
       },
     };
-  }, [preferences]);
+  }, [accessProfile, preferences]);
 
   return (
     <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>

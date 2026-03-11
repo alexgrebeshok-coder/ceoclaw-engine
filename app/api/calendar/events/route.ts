@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { databaseUnavailable, serverError } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 /**
  * GET /api/calendar/events — Calendar events for tasks
@@ -11,9 +13,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock calendar events if no database
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       const { getMockTasks, getMockProjects } = await import("@/lib/mock-data");
       const tasks = getMockTasks();
       const projects = getMockProjects();
@@ -37,6 +39,10 @@ export async function GET(request: NextRequest) {
         });
 
       return NextResponse.json(events);
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { searchParams } = new URL(request.url);
@@ -81,30 +87,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(events);
   } catch (error) {
     console.error("[Calendar API] Error:", error);
-    // Fallback to mock data on any error
-    const { getMockTasks, getMockProjects } = await import("@/lib/mock-data");
-    const tasks = getMockTasks();
-    const projects = getMockProjects();
-
-    const events = tasks
-      .filter((t) => t.dueDate)
-      .map((t) => {
-        const project = projects.find((p) => p.id === t.projectId);
-        return {
-          id: t.id,
-          title: t.title,
-          start: t.dueDate,
-          end: t.dueDate,
-          allDay: true,
-          color: getStatusColor(t.status),
-          resource: {
-            projectId: t.projectId,
-            projectName: project?.name || "Unknown",
-          },
-        };
-      });
-
-    return NextResponse.json(events);
+    return serverError(error, "Failed to fetch calendar events.");
   }
 }
 

@@ -4,20 +4,31 @@ import {
   CalendarDays,
   CircleHelp,
   Columns3,
+  Database,
+  FileText,
   LayoutDashboard,
   LineChart,
   MessageSquareText,
+  RefreshCcw,
   Settings2,
   Sparkles,
   Users,
   Workflow,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
 import { type MessageKey } from "@/lib/translations";
 import type { Project } from "@/lib/types";
 
-export const navigation: Array<{ href: string; labelKey: MessageKey; icon: LucideIcon }> = [
+export interface NavigationItem {
+  href: string;
+  icon: LucideIcon;
+  label?: string;
+  labelKey?: MessageKey;
+}
+
+export const navigation: NavigationItem[] = [
   { href: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { href: "/projects", labelKey: "nav.projects", icon: BriefcaseBusiness },
   { href: "/tasks", labelKey: "nav.tasks", icon: Workflow },
@@ -30,12 +41,27 @@ export const navigation: Array<{ href: string; labelKey: MessageKey; icon: Lucid
   { href: "/chat", labelKey: "nav.chat", icon: MessageSquareText },
 ];
 
-export const footerNavigation: Array<{ href: string; labelKey: MessageKey; icon: LucideIcon }> = [
+export const operationsNavigation: NavigationItem[] = [
+  { href: "/imports", label: "Imports", icon: Database },
+  { href: "/briefs", label: "Executive Briefs", icon: FileText },
+  { href: "/meetings", label: "Meeting to Action", icon: MessageSquareText },
+  { href: "/work-reports", label: "Work Reports", icon: RefreshCcw },
+  { href: "/integrations", label: "Connector Health", icon: Wrench },
+];
+
+export const footerNavigation: NavigationItem[] = [
   { href: "/settings", labelKey: "nav.settings", icon: Settings2 },
   { href: "/help", labelKey: "nav.help", icon: CircleHelp },
 ];
 
-const localizedPageTitles: Record<string, { eyebrowKey: MessageKey; titleKey: MessageKey }> = {
+export interface ResolvedTitle {
+  eyebrow?: string;
+  eyebrowKey?: MessageKey;
+  title?: string;
+  titleKey?: MessageKey;
+}
+
+const localizedPageTitles: Record<string, ResolvedTitle> = {
   "/": { eyebrowKey: "page.dashboard.eyebrow", titleKey: "page.dashboard.title" },
   "/projects": { eyebrowKey: "page.projects.eyebrow", titleKey: "page.projects.title" },
   "/tasks": { eyebrowKey: "page.tasks.eyebrow", titleKey: "page.tasks.title" },
@@ -48,12 +74,14 @@ const localizedPageTitles: Record<string, { eyebrowKey: MessageKey; titleKey: Me
   "/chat": { eyebrowKey: "page.chat.eyebrow", titleKey: "page.chat.title" },
   "/settings": { eyebrowKey: "page.settings.eyebrow", titleKey: "page.settings.title" },
   "/help": { eyebrowKey: "page.help.eyebrow", titleKey: "page.help.title" },
+  "/imports": { eyebrow: "Data intake", title: "Imports" },
+  "/briefs": { eyebrow: "Executive comms", title: "Executive Briefs" },
+  "/meetings": { eyebrow: "Agentic intake", title: "Meeting to Action" },
+  "/work-reports": { eyebrow: "Delivery cadence", title: "Work Reports" },
+  "/integrations": { eyebrow: "Platform trust", title: "Connector Health" },
 };
 
-export function resolveTitle(pathname: string | null): {
-  eyebrowKey: MessageKey;
-  titleKey: MessageKey;
-} {
+export function resolveTitle(pathname: string | null): ResolvedTitle {
   const safePathname = pathname ?? "/";
 
   if (safePathname.startsWith("/projects/")) {
@@ -61,6 +89,26 @@ export function resolveTitle(pathname: string | null): {
       eyebrowKey: "page.project.eyebrow",
       titleKey: "page.project.title",
     };
+  }
+
+  if (safePathname.startsWith("/imports/")) {
+    return localizedPageTitles["/imports"];
+  }
+
+  if (safePathname.startsWith("/briefs/")) {
+    return localizedPageTitles["/briefs"];
+  }
+
+  if (safePathname.startsWith("/meetings/")) {
+    return localizedPageTitles["/meetings"];
+  }
+
+  if (safePathname.startsWith("/work-reports/")) {
+    return localizedPageTitles["/work-reports"];
+  }
+
+  if (safePathname.startsWith("/integrations/")) {
+    return localizedPageTitles["/integrations"];
   }
 
   return localizedPageTitles[safePathname as keyof typeof localizedPageTitles] ?? localizedPageTitles["/"];

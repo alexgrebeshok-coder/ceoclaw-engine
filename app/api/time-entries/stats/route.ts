@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { databaseUnavailable, serverError } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 /**
  * GET /api/time-entries/stats — Time tracking statistics
@@ -13,9 +15,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json({
         summary: {
           totalEntries: 0,
@@ -28,6 +30,10 @@ export async function GET(request: NextRequest) {
         byMember: [],
         byTask: [],
       });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { searchParams } = new URL(request.url);
@@ -141,9 +147,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("[Time Stats API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch time statistics" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to fetch time statistics");
   }
 }

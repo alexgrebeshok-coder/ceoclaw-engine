@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+
+import { authorizeRequest } from "@/app/api/middleware/auth";
 import { checkDueDates } from "@/lib/notify";
+import { databaseUnavailable, serverError } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 /**
  * POST /api/notifications/check-due-dates
@@ -12,15 +16,30 @@ import { checkDueDates } from "@/lib/notify";
  */
 export async function POST(request: NextRequest) {
   try {
-    // Optional: Verify cron secret
-    const authHeader = request.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
-    
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    const authResult = authorizeRequest(request, {
+      apiKey: process.env.CRON_SECRET,
+      permission: "RUN_DUE_DATE_SCAN",
+      requireApiKey: Boolean(process.env.CRON_SECRET),
+      workspaceId: "executive",
+    });
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
+      return NextResponse.json({
+        success: true,
+        notificationsCreated: 0,
+        checkedTasks: 0,
+        timestamp: new Date().toISOString(),
+        mock: true,
+      });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const result = await checkDueDates();
@@ -32,9 +51,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("[Check Due Dates API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to check due dates" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to check due dates");
   }
 }

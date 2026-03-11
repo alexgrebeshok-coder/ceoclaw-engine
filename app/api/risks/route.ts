@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { serverError, validationError } from "@/lib/server/api-utils";
+import {
+  databaseUnavailable,
+  serverError,
+  validationError,
+} from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 import { createRiskSchema } from "@/lib/validators/risk";
 
 export const runtime = "nodejs";
@@ -21,11 +26,15 @@ function resolveSeverity(probability?: string, impact?: string): number {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       const { getMockRisks } = await import("@/lib/mock-data");
       return NextResponse.json(getMockRisks());
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { searchParams } = new URL(request.url);
@@ -50,9 +59,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(risks);
   } catch (error) {
-    // Fallback to mock data on any error
-    const { getMockRisks } = await import("@/lib/mock-data");
-    return NextResponse.json(getMockRisks());
+    return serverError(error, "Failed to fetch risks.");
   }
 }
 

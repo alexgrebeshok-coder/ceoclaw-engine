@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { prisma } from "@/lib/prisma";
+import {
+  badRequest,
+  databaseUnavailable,
+  notFound,
+  serverError,
+} from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 /**
  * PUT /api/tasks/[id]/move — Move task to another column
@@ -12,21 +20,32 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
-      return NextResponse.json({ success: true, id: "mock-id" });
-    }
-
     const { id } = await params;
     const body = await request.json();
     const { columnId, order } = body;
+    const runtime = getServerRuntimeState();
 
     if (!columnId) {
-      return NextResponse.json(
-        { error: "columnId is required" },
-        { status: 400 }
-      );
+      return badRequest("columnId is required");
+    }
+
+    if (runtime.usingMockData) {
+      const { getMockTasks } = await import("@/lib/mock-data");
+      const mockTask = getMockTasks().find((task) => task.id === id);
+      if (!mockTask) {
+        return notFound("Task not found");
+      }
+
+      return NextResponse.json({
+        ...mockTask,
+        columnId,
+        order: order ?? mockTask.order,
+        status: inferMockStatusFromColumnId(columnId),
+      });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     // Get current task
@@ -36,7 +55,7 @@ export async function PUT(
     });
 
     if (!task) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      return notFound("Task not found");
     }
 
     // If moving to same column, just update order
@@ -60,10 +79,7 @@ export async function PUT(
     return NextResponse.json(updatedTask);
   } catch (error) {
     console.error("[Task Move API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to move task" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to move task.");
   }
 }
 
@@ -82,5 +98,14 @@ async function getColumnStatus(columnId: string): Promise<string> {
   if (title.includes("done")) return "done";
   if (title.includes("progress")) return "in_progress";
   if (title.includes("review")) return "in_progress";
+  return "todo";
+}
+
+function inferMockStatusFromColumnId(columnId: string): string {
+  const normalized = columnId.toLowerCase();
+  if (normalized.includes("done")) return "done";
+  if (normalized.includes("progress") || normalized.includes("review")) {
+    return "in-progress";
+  }
   return "todo";
 }

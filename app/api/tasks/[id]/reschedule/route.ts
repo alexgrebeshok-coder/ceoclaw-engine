@@ -7,6 +7,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { badRequest, databaseUnavailable, notFound, serverError } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 const MAX_RECURSION_DEPTH = 50;
 
@@ -22,10 +24,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json({ rescheduledCount: 0, tasks: [] });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { id } = await params;
@@ -33,19 +39,13 @@ export async function POST(
     const { newDueDate } = body;
 
     if (!newDueDate) {
-      return NextResponse.json(
-        { error: "newDueDate is required" },
-        { status: 400 }
-      );
+      return badRequest("newDueDate is required");
     }
 
     // Validate date
     const parsedDate = new Date(newDueDate);
     if (isNaN(parsedDate.getTime())) {
-      return NextResponse.json(
-        { error: "Invalid date format" },
-        { status: 400 }
-      );
+      return badRequest("Invalid date format");
     }
 
     // Get the task
@@ -55,7 +55,7 @@ export async function POST(
     });
 
     if (!task) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      return notFound("Task not found");
     }
 
     // Use transaction for atomic updates
@@ -132,16 +132,10 @@ export async function POST(
     console.error("[Reschedule API] Error:", error);
     
     if (error instanceof Error && error.message === "Max recursion depth exceeded") {
-      return NextResponse.json(
-        { error: "Dependency chain too deep (possible circular dependency)" },
-        { status: 400 }
-      );
+      return badRequest("Dependency chain too deep (possible circular dependency)");
     }
     
-    return NextResponse.json(
-      { error: "Failed to reschedule tasks" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to reschedule tasks.");
   }
 }
 

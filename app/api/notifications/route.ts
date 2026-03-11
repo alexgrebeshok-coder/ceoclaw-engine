@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  badRequest,
+  databaseUnavailable,
+  serverError,
+} from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 /**
  * GET /api/notifications
@@ -7,14 +13,18 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET(request: NextRequest) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json({
         notifications: [],
         unreadCount: 0,
         total: 0,
       });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { searchParams } = new URL(request.url);
@@ -47,10 +57,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("[Notifications API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch notifications" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to fetch notifications");
   }
 }
 
@@ -60,20 +67,21 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json({ success: true, id: "mock-id" });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const body = await request.json();
     const { userId, type, title, message, entityType, entityId } = body;
 
     if (!userId || !type || !title || !message) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return badRequest("Missing required fields");
     }
 
     const notification = await prisma.notification.create({
@@ -90,9 +98,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(notification, { status: 201 });
   } catch (error) {
     console.error("[Notifications API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to create notification" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to create notification");
   }
 }

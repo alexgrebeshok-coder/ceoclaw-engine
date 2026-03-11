@@ -128,7 +128,7 @@ export function ChatMessage({
             <span className="font-semibold text-[var(--ink)]">{t("chat.you")}</span>
             <span>{timestamp}</span>
           </div>
-          <div className="rounded-[12px] rounded-tr-[4px] bg-[var(--brand)] px-4 py-3 text-left text-sm leading-7 text-white">
+          <div className="rounded-[12px] rounded-tr-[4px] bg-[linear-gradient(135deg,var(--brand)_0%,var(--brand-strong)_100%)] px-4 py-3 text-left text-sm leading-7 text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)]">
             {run.prompt}
           </div>
         </div>
@@ -152,7 +152,7 @@ export function ChatMessage({
 
           <div
             className={cn(
-              "rounded-[12px] rounded-tl-[4px] border border-[var(--line)] bg-[color:var(--surface-panel)] px-4 py-3",
+              "rounded-[12px] rounded-tl-[4px] border border-[var(--line-strong)] bg-[color:var(--surface-panel-strong)] px-4 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.12)]",
               selected && "border-[var(--brand)]/45"
             )}
           >

@@ -11,6 +11,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Organization {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  description String?
+  workspaces  Workspace[]
+  memberships Membership[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Workspace {
+  id             String                @id @default(cuid())
+  organizationId String
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  key            String
+  name           String
+  initials       String
+  description    String?
+  isDefault      Boolean               @default(false)
+  memberships    WorkspaceMembership[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+}
+
 // ============================================
 // PROJECT MODEL
 // ============================================
@@ -49,6 +77,8 @@ model Project {
   milestones  Milestone[]
   team        TeamMember[]
   boards      Board[]
+  workReports WorkReport[]
+  telegramBriefPolicies TelegramBriefDeliveryPolicy[]
   
   @@index([status])
   @@index([direction])
@@ -122,11 +152,45 @@ model TeamMember {
   risks     Risk[]     @relation("RiskOwner")
   documents Document[] @relation("DocumentOwner")
   timeEntries TimeEntry[]
+  authoredWorkReports WorkReport[] @relation("WorkReportAuthor")
+  reviewedWorkReports WorkReport[] @relation("WorkReportReviewer")
+  memberships Membership[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@index([name])
+}
+
+model Membership {
+  id                  String                @id @default(cuid())
+  organizationId      String
+  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamMemberId        String?
+  teamMember          TeamMember?           @relation(fields: [teamMemberId], references: [id], onDelete: SetNull)
+  externalUserId      String?               @unique
+  email               String?
+  displayName         String
+  role                String                @default("MEMBER")
+  workspaceMemberships WorkspaceMembership[]
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@index([organizationId, role])
+  @@index([teamMemberId])
+}
+
+model WorkspaceMembership {
+  id           String      @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  membershipId String
+  membership   Membership  @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  role         String?
+  createdAt    DateTime    @default(now())
+
+  @@unique([workspaceId, membershipId])
+  @@index([membershipId])
 }
 
 // ============================================
@@ -333,6 +397,74 @@ model Notification {
   @@index([userId])
   @@index([read])
   @@index([createdAt])
+}
+
+model TelegramBriefDeliveryPolicy {
+  id              String    @id @default(cuid())
+  workspaceId     String    @default("executive")
+  scope           String
+  projectId       String?
+  project         Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  locale          String    @default("ru")
+  chatId          String?
+  cadence         String    @default("daily")
+  timezone        String    @default("UTC")
+  deliveryHour    Int
+  active          Boolean   @default(true)
+  createdByUserId String?
+  updatedByUserId String?
+  lastAttemptAt   DateTime?
+  lastDeliveredAt DateTime?
+  lastMessageId   Int?
+  lastError       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([workspaceId, active])
+  @@index([projectId])
+  @@index([deliveryHour, active])
+}
+
+// ============================================
+// WORK REPORT MODEL
+// ============================================
+
+model WorkReport {
+  id                        String      @id @default(cuid())
+  reportNumber              String      @unique
+  projectId                 String
+  project                   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorId                  String
+  author                    TeamMember  @relation("WorkReportAuthor", fields: [authorId], references: [id])
+  reviewerId                String?
+  reviewer                  TeamMember? @relation("WorkReportReviewer", fields: [reviewerId], references: [id])
+  section                   String
+  reportDate                DateTime
+  workDescription           String
+  volumesJson               String      @default("[]")
+  personnelCount            Int?
+  personnelDetails          String?
+  equipment                 String?
+  weather                   String?
+  issues                    String?
+  nextDayPlan               String?
+  attachmentsJson           String      @default("[]")
+  status                    String      @default("submitted")
+  reviewComment             String?
+  source                    String      @default("manual")
+  externalReporterTelegramId String?
+  externalReporterName      String?
+  submittedAt               DateTime    @default(now())
+  reviewedAt                DateTime?
+  createdAt                 DateTime    @default(now())
+  updatedAt                 DateTime    @updatedAt
+
+  @@index([projectId])
+  @@index([authorId])
+  @@index([reviewerId])
+  @@index([reportDate])
+  @@index([status])
+  @@index([projectId, reportDate])
 }
 
 // ============================================

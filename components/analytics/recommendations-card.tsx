@@ -73,14 +73,14 @@ export function RecommendationsCard({
   }
 
   return (
-    <Card className="border-blue-200 dark:border-blue-900">
+    <Card className="min-w-0 border-blue-200 dark:border-blue-900">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Lightbulb className="h-4 w-4 text-blue-500" />
             {t("recommendations.title")}
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {criticalCount > 0 && (
               <Badge variant="danger" className="text-xs">
                 {criticalCount} {t("recommendations.critical")}
@@ -128,12 +128,9 @@ function RecommendationItem({ recommendation }: { recommendation: Recommendation
           <Icon className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
             <h4 className="text-sm font-medium truncate">{recommendation.title}</h4>
-            <Badge
-              variant="neutral"
-              className={`text-xs ${colors.badge}`}
-            >
+            <Badge variant={getPriorityVariant(recommendation.priority)} className="text-xs">
               {t(`recommendations.types.${recommendation.type}`)}
             </Badge>
           </div>
@@ -176,6 +173,18 @@ function getRecommendationIcon(priority: Recommendation["priority"]) {
   }
 }
 
+function getPriorityVariant(priority: Recommendation["priority"]) {
+  switch (priority) {
+    case "critical":
+      return "danger" as const;
+    case "warning":
+      return "warning" as const;
+    case "info":
+    default:
+      return "info" as const;
+  }
+}
+
 function getPriorityColors(priority: Recommendation["priority"]) {
   switch (priority) {
     case "critical":
@@ -183,14 +192,12 @@ function getPriorityColors(priority: Recommendation["priority"]) {
         bg: "bg-red-50 dark:bg-red-950/50",
         border: "border-red-200 dark:border-red-900",
         icon: "text-red-600 dark:text-red-400",
-        badge: "border-red-300 text-red-700 dark:border-red-700 dark:text-red-400",
       };
     case "warning":
       return {
         bg: "bg-yellow-50 dark:bg-yellow-950/50",
         border: "border-yellow-200 dark:border-yellow-900",
         icon: "text-yellow-600 dark:text-yellow-400",
-        badge: "border-yellow-300 text-yellow-700 dark:border-yellow-700 dark:text-yellow-400",
       };
     case "info":
     default:
@@ -198,7 +205,6 @@ function getPriorityColors(priority: Recommendation["priority"]) {
         bg: "bg-blue-50 dark:bg-blue-950/50",
         border: "border-blue-200 dark:border-blue-900",
         icon: "text-blue-600 dark:text-blue-400",
-        badge: "border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400",
       };
   }
 }

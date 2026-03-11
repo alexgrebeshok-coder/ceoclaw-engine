@@ -71,7 +71,7 @@ export function TasksPage() {
 
   if (showHydrationSkeleton) {
     return (
-      <div className="grid gap-6">
+      <div className="grid min-w-0 gap-6">
         <AIContextActionsSkeleton />
 
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
@@ -97,7 +97,7 @@ export function TasksPage() {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 gap-6">
       <AIContextActions />
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
@@ -136,12 +136,12 @@ export function TasksPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <CardHeader className="min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <CardTitle>{t("tasks.title")}</CardTitle>
             <p className="text-sm text-[var(--ink-soft)]">{t("tasks.description")}</p>
           </div>
-          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+          <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
             <select
               className={fieldStyles}
               onChange={(event) => setStatus(event.target.value as "all" | TaskStatus)}

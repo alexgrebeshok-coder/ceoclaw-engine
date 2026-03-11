@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import {
+  databaseUnavailable,
   isPrismaNotFoundError,
   normalizeTaskStatus,
   notFound,
   serverError,
   validationError,
 } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 import { updateTaskSchema } from "@/lib/validators/task";
 
 export const runtime = "nodejs";
@@ -17,10 +19,20 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(_request: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
-      return NextResponse.json({});
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
+      const { id } = await params;
+      const mockTask = await buildMockTaskDetail(id);
+      if (!mockTask) {
+        return notFound("Task not found");
+      }
+
+      return NextResponse.json(mockTask);
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { id } = await params;
@@ -48,10 +60,20 @@ export async function GET(_request: NextRequest, { params }: RouteContext): Prom
 
 export async function PUT(request: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
-      return NextResponse.json({ success: true, id: "mock-id" });
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
+      const { id } = await params;
+      const mockTask = await buildMockTaskDetail(id);
+      if (!mockTask) {
+        return notFound("Task not found");
+      }
+
+      return NextResponse.json(mockTask);
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { id } = await params;
@@ -128,10 +150,14 @@ export async function PUT(request: NextRequest, { params }: RouteContext): Promi
 
 export async function DELETE(_request: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json({ deleted: true });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { id } = await params;
@@ -147,4 +173,27 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext): P
 
     return serverError(error, "Failed to delete task.");
   }
+}
+
+async function buildMockTaskDetail(taskId: string) {
+  const { getMockTasks, getMockProjects } = await import("@/lib/mock-data");
+  const task = getMockTasks().find((item) => item.id === taskId);
+
+  if (!task) {
+    return null;
+  }
+
+  const project = getMockProjects().find((item) => item.id === task.projectId);
+
+  return {
+    ...task,
+    project: project
+      ? {
+          id: project.id,
+          name: project.name,
+          direction: project.direction,
+        }
+      : null,
+    assignee: task.assignee,
+  };
 }

@@ -34,7 +34,7 @@ export function ChatInput() {
 
   return (
     <div className="border-t border-[color:var(--line-strong)] bg-[color:var(--surface-panel)] px-4 py-4 sm:px-6">
-      <div className="mx-auto flex w-full max-w-5xl items-end gap-3">
+      <div className="mx-auto flex min-w-0 w-full max-w-5xl items-end gap-3">
         <Button
           aria-label={t("chat.input.attach")}
           onClick={() =>
@@ -49,7 +49,7 @@ export function ChatInput() {
           <Paperclip className="h-4 w-4" />
         </Button>
 
-        <div className="flex-1 rounded-[12px] border border-[var(--line)] bg-[color:var(--surface-panel)] px-3 py-3">
+        <div className="min-w-0 flex-1 rounded-[14px] border border-[var(--line-strong)] bg-[color:var(--surface-panel-strong)] px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.1)]">
           <Textarea
             aria-describedby={composerHelpId}
             aria-label={t("chat.input.send")}

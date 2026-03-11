@@ -63,6 +63,22 @@ export function badRequest(
   return jsonError(400, code, message, details);
 }
 
+export function serviceUnavailable(
+  message: string,
+  code = "SERVICE_UNAVAILABLE",
+  details?: unknown
+): NextResponse<APIErrorPayload> {
+  return jsonError(503, code, message, details);
+}
+
+export function databaseUnavailable(dataMode?: string): NextResponse<APIErrorPayload> {
+  return serviceUnavailable(
+    "DATABASE_URL is not configured for live mode.",
+    "DATABASE_UNAVAILABLE",
+    dataMode ? { dataMode } : undefined
+  );
+}
+
 export function notFound(
   message: string,
   code = "NOT_FOUND"

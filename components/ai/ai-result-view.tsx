@@ -215,6 +215,19 @@ export function AIResultView() {
           {selectedRun.result.proposal ? (
             <AIProposalCard proposal={selectedRun.result.proposal} runId={selectedRun.id} />
           ) : null}
+
+          {selectedRun.result.actionResult ? (
+            <Card>
+              <CardContent className="space-y-3 p-6">
+                <p className="text-xs uppercase tracking-[0.16em] text-[var(--ink-muted)]">
+                  Action result
+                </p>
+                <p className="text-sm leading-7 text-[var(--ink)]">
+                  {selectedRun.result.actionResult.summary}
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
         </>
       ) : null}
     </div>

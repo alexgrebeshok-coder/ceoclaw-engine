@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { prisma } from "@/lib/prisma";
+import {
+  badRequest,
+  databaseUnavailable,
+  serverError,
+} from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 /**
  * GET /api/tasks/[id]/dependencies — Get task dependencies
@@ -11,10 +18,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json({ dependencies: [], dependents: [] });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { id } = await params;
@@ -61,10 +72,7 @@ export async function GET(
     });
   } catch (error) {
     console.error("[Dependencies API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch dependencies" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to fetch task dependencies.");
   }
 }
 
@@ -73,30 +81,35 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
-      return NextResponse.json({ success: true, id: "mock-id" });
-    }
-
     const { id } = await params;
     const body = await request.json();
     const { dependsOnTaskId, type = "FINISH_TO_START" } = body;
+    const runtime = getServerRuntimeState();
 
     if (!dependsOnTaskId) {
+      return badRequest("dependsOnTaskId is required");
+    }
+
+    if (runtime.usingMockData) {
       return NextResponse.json(
-        { error: "dependsOnTaskId is required" },
-        { status: 400 }
+        {
+          id: `mock-dependency-${id}-${dependsOnTaskId}`,
+          taskId: id,
+          dependsOnTaskId,
+          type,
+        },
+        { status: 201 }
       );
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     // Check for circular dependency
     const hasCircular = await checkCircularDependency(id, dependsOnTaskId);
     if (hasCircular) {
-      return NextResponse.json(
-        { error: "Circular dependency detected" },
-        { status: 400 }
-      );
+      return badRequest("Circular dependency detected");
     }
 
     // Check if dependency already exists
@@ -110,10 +123,7 @@ export async function POST(
     });
 
     if (existing) {
-      return NextResponse.json(
-        { error: "Dependency already exists" },
-        { status: 400 }
-      );
+      return badRequest("Dependency already exists");
     }
 
     const dependency = await prisma.taskDependency.create({
@@ -137,10 +147,7 @@ export async function POST(
     return NextResponse.json(dependency, { status: 201 });
   } catch (error) {
     console.error("[Dependencies API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to create dependency" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to create task dependency.");
   }
 }
 

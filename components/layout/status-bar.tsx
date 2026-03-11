@@ -13,8 +13,8 @@ export function StatusBar() {
   }).format(new Date());
 
   return (
-    <footer className="shrink-0 flex h-7 items-center justify-between border-t border-[var(--line-strong)] bg-[var(--statusbar-surface)] px-4 text-xs text-[var(--statusbar-ink)]">
-      <div className="flex items-center gap-4">
+    <footer className="shrink-0 border-t border-[var(--line-strong)] bg-[var(--statusbar-surface)] px-3 py-2 text-[10px] text-[var(--statusbar-ink)] sm:flex sm:h-7 sm:items-center sm:justify-between sm:px-4 sm:py-0 sm:text-xs">
+      <div className="flex min-w-0 items-center gap-3 overflow-x-auto whitespace-nowrap pr-1 sm:gap-4 sm:overflow-visible">
         <span className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
           {t("shell.online")}
@@ -32,7 +32,7 @@ export function StatusBar() {
           {notifications.length} {t("topbar.criticalFeed").toLowerCase()}
         </span>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="mt-1 flex items-center justify-between gap-3 whitespace-nowrap sm:mt-0 sm:justify-end sm:gap-4">
         <span>
           {t("shell.lastSync")}: {timestamp}
         </span>

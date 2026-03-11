@@ -19,6 +19,13 @@ export type AIRunStatus =
   | "failed";
 
 export type AIProposalState = "pending" | "applied" | "dismissed";
+export type AIActionType =
+  | "create_tasks"
+  | "update_tasks"
+  | "reschedule_tasks"
+  | "raise_risks"
+  | "draft_status_report"
+  | "notify_team";
 
 export type AIAgentKind = "analyst" | "planner" | "reporter" | "researcher";
 export type AIAgentCategory =
@@ -93,13 +100,112 @@ export interface AITaskDraft {
   reason: string;
 }
 
-export interface AIActionProposal {
+export interface AITaskUpdateDraft {
+  taskId: string;
+  title: string;
+  description?: string;
+  assignee?: string;
+  dueDate?: string;
+  priority?: Priority;
+  reason: string;
+}
+
+export interface AITaskRescheduleDraft {
+  taskId: string;
+  title: string;
+  previousDueDate: string;
+  newDueDate: string;
+  assignee?: string;
+  reason: string;
+}
+
+export interface AIRiskDraft {
+  projectId: string;
+  title: string;
+  description: string;
+  owner: string;
+  probability: number;
+  impact: number;
+  mitigation: string;
+  reason: string;
+}
+
+export interface AIStatusReportDraft {
+  projectId?: string;
+  title: string;
+  audience: string;
+  channel: string;
+  summary: string;
+  body: string;
+  reason: string;
+}
+
+export interface AINotificationDraft {
+  channel: string;
+  recipients: string[];
+  message: string;
+  reason: string;
+}
+
+interface AIActionProposalBase {
   id: string;
-  type: "create_tasks";
+  type: AIActionType;
   title: string;
   summary: string;
   state: AIProposalState;
   tasks: AITaskDraft[];
+}
+
+export interface AICreateTasksProposal extends AIActionProposalBase {
+  type: "create_tasks";
+  tasks: AITaskDraft[];
+}
+
+export interface AIUpdateTasksProposal extends AIActionProposalBase {
+  type: "update_tasks";
+  taskUpdates: AITaskUpdateDraft[];
+}
+
+export interface AIRescheduleTasksProposal extends AIActionProposalBase {
+  type: "reschedule_tasks";
+  taskReschedules: AITaskRescheduleDraft[];
+}
+
+export interface AIRaiseRisksProposal extends AIActionProposalBase {
+  type: "raise_risks";
+  risks: AIRiskDraft[];
+}
+
+export interface AIDraftStatusReportProposal extends AIActionProposalBase {
+  type: "draft_status_report";
+  statusReport: AIStatusReportDraft;
+}
+
+export interface AINotifyTeamProposal extends AIActionProposalBase {
+  type: "notify_team";
+  notifications: AINotificationDraft[];
+}
+
+export type AIActionProposal =
+  | AICreateTasksProposal
+  | AIUpdateTasksProposal
+  | AIRescheduleTasksProposal
+  | AIRaiseRisksProposal
+  | AIDraftStatusReportProposal
+  | AINotifyTeamProposal;
+
+export interface AIApplyResult {
+  proposalId: string;
+  type: AIActionType;
+  appliedAt: string;
+  summary: string;
+  itemCount: number;
+  tasksCreated: AITaskDraft[];
+  tasksUpdated: AITaskUpdateDraft[];
+  tasksRescheduled: AITaskRescheduleDraft[];
+  risksRaised: AIRiskDraft[];
+  draftedStatusReport: AIStatusReportDraft | null;
+  notificationsSent: AINotificationDraft[];
 }
 
 export interface AIRunResult {
@@ -108,6 +214,7 @@ export interface AIRunResult {
   highlights: string[];
   nextSteps: string[];
   proposal?: AIActionProposal | null;
+  actionResult?: AIApplyResult | null;
 }
 
 export interface AIRunRecord {

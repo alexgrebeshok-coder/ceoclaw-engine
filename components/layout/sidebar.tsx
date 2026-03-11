@@ -6,7 +6,13 @@ import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { useDashboard } from "@/components/dashboard-provider";
-import { footerNavigation, getProjectTone, navigation } from "@/components/layout/navigation-config";
+import {
+  footerNavigation,
+  getProjectTone,
+  navigation,
+  operationsNavigation,
+  type NavigationItem,
+} from "@/components/layout/navigation-config";
 import { Input } from "@/components/ui/field";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLocale } from "@/contexts/locale-context";
@@ -85,6 +91,9 @@ export function Sidebar({
     onNavigate?.();
     router.push(`/projects?query=${encodeURIComponent(search.trim())}`);
   };
+
+  const getItemLabel = (item: NavigationItem): string =>
+    item.label ?? (item.labelKey ? t(item.labelKey) : item.href);
 
   return (
     <div
@@ -223,7 +232,7 @@ export function Sidebar({
               onClick={onNavigate}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              <span className="min-w-0 flex-1 truncate">{t(item.labelKey)}</span>
+              <span className="min-w-0 flex-1 truncate">{getItemLabel(item)}</span>
               {badgeValue > 0 ? (
                 <span
                   className={cn(
@@ -240,6 +249,38 @@ export function Sidebar({
           );
         })}
       </nav>
+
+      <div className="mt-2">
+        <p className="px-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)]">
+          Executive Ops
+        </p>
+        <p className="mt-1 px-2 text-xs leading-5 text-[var(--ink-muted)]">
+          New shell routes ready for backend contracts.
+        </p>
+      </div>
+
+      <div className="grid gap-1">
+        {operationsNavigation.map((item) => {
+          const Icon = item.icon;
+          const active = item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
+
+          return (
+            <Link
+              key={item.href}
+              className={cn(
+                "app-shell-nav-link group flex items-center gap-3 rounded-md px-4 py-2.5 text-sm font-medium text-[var(--ink-soft)] transition hover:bg-[var(--panel-soft)] hover:text-[var(--ink)]",
+                active && "bg-[var(--panel-soft)] text-[var(--ink)] ring-1 ring-[var(--line-strong)]"
+              )}
+              href={item.href}
+              onClick={onNavigate}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="min-w-0 flex-1 truncate">{getItemLabel(item)}</span>
+              <ChevronRight className="h-4 w-4 text-[var(--ink-muted)]" />
+            </Link>
+          );
+        })}
+      </div>
 
       <div className="mt-2">
         <p className="px-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)]">
@@ -325,7 +366,7 @@ export function Sidebar({
                 onClick={onNavigate}
               >
                 <Icon className="h-4 w-4" />
-                <span className="flex-1">{t(item.labelKey)}</span>
+                <span className="flex-1">{getItemLabel(item)}</span>
                 <ChevronRight className="h-4 w-4 text-[var(--ink-muted)]" />
               </Link>
             );

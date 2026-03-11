@@ -16,9 +16,9 @@ function getCapacityColor(allocated: number): string {
 }
 
 function getCapacityTextColor(allocated: number): string {
-  if (allocated >= 90) return "text-red-600";
-  if (allocated >= 70) return "text-amber-600";
-  return "text-green-600";
+  if (allocated >= 90) return "text-red-600 dark:text-red-300";
+  if (allocated >= 70) return "text-amber-600 dark:text-amber-300";
+  return "text-green-600 dark:text-green-300";
 }
 
 export function TeamMemberCard({ member }: TeamMemberCardProps) {

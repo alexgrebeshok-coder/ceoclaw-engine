@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { badRequest, databaseUnavailable, notFound, serverError } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 /**
  * GET /api/time-entries — List time entries
@@ -8,10 +10,14 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json([]);
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { searchParams } = new URL(request.url);
@@ -49,29 +55,27 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(entries);
   } catch (error) {
     console.error("[Time Entries API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch time entries" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to fetch time entries");
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json({ success: true, id: "mock-id" });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const body = await request.json();
     const { taskId, memberId, description, billable = true } = body;
 
     if (!taskId) {
-      return NextResponse.json(
-        { error: "taskId is required" },
-        { status: 400 }
-      );
+      return badRequest("taskId is required");
     }
 
     // Check if task exists
@@ -81,7 +85,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!task) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      return notFound("Task not found");
     }
 
     // Check for active timer (entry without endTime)
@@ -94,10 +98,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (activeEntry) {
-      return NextResponse.json(
-        { error: "Timer already running for this task", activeEntry },
-        { status: 400 }
-      );
+      return badRequest("Timer already running for this task", "TIMER_ALREADY_RUNNING", {
+        activeEntry,
+      });
     }
 
     const entry = await prisma.timeEntry.create({
@@ -121,9 +124,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(entry, { status: 201 });
   } catch (error) {
     console.error("[Time Entries API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to start timer" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to start timer");
   }
 }

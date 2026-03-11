@@ -35,9 +35,9 @@ function ProjectCardComponent({
 
   return (
     <Card className="group overflow-hidden transition duration-150 hover:border-[var(--brand)]">
-      <CardContent className="flex h-full flex-col gap-5 p-5">
+      <CardContent className="flex h-full min-w-0 flex-col gap-5 p-5">
         <div className="flex items-start justify-between gap-3">
-          <div className="space-y-3">
+          <div className="min-w-0 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge className={cn("ring-1", projectStatusMeta[project.status].className)}>
                 {enumLabel("projectStatus", project.status)}
@@ -46,11 +46,11 @@ function ProjectCardComponent({
                 {enumLabel("priority", project.priority)}
               </Badge>
             </div>
-            <div>
-              <h3 className="font-heading text-[1.8rem] font-semibold tracking-[-0.05em] text-[var(--ink)]">
+            <div className="min-w-0">
+              <h3 className="break-words font-heading text-[1.8rem] font-semibold tracking-[-0.05em] text-[var(--ink)]">
                 {project.name}
               </h3>
-              <p className="mt-2 max-w-xl text-sm leading-7 text-[var(--ink-soft)]">
+              <p className="mt-2 max-w-xl break-words text-sm leading-7 text-[var(--ink-soft)]">
                 {project.description}
               </p>
             </div>

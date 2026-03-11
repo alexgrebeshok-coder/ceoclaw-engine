@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { normalizeTaskStatus, serverError, validationError } from "@/lib/server/api-utils";
+import {
+  normalizeTaskStatus,
+  serverError,
+  serviceUnavailable,
+  validationError,
+} from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 import { createTaskSchema } from "@/lib/validators/task";
 
 export const runtime = "nodejs";
@@ -9,11 +15,19 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       const { getMockTasks } = await import("@/lib/mock-data");
       return NextResponse.json(getMockTasks());
+    }
+
+    if (!runtime.databaseConfigured) {
+      return serviceUnavailable(
+        "DATABASE_URL is not configured for live mode.",
+        "DATABASE_UNAVAILABLE",
+        { dataMode: runtime.dataMode }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -42,9 +56,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(tasks);
   } catch (error) {
-    // Fallback to mock data on any error
-    const { getMockTasks } = await import("@/lib/mock-data");
-    return NextResponse.json(getMockTasks());
+    return serverError(error, "Failed to fetch tasks.");
   }
 }
 

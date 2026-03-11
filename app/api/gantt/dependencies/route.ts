@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { prisma } from "@/lib/prisma";
+import { databaseUnavailable, serverError } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 /**
  * GET /api/gantt/dependencies — Dependencies for Gantt chart
@@ -9,10 +12,14 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json([]);
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const dependencies = await prisma.taskDependency.findMany({
@@ -51,9 +58,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(links);
   } catch (error) {
     console.error("[Gantt Dependencies API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch dependencies" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to fetch gantt dependencies.");
   }
 }

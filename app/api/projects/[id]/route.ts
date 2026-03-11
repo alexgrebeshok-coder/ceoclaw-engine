@@ -4,12 +4,14 @@ import { prisma } from "@/lib/prisma";
 import {
   calculateProjectHealth,
   calculateProjectProgress,
+  databaseUnavailable,
   isPrismaNotFoundError,
   normalizeProjectStatus,
   notFound,
   serverError,
   validationError,
 } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 import { updateProjectSchema } from "@/lib/validators/project";
 
 export const runtime = "nodejs";
@@ -19,10 +21,20 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(_request: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
-      return NextResponse.json({});
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
+      const { id } = await params;
+      const mockProject = await buildMockProjectDetail(id);
+      if (!mockProject) {
+        return notFound("Project not found");
+      }
+
+      return NextResponse.json(mockProject);
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { id } = await params;
@@ -73,10 +85,20 @@ export async function GET(_request: NextRequest, { params }: RouteContext): Prom
 
 export async function PUT(request: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
-      return NextResponse.json({ success: true, id: "mock-id" });
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
+      const { id } = await params;
+      const mockProject = await buildMockProjectDetail(id);
+      if (!mockProject) {
+        return notFound("Project not found");
+      }
+
+      return NextResponse.json(mockProject);
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { id } = await params;
@@ -178,10 +200,14 @@ export async function PUT(request: NextRequest, { params }: RouteContext): Promi
 
 export async function DELETE(_request: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json({ deleted: true });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { id } = await params;
@@ -197,4 +223,28 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext): P
 
     return serverError(error, "Failed to delete project.");
   }
+}
+
+async function buildMockProjectDetail(projectId: string) {
+  const { initialDashboardState } = await import("@/lib/mock-data");
+  const project = initialDashboardState.projects.find((item) => item.id === projectId);
+
+  if (!project) {
+    return null;
+  }
+
+  return {
+    ...project,
+    tasks: initialDashboardState.tasks.filter((task) => task.projectId === projectId),
+    team: initialDashboardState.team.filter((member) => project.team.includes(member.name)),
+    risks: initialDashboardState.risks.filter((risk) => risk.projectId === projectId),
+    milestones: initialDashboardState.milestones.filter(
+      (milestone) => milestone.projectId === projectId
+    ),
+    documents: initialDashboardState.documents.filter(
+      (document) => document.projectId === projectId
+    ),
+    progress: project.progress ?? calculateProjectProgress({}),
+    health: project.health ?? calculateProjectHealth({}),
+  };
 }

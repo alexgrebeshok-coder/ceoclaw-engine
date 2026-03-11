@@ -9,7 +9,7 @@ import { useTeam } from "@/lib/hooks/use-api";
 
 function TeamSkeleton() {
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 gap-6">
       <Card>
         <CardHeader>
           <Skeleton className="h-7 w-40" />
@@ -62,40 +62,40 @@ export function TeamPage() {
     <div className="grid gap-6">
       {/* Team Summary Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="bg-green-500/5 border-green-500/20">
+        <Card className="border-green-500/20 bg-green-500/5 dark:border-green-400/25 dark:bg-green-500/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-green-500/14 flex items-center justify-center">
                 <div className="h-3 w-3 rounded-full bg-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-heading font-semibold text-green-600">{normalCount}</p>
+                <p className="text-2xl font-heading font-semibold text-green-600 dark:text-green-300">{normalCount}</p>
                 <p className="text-xs text-[var(--ink-muted)]">Normal Load</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-amber-500/5 border-amber-500/20">
+        <Card className="border-amber-500/20 bg-amber-500/5 dark:border-amber-400/25 dark:bg-amber-500/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-amber-500/14 flex items-center justify-center">
                 <div className="h-3 w-3 rounded-full bg-amber-500" />
               </div>
               <div>
-                <p className="text-2xl font-heading font-semibold text-amber-600">{highLoadCount}</p>
+                <p className="text-2xl font-heading font-semibold text-amber-600 dark:text-amber-300">{highLoadCount}</p>
                 <p className="text-xs text-[var(--ink-muted)]">High Load</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-red-500/5 border-red-500/20">
+        <Card className="border-red-500/20 bg-red-500/5 dark:border-red-400/25 dark:bg-red-500/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-red-500/14 flex items-center justify-center">
                 <div className="h-3 w-3 rounded-full bg-red-500" />
               </div>
               <div>
-                <p className="text-2xl font-heading font-semibold text-red-600">{criticalCount}</p>
+                <p className="text-2xl font-heading font-semibold text-red-600 dark:text-red-300">{criticalCount}</p>
                 <p className="text-xs text-[var(--ink-muted)]">Critical</p>
               </div>
             </div>

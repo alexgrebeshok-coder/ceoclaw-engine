@@ -91,9 +91,9 @@ export function AnalyticsPage() {
   }));
 
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 gap-6">
       <Card>
-        <CardHeader className="flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <CardHeader className="min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <CardTitle>{t("analytics.title")}</CardTitle>
             <CardDescription>

@@ -23,7 +23,7 @@ export async function POST(
     return NextResponse.json(run);
   } catch (error) {
     return badRequest(
-      error instanceof Error ? error.message : "Failed to apply AI proposal.",
+      error instanceof Error ? error.message : "Failed to apply AI action.",
       "AI_PROPOSAL_APPLY_FAILED"
     );
   }

@@ -60,14 +60,14 @@ export function AIInsightsCard({
   }
 
   return (
-    <Card className="border-purple-200 dark:border-purple-900">
+    <Card className="min-w-0 border-purple-200 dark:border-purple-900">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <BrainCircuit className="h-4 w-4 text-purple-500" />
             {t("aiInsights.title")}
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {criticalCount > 0 && (
               <Badge variant="danger" className="text-xs">
                 {criticalCount} {t("aiInsights.critical")}
@@ -79,7 +79,7 @@ export function AIInsightsCard({
               </Badge>
             )}
             {infoCount > 0 && (
-              <Badge variant="neutral" className="text-xs text-blue-600 border-blue-300">
+              <Badge variant="info" className="text-xs">
                 {infoCount} {t("aiInsights.info")}
               </Badge>
             )}
@@ -122,7 +122,7 @@ function InsightItem({ insight }: { insight: AIInsight }) {
           <Icon className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
             <TypeIcon className="h-3.5 w-3.5 text-muted-foreground" />
             <h4 className="text-sm font-medium truncate">{insight.title}</h4>
           </div>
@@ -130,10 +130,7 @@ function InsightItem({ insight }: { insight: AIInsight }) {
             {insight.description}
           </p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge
-              variant="neutral"
-              className={`text-xs ${severityColors.badge}`}
-            >
+            <Badge variant={getSeverityVariant(insight.severity)} className="text-xs">
               {t(`aiInsights.${insight.type}`)}
             </Badge>
           </div>
@@ -171,6 +168,18 @@ function getInsightTypeIcon(type: AIInsight["type"]) {
   }
 }
 
+function getSeverityVariant(severity: AIInsight["severity"]) {
+  switch (severity) {
+    case "critical":
+      return "danger" as const;
+    case "warning":
+      return "warning" as const;
+    case "info":
+    default:
+      return "info" as const;
+  }
+}
+
 function getSeverityColors(severity: AIInsight["severity"]) {
   switch (severity) {
     case "critical":
@@ -178,16 +187,12 @@ function getSeverityColors(severity: AIInsight["severity"]) {
         bg: "bg-red-50 dark:bg-red-950/50",
         border: "border-red-200 dark:border-red-900",
         icon: "text-red-600 dark:text-red-400",
-        badge:
-          "border-red-300 text-red-700 dark:border-red-700 dark:text-red-400",
       };
     case "warning":
       return {
         bg: "bg-orange-50 dark:bg-orange-950/50",
         border: "border-orange-200 dark:border-orange-900",
         icon: "text-orange-600 dark:text-orange-400",
-        badge:
-          "border-orange-300 text-orange-700 dark:border-orange-700 dark:text-orange-400",
       };
     case "info":
     default:
@@ -195,8 +200,6 @@ function getSeverityColors(severity: AIInsight["severity"]) {
         bg: "bg-blue-50 dark:bg-blue-950/50",
         border: "border-blue-200 dark:border-blue-900",
         icon: "text-blue-600 dark:text-blue-400",
-        badge:
-          "border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400",
       };
   }
 }

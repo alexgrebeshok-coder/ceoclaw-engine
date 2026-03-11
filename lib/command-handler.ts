@@ -7,9 +7,12 @@
  * 3. Result → formatted response for user
  */
 
-import { getDashboardClient, DashboardAPIError } from "./dashboard-client";
-import { parseCommand, type ParsedCommand, type Intent } from "./intent-parser";
-import type { Project, Task } from "./types";
+import {
+  getDashboardClient,
+  DashboardAPIError,
+  type DashboardClient,
+} from "./dashboard-client";
+import { parseCommand, type ParsedCommand } from "./intent-parser";
 
 export interface CommandResult {
   success: boolean;
@@ -17,15 +20,22 @@ export interface CommandResult {
   data?: unknown;
 }
 
+type DashboardClientLike = Pick<
+  DashboardClient,
+  "findProjectByName" | "listProjects" | "createTask" | "listTasks"
+>;
+
 /**
  * Execute a natural language command
  * 
  * @param text - User message (e.g., "Добавь задачу в ЧЭМК — согласовать СП")
  * @returns CommandResult with success status and message
  */
-export async function executeCommand(text: string): Promise<CommandResult> {
+export async function executeCommand(
+  text: string,
+  client: DashboardClientLike = getDashboardClient()
+): Promise<CommandResult> {
   const parsed = parseCommand(text);
-  const client = getDashboardClient();
 
   try {
     switch (parsed.intent) {
@@ -63,7 +73,7 @@ export async function executeCommand(text: string): Promise<CommandResult> {
  */
 async function handleCreateTask(
   parsed: ParsedCommand,
-  client: ReturnType<typeof getDashboardClient>
+  client: DashboardClientLike
 ): Promise<CommandResult> {
   const { project: projectName, task: taskTitle } = parsed.entities;
 
@@ -111,7 +121,7 @@ async function handleCreateTask(
  * Handle listProjects intent
  */
 async function handleListProjects(
-  client: ReturnType<typeof getDashboardClient>
+  client: DashboardClientLike
 ): Promise<CommandResult> {
   const projects = await client.listProjects();
 
@@ -142,7 +152,7 @@ async function handleListProjects(
  */
 async function handleShowStatus(
   parsed: ParsedCommand,
-  client: ReturnType<typeof getDashboardClient>
+  client: DashboardClientLike
 ): Promise<CommandResult> {
   const { project: projectName } = parsed.entities;
 

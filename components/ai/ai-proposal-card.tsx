@@ -6,6 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAIWorkspace } from "@/contexts/ai-context";
 import { useLocale } from "@/contexts/locale-context";
+import {
+  getProposalDates,
+  getProposalItemCount,
+  getProposalPeople,
+  getProposalPreviewItems,
+} from "@/lib/ai/action-engine";
 import type { MessageKey } from "@/lib/translations";
 import type { AIActionProposal } from "@/lib/ai/types";
 import { priorityMeta } from "@/lib/utils";
@@ -29,6 +35,15 @@ const priorityLabelKey: Record<keyof typeof priorityMeta, MessageKey> = {
   critical: "priority.critical",
 };
 
+const proposalTypeLabel: Record<AIActionProposal["type"], string> = {
+  create_tasks: "Create tasks",
+  update_tasks: "Update tasks",
+  reschedule_tasks: "Reschedule tasks",
+  raise_risks: "Raise risks",
+  draft_status_report: "Draft status report",
+  notify_team: "Notify team",
+};
+
 export function AIProposalCard({
   proposal,
   runId,
@@ -39,16 +54,29 @@ export function AIProposalCard({
   const { formatDateLocalized, t } = useLocale();
   const { applyProposal, applyingProposalIds, dismissProposal } = useAIWorkspace();
   const isApplying = applyingProposalIds.includes(proposal.id);
-  const assigneeCount = new Set(proposal.tasks.map((task) => task.assignee).filter(Boolean)).size;
-  const sortedDates = proposal.tasks
-    .map((task) => task.dueDate)
-    .sort((left, right) => left.localeCompare(right));
+  const previewItems = getProposalPreviewItems(proposal);
+  const assigneeCount = new Set(getProposalPeople(proposal)).size;
+  const itemCount = getProposalItemCount(proposal);
+  const supportsLocalApply = proposal.type === "create_tasks";
+  const sortedDates = getProposalDates(proposal).sort((left, right) => left.localeCompare(right));
   const dueWindow =
     sortedDates.length > 1
       ? `${formatDateLocalized(sortedDates[0], "d MMM")} - ${formatDateLocalized(sortedDates[sortedDates.length - 1], "d MMM")}`
       : sortedDates[0]
         ? formatDateLocalized(sortedDates[0], "d MMM")
         : t("project.none");
+  const tertiaryLabel =
+    proposal.type === "create_tasks"
+      ? t("ai.proposal.window")
+      : proposal.type === "draft_status_report" || proposal.type === "notify_team"
+        ? "Channel"
+        : "Timing";
+  const tertiaryValue =
+    proposal.type === "draft_status_report"
+      ? proposal.statusReport.channel
+      : proposal.type === "notify_team"
+        ? [...new Set(proposal.notifications.map((item) => item.channel))].join(", ")
+        : dueWindow;
 
   return (
     <div className="rounded-[12px] border border-amber-300/50 bg-amber-50/80 p-5 dark:border-amber-400/20 dark:bg-amber-500/10">
@@ -58,6 +86,9 @@ export function AIProposalCard({
             <Sparkles className="h-3.5 w-3.5" />
             {t("ai.proposalBadge")}
           </div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+            {proposalTypeLabel[proposal.type]}
+          </p>
           <h4 className="font-heading text-xl font-semibold tracking-[-0.04em] text-[var(--ink)]">
             {proposal.title}
           </h4>
@@ -73,54 +104,67 @@ export function AIProposalCard({
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <div className="rounded-[10px] border border-[var(--line)] bg-[color:var(--surface-panel)] px-4 py-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-            {t("ai.proposal.tasksCount")}
+            {proposal.type === "create_tasks" ? t("ai.proposal.tasksCount") : "Items"}
           </p>
-          <p className="mt-1 text-sm font-medium text-[var(--ink)]">{proposal.tasks.length}</p>
+          <p className="mt-1 text-sm font-medium text-[var(--ink)]">{itemCount}</p>
         </div>
         <div className="rounded-[10px] border border-[var(--line)] bg-[color:var(--surface-panel)] px-4 py-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-            {t("ai.proposal.assignees")}
+            {proposal.type === "notify_team" ? "Recipients" : t("ai.proposal.assignees")}
           </p>
           <p className="mt-1 text-sm font-medium text-[var(--ink)]">{assigneeCount}</p>
         </div>
         <div className="rounded-[10px] border border-[var(--line)] bg-[color:var(--surface-panel)] px-4 py-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-            {t("ai.proposal.window")}
+            {tertiaryLabel}
           </p>
-          <p className="mt-1 text-sm font-medium text-[var(--ink)]">{dueWindow}</p>
+          <p className="mt-1 text-sm font-medium text-[var(--ink)]">{tertiaryValue}</p>
         </div>
       </div>
 
       <div className="mt-5 grid gap-3">
-        {proposal.tasks.map((task) => (
+        {previewItems.map((item) => (
           <div
-            key={`${proposal.id}-${task.title}`}
+            key={item.key}
             className="rounded-[10px] border border-[var(--line)] bg-[color:var(--surface-panel)] p-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="font-medium text-[var(--ink)]">{task.title}</p>
-                <p className="mt-1 text-sm text-[var(--ink-soft)]">{task.description}</p>
+                <p className="font-medium text-[var(--ink)]">{item.title}</p>
+                <p className="mt-1 text-sm text-[var(--ink-soft)]">{item.description}</p>
               </div>
-              <Badge className={priorityMeta[task.priority].className}>
-                {t(priorityLabelKey[task.priority])}
-              </Badge>
+              {item.priority ? (
+                <Badge className={priorityMeta[item.priority].className}>
+                  {t(priorityLabelKey[item.priority])}
+                </Badge>
+              ) : null}
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--ink-muted)]">
-              <span className="rounded-full bg-[var(--panel-soft)] px-3 py-1">{task.assignee || "-"}</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--panel-soft)] px-3 py-1">
-                <Clock3 className="h-3 w-3" />
-                {formatDateLocalized(task.dueDate, "d MMM")}
-              </span>
-              <span className="rounded-full bg-[var(--panel-soft)] px-3 py-1">{task.reason}</span>
+              {item.assignee ? (
+                <span className="rounded-full bg-[var(--panel-soft)] px-3 py-1">{item.assignee}</span>
+              ) : null}
+              {item.dueDate ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--panel-soft)] px-3 py-1">
+                  <Clock3 className="h-3 w-3" />
+                  {formatDateLocalized(item.dueDate, "d MMM")}
+                </span>
+              ) : null}
+              <span className="rounded-full bg-[var(--panel-soft)] px-3 py-1">{item.reason}</span>
             </div>
           </div>
         ))}
       </div>
 
+      {!supportsLocalApply ? (
+        <p className="mt-4 text-xs text-[var(--ink-muted)]">
+          This action type is handled by the API action engine. The current dashboard client
+          only materializes approved task creation locally.
+        </p>
+      ) : null}
+
       <div className="mt-5 flex flex-wrap gap-3">
         <Button
-          disabled={proposal.state !== "pending" || isApplying}
+          disabled={!supportsLocalApply || proposal.state !== "pending" || isApplying}
           onClick={() => applyProposal(runId, proposal.id)}
         >
           <Check className="h-4 w-4" />

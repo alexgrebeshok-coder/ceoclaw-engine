@@ -44,5 +44,6 @@ prisma/*.db
 prisma/dev.db
 
 # cache
+.ceoclaw-cache/
 .seoclaw-cache/
 .next.broken.*/

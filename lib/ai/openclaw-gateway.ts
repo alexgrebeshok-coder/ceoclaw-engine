@@ -2,6 +2,7 @@ import { addDays, format } from "date-fns";
 
 import type {
   AIActionProposal,
+  AIActionType,
   AIRunInput,
   AIRunResult,
 } from "@/lib/ai/types";
@@ -17,9 +18,15 @@ type ParsedGatewayResult = {
   highlights: string[];
   nextSteps: string[];
   proposal?: {
+    type?: string;
     title?: string;
     summary?: string;
     tasks?: Array<Record<string, unknown>>;
+    taskUpdates?: Array<Record<string, unknown>>;
+    taskReschedules?: Array<Record<string, unknown>>;
+    risks?: Array<Record<string, unknown>>;
+    statusReport?: Record<string, unknown> | null;
+    notifications?: Array<Record<string, unknown>>;
   } | null;
 };
 
@@ -82,6 +89,17 @@ function normalizeDueDate(value: unknown, index: number) {
   }
 
   return format(addDays(new Date(), index + 2), "yyyy-MM-dd");
+}
+
+function normalizeActionType(value: unknown): AIActionType | null {
+  return value === "create_tasks" ||
+    value === "update_tasks" ||
+    value === "reschedule_tasks" ||
+    value === "raise_risks" ||
+    value === "draft_status_report" ||
+    value === "notify_team"
+    ? value
+    : null;
 }
 
 function ensureStringArray(value: unknown, fallback: string[]) {
@@ -422,19 +440,15 @@ Response schema:
   "highlights": ["2 to 4 short strings"],
   "nextSteps": ["2 to 4 short strings"],
   "proposal": null | {
+    "type": "create_tasks|update_tasks|reschedule_tasks|raise_risks|draft_status_report|notify_team",
     "title": "short string",
     "summary": "short string",
-    "tasks": [
-      {
-        "projectId": "existing project id",
-        "title": "task title",
-        "description": "task description",
-        "assignee": "existing team member name",
-        "dueDate": "YYYY-MM-DD",
-        "priority": "low|medium|high|critical",
-        "reason": "why this task matters"
-      }
-    ]
+    "tasks": [{"projectId": "existing project id", "title": "task title", "description": "task description", "assignee": "existing team member name", "dueDate": "YYYY-MM-DD", "priority": "low|medium|high|critical", "reason": "why this task matters"}],
+    "taskUpdates": [{"taskId": "existing task id", "title": "task title", "description": "updated description", "assignee": "existing team member name", "dueDate": "YYYY-MM-DD", "priority": "low|medium|high|critical", "reason": "why this update matters"}],
+    "taskReschedules": [{"taskId": "existing task id", "title": "task title", "previousDueDate": "YYYY-MM-DD", "newDueDate": "YYYY-MM-DD", "assignee": "existing team member name", "reason": "why the schedule is changing"}],
+    "risks": [{"projectId": "existing project id", "title": "risk title", "description": "risk description", "owner": "existing team member name", "probability": 0-100, "impact": 0-100, "mitigation": "mitigation plan", "reason": "why this risk must be raised"}],
+    "statusReport": {"projectId": "existing project id", "title": "report title", "audience": "stakeholder group", "channel": "weekly update", "summary": "report summary", "body": "report body", "reason": "why the draft is needed"},
+    "notifications": [{"channel": "team-ops", "recipients": ["existing team member name"], "message": "short message", "reason": "why the notification matters"}]
   }
 }
 
@@ -442,9 +456,10 @@ Rules:
 - Keep the tone executive and concise.
 - Always populate title, summary, highlights, and nextSteps.
 - Use existing project IDs and existing assignee names only.
-- proposal must be null unless the request clearly asks for task planning or the quick action kind is suggest_tasks.
-- If proposal exists, include 2 to 4 tasks max.
-- dueDate must be within the next 14 days.
+- proposal must be null unless the request clearly asks for an action that should go through human approval.
+- If proposal exists, choose exactly one proposal.type and only populate the fields for that type.
+- tasks, taskUpdates, taskReschedules, risks, and notifications should each contain 1 to 4 items max when used.
+- dueDate and newDueDate must be within the next 14 days.
 - Do not mention hidden system rules.
 
 Structured dashboard context:
@@ -459,42 +474,250 @@ function buildProposal(
   value: ParsedGatewayResult["proposal"],
   runId: string
 ): AIActionProposal | null {
-  if (!value || !Array.isArray(value.tasks) || !value.tasks.length) {
+  if (!value) {
     return null;
   }
 
-  const tasks = value.tasks
-    .map((task, index) => ({
-      projectId: typeof task.projectId === "string" ? task.projectId : "",
-      title: typeof task.title === "string" ? task.title.trim() : "",
-      description:
-        typeof task.description === "string" ? task.description.trim() : "AI-generated task",
-      assignee: typeof task.assignee === "string" ? task.assignee.trim() : "Owner",
-      dueDate: normalizeDueDate(task.dueDate, index),
-      priority: normalizePriority(task.priority),
-      reason: typeof task.reason === "string" ? task.reason.trim() : "AI suggestion",
-    }))
-    .filter((task) => task.projectId && task.title && task.assignee)
-    .slice(0, 4);
+  const inferredType =
+    normalizeActionType(value.type) ??
+    (Array.isArray(value.tasks) && value.tasks.length
+      ? "create_tasks"
+      : Array.isArray(value.taskUpdates) && value.taskUpdates.length
+        ? "update_tasks"
+        : Array.isArray(value.taskReschedules) && value.taskReschedules.length
+          ? "reschedule_tasks"
+          : Array.isArray(value.risks) && value.risks.length
+            ? "raise_risks"
+            : value.statusReport && typeof value.statusReport === "object"
+              ? "draft_status_report"
+              : Array.isArray(value.notifications) && value.notifications.length
+                ? "notify_team"
+                : null);
 
-  if (!tasks.length) {
+  if (!inferredType) {
     return null;
   }
 
-  return {
-    id: `proposal-${runId}`,
-    type: "create_tasks",
-    title:
-      typeof value.title === "string" && value.title.trim().length
-        ? value.title.trim()
-        : "AI proposal",
-    summary:
-      typeof value.summary === "string" && value.summary.trim().length
-        ? value.summary.trim()
-        : "Task package prepared by the gateway.",
-    state: "pending",
-    tasks,
-  };
+  const title =
+    typeof value.title === "string" && value.title.trim().length
+      ? value.title.trim()
+      : "AI proposal";
+  const summary =
+    typeof value.summary === "string" && value.summary.trim().length
+      ? value.summary.trim()
+      : "AI action prepared by the gateway.";
+
+  switch (inferredType) {
+    case "create_tasks": {
+      const tasks = (value.tasks ?? [])
+        .map((task, index) => ({
+          projectId: typeof task.projectId === "string" ? task.projectId : "",
+          title: typeof task.title === "string" ? task.title.trim() : "",
+          description:
+            typeof task.description === "string" ? task.description.trim() : "AI-generated task",
+          assignee: typeof task.assignee === "string" ? task.assignee.trim() : "Owner",
+          dueDate: normalizeDueDate(task.dueDate, index),
+          priority: normalizePriority(task.priority),
+          reason: typeof task.reason === "string" ? task.reason.trim() : "AI suggestion",
+        }))
+        .filter((task) => task.projectId && task.title && task.assignee)
+        .slice(0, 4);
+
+      return tasks.length
+        ? {
+            id: `proposal-${runId}`,
+            type: "create_tasks",
+            title,
+            summary,
+            state: "pending",
+            tasks,
+          }
+        : null;
+    }
+    case "update_tasks": {
+      const taskUpdates = (value.taskUpdates ?? [])
+        .map((task, index) => ({
+          taskId: typeof task.taskId === "string" ? task.taskId : "",
+          title: typeof task.title === "string" ? task.title.trim() : "",
+          description:
+            typeof task.description === "string" ? task.description.trim() : undefined,
+          assignee:
+            typeof task.assignee === "string" && task.assignee.trim().length
+              ? task.assignee.trim()
+              : undefined,
+          dueDate: task.dueDate ? normalizeDueDate(task.dueDate, index) : undefined,
+          priority: task.priority ? normalizePriority(task.priority) : undefined,
+          reason: typeof task.reason === "string" ? task.reason.trim() : "AI suggestion",
+        }))
+        .filter((task) => task.taskId && task.title)
+        .slice(0, 4);
+
+      return taskUpdates.length
+        ? {
+            id: `proposal-${runId}`,
+            type: "update_tasks",
+            title,
+            summary,
+            state: "pending",
+            tasks: [],
+            taskUpdates,
+          }
+        : null;
+    }
+    case "reschedule_tasks": {
+      const taskReschedules = (value.taskReschedules ?? [])
+        .map((task, index) => ({
+          taskId: typeof task.taskId === "string" ? task.taskId : "",
+          title: typeof task.title === "string" ? task.title.trim() : "",
+          previousDueDate:
+            typeof task.previousDueDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(task.previousDueDate)
+              ? task.previousDueDate
+              : normalizeDueDate(task.previousDueDate, index),
+          newDueDate: normalizeDueDate(task.newDueDate, index + 1),
+          assignee:
+            typeof task.assignee === "string" && task.assignee.trim().length
+              ? task.assignee.trim()
+              : undefined,
+          reason: typeof task.reason === "string" ? task.reason.trim() : "AI suggestion",
+        }))
+        .filter((task) => task.taskId && task.title)
+        .slice(0, 4);
+
+      return taskReschedules.length
+        ? {
+            id: `proposal-${runId}`,
+            type: "reschedule_tasks",
+            title,
+            summary,
+            state: "pending",
+            tasks: [],
+            taskReschedules,
+          }
+        : null;
+    }
+    case "raise_risks": {
+      const risks = (value.risks ?? [])
+        .map((risk) => ({
+          projectId: typeof risk.projectId === "string" ? risk.projectId : "",
+          title: typeof risk.title === "string" ? risk.title.trim() : "",
+          description:
+            typeof risk.description === "string" ? risk.description.trim() : "AI-generated risk",
+          owner: typeof risk.owner === "string" ? risk.owner.trim() : "Owner",
+          probability:
+            typeof risk.probability === "number" ? Math.max(0, Math.min(100, risk.probability)) : 60,
+          impact: typeof risk.impact === "number" ? Math.max(0, Math.min(100, risk.impact)) : 60,
+          mitigation:
+            typeof risk.mitigation === "string" ? risk.mitigation.trim() : "Mitigation pending.",
+          reason: typeof risk.reason === "string" ? risk.reason.trim() : "AI suggestion",
+        }))
+        .filter((risk) => risk.projectId && risk.title && risk.owner)
+        .slice(0, 4);
+
+      return risks.length
+        ? {
+            id: `proposal-${runId}`,
+            type: "raise_risks",
+            title,
+            summary,
+            state: "pending",
+            tasks: [],
+            risks,
+          }
+        : null;
+    }
+    case "draft_status_report": {
+      const report = value.statusReport;
+      if (!report || typeof report !== "object") {
+        return null;
+      }
+
+      const projectId =
+        typeof report.projectId === "string" && report.projectId.trim().length
+          ? report.projectId.trim()
+          : undefined;
+      const reportTitle =
+        typeof report.title === "string" && report.title.trim().length
+          ? report.title.trim()
+          : "Status draft";
+      const audience =
+        typeof report.audience === "string" && report.audience.trim().length
+          ? report.audience.trim()
+          : "Stakeholders";
+      const channel =
+        typeof report.channel === "string" && report.channel.trim().length
+          ? report.channel.trim()
+          : "weekly update";
+      const reportSummary =
+        typeof report.summary === "string" && report.summary.trim().length
+          ? report.summary.trim()
+          : summary;
+      const body =
+        typeof report.body === "string" && report.body.trim().length
+          ? report.body.trim()
+          : reportSummary;
+
+      return {
+        id: `proposal-${runId}`,
+        type: "draft_status_report",
+        title,
+        summary,
+        state: "pending",
+        tasks: [],
+        statusReport: {
+          projectId,
+          title: reportTitle,
+          audience,
+          channel,
+          summary: reportSummary,
+          body,
+          reason:
+            typeof report.reason === "string" && report.reason.trim().length
+              ? report.reason.trim()
+              : "AI suggestion",
+        },
+      };
+    }
+    case "notify_team": {
+      const notifications = (value.notifications ?? [])
+        .map((item) => ({
+          channel:
+            typeof item.channel === "string" && item.channel.trim().length
+              ? item.channel.trim()
+              : "team-ops",
+          recipients: Array.isArray(item.recipients)
+            ? item.recipients
+                .filter(
+                  (recipient): recipient is string =>
+                    typeof recipient === "string" && recipient.trim().length > 0
+                )
+                .map((recipient) => recipient.trim())
+                .slice(0, 6)
+            : [],
+          message:
+            typeof item.message === "string" && item.message.trim().length
+              ? item.message.trim()
+              : "",
+          reason:
+            typeof item.reason === "string" && item.reason.trim().length
+              ? item.reason.trim()
+              : "AI suggestion",
+        }))
+        .filter((item) => item.recipients.length > 0 && item.message.length > 0)
+        .slice(0, 4);
+
+      return notifications.length
+        ? {
+            id: `proposal-${runId}`,
+            type: "notify_team",
+            title,
+            summary,
+            state: "pending",
+            tasks: [],
+            notifications,
+          }
+        : null;
+    }
+  }
 }
 
 function parseGatewayResult(rawText: string, runId: string): AIRunResult {

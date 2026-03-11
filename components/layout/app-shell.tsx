@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Topbar onOpenMenu={() => setMobileOpen(true)} />
             <main
               className={cn(
-                "app-shell-main app-shell-scroll-region min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto",
+                "app-shell-main app-shell-scroll-region min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-auto",
                 pathname === "/chat" && "px-0 pb-0 pt-0 sm:px-0 lg:px-0"
               )}
               id="main-content"

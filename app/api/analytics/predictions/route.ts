@@ -1,189 +1,129 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 
-/**
- * GET /api/analytics/predictions — AI predictions for projects
- * 
- * Predictions:
- * - Project finish date prediction
- * - Budget overrun risk
- * - Resource bottleneck detection
- * 
- * Query params:
- * - projectId: Filter by project (optional)
- */
+import { isForecastOverdue } from "@/lib/analytics/predictions";
+import { loadExecutiveSnapshot } from "@/lib/briefs/snapshot";
+import { buildPortfolioPlanFactSummary } from "@/lib/plan-fact/service";
+import { databaseUnavailable, serverError } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock predictions if no database
-      const { getMockProjects } = await import("@/lib/mock-data");
-      const projects = getMockProjects();
+    const runtimeState = getServerRuntimeState();
 
-      const predictions = projects.map((project) => ({
-        projectId: project.id,
-        projectName: project.name,
-        predictedFinishDate: project.dates.end,
-        budgetOverrunRisk: Math.random() * 30,
-        resourceBottleneck: Math.random() > 0.7,
-        velocity: 3 + Math.random() * 2,
-        risks: {
-          budgetOverrun: Math.random() * 40,
-          scheduleDelay: Math.random() * 30,
-          resourceShortage: Math.random() * 20,
-        },
-      }));
-
-      return NextResponse.json({ predictions });
+    if (!runtimeState.usingMockData && !runtimeState.databaseConfigured) {
+      return databaseUnavailable(runtimeState.dataMode);
     }
 
     const { searchParams } = new URL(request.url);
-    const projectId = searchParams.get("projectId");
-
-    // Get projects with tasks
-    const projects = await prisma.project.findMany({
-      where: projectId ? { id: projectId } : undefined,
-      include: {
-        tasks: {
-          select: {
-            id: true,
-            status: true,
-            dueDate: true,
-            createdAt: true,
-            completedAt: true,
-            assigneeId: true,
-          },
-        },
-      },
+    const projectId = searchParams.get("projectId") ?? undefined;
+    const snapshot = await loadExecutiveSnapshot({ projectId });
+    const planFact = buildPortfolioPlanFactSummary(snapshot, {
+      referenceDate: snapshot.generatedAt,
     });
 
-    // Generate predictions for each project
-    const predictions = projects.map((project) => {
-      const tasks = project.tasks;
-      const totalTasks = tasks.length;
-      const completedTasks = tasks.filter((t) => t.status === "done").length;
-      const inProgressTasks = tasks.filter((t) => t.status === "in_progress").length;
-
-      // Calculate velocity (tasks completed per week)
-      const weeksSinceStart = Math.max(
-        1,
-        Math.ceil(
-          (Date.now() - project.createdAt.getTime()) / (7 * 24 * 60 * 60 * 1000)
-        )
-      );
-      const velocity = completedTasks / weeksSinceStart;
-
-      // Predict finish date
-      const remainingTasks = totalTasks - completedTasks;
-      const weeksToFinish = velocity > 0 ? remainingTasks / velocity : Infinity;
-      const predictedFinishDate =
-        weeksToFinish < Infinity
-          ? new Date(Date.now() + weeksToFinish * 7 * 24 * 60 * 60 * 1000)
-          : null;
-
-      // Check if predicted finish is after due date
-      const isOverdue =
-        predictedFinishDate &&
-        project.end &&
-        predictedFinishDate > new Date(project.end);
-
-      // Budget overrun risk (simplified - based on task completion rate)
-      const completionRate = totalTasks > 0 ? completedTasks / totalTasks : 0;
-      const timeElapsed =
-        project.end && project.start
-          ? Math.min(
-              1,
-              (Date.now() - new Date(project.start).getTime()) /
-                (new Date(project.end).getTime() -
-                  new Date(project.start).getTime())
+    const predictions = planFact.projects
+      .map((summary) => {
+        const finishDate = summary.forecastFinishDate;
+        const weeksToFinish = finishDate
+          ? round(
+              Math.max(
+                0,
+                (new Date(finishDate).getTime() - new Date(summary.referenceDate).getTime()) /
+                  (1000 * 60 * 60 * 24 * 7)
+              ),
+              1
             )
-          : 0;
+          : null;
+        const budgetOverrunRisk = deriveBudgetRisk(summary);
+        const scheduleDelayRisk = deriveScheduleRisk(summary);
+        const reportingGapRisk =
+          summary.evidence.daysSinceLastApprovedReport === null
+            ? 10
+            : Math.min(100, summary.evidence.daysSinceLastApprovedReport * 15);
+        const overallRisk = Math.min(
+          100,
+          Math.round(budgetOverrunRisk * 0.4 + scheduleDelayRisk * 0.45 + reportingGapRisk * 0.15)
+        );
 
-      const budgetOverrunRisk =
-        timeElapsed > completionRate ? (timeElapsed - completionRate) * 100 : 0;
-
-      // Resource bottleneck detection
-      const assigneeLoad: Record<string, number> = {};
-      tasks.forEach((t) => {
-        if (t.assigneeId && t.status !== "done") {
-          assigneeLoad[t.assigneeId] = (assigneeLoad[t.assigneeId] || 0) + 1;
-        }
-      });
-
-      const maxLoad = Math.max(0, ...Object.values(assigneeLoad));
-      const avgLoad =
-        Object.keys(assigneeLoad).length > 0
-          ? Object.values(assigneeLoad).reduce((a, b) => a + b, 0) /
-            Object.keys(assigneeLoad).length
-          : 0;
-
-      const bottleneckRisk =
-        maxLoad > avgLoad * 1.5 ? ((maxLoad - avgLoad) / avgLoad) * 50 : 0;
-
-      // Overall risk score (0-100)
-      const overallRisk = Math.min(
-        100,
-        (budgetOverrunRisk * 0.4 + bottleneckRisk * 0.3 + (isOverdue ? 30 : 0))
-      );
-
-      return {
-        projectId: project.id,
-        projectName: project.name,
-        predictions: {
-          finishDate: predictedFinishDate?.toISOString() || null,
-          weeksToFinish: weeksToFinish < Infinity ? Math.round(weeksToFinish * 10) / 10 : null,
-          isOverdue,
-          velocity: Math.round(velocity * 10) / 10,
-        },
-        risks: {
-          budgetOverrun: Math.round(budgetOverrunRisk),
-          resourceBottleneck: Math.round(bottleneckRisk),
-          overall: Math.round(overallRisk),
-        },
-        metrics: {
-          totalTasks,
-          completedTasks,
-          remainingTasks,
-          completionRate: Math.round(completionRate * 100),
-        },
-      };
-    });
-
-    // Sort by overall risk (highest first)
-    predictions.sort((a, b) => b.risks.overall - a.risks.overall);
+        return {
+          projectId: summary.projectId,
+          projectName: summary.projectName,
+          predictions: {
+            finishDate,
+            weeksToFinish,
+            isOverdue: isForecastOverdue(
+              finishDate,
+              snapshot.projects.find((project) => project.id === summary.projectId)?.dates.end ??
+                null,
+              summary.actualProgress
+            ),
+            velocity: summary.evm.spi !== null ? round(summary.evm.spi, 2) : null,
+          },
+          risks: {
+            budgetOverrun: budgetOverrunRisk,
+            scheduleDelay: scheduleDelayRisk,
+            reportingGap: reportingGapRisk,
+            overall: overallRisk,
+          },
+          metrics: {
+            totalTasks: summary.evidence.totalTasks,
+            completedTasks: summary.evidence.completedTasks,
+            remainingTasks:
+              summary.evidence.totalTasks - summary.evidence.completedTasks,
+            completionRate: Math.round(summary.actualProgress),
+            approvedWorkReports: summary.evidence.approvedWorkReports,
+          },
+        };
+      })
+      .sort((left, right) => right.risks.overall - left.risks.overall);
 
     return NextResponse.json({
       predictions,
       summary: {
         totalProjects: predictions.length,
-        highRisk: predictions.filter((p) => p.risks.overall >= 70).length,
+        highRisk: predictions.filter((project) => project.risks.overall >= 70).length,
         mediumRisk: predictions.filter(
-          (p) => p.risks.overall >= 40 && p.risks.overall < 70
+          (project) => project.risks.overall >= 40 && project.risks.overall < 70
         ).length,
-        lowRisk: predictions.filter((p) => p.risks.overall < 40).length,
+        lowRisk: predictions.filter((project) => project.risks.overall < 40).length,
       },
     });
   } catch (error) {
-    console.error("[Predictions API] Error:", error);
-    // Fallback to mock data on any error
-    const { getMockProjects } = await import("@/lib/mock-data");
-    const projects = getMockProjects();
-
-    const predictions = projects.slice(0, 3).map((project) => ({
-      projectId: project.id,
-      projectName: project.name,
-      predictedFinishDate: project.dates.end,
-      budgetOverrunRisk: Math.random() * 30,
-      resourceBottleneck: Math.random() > 0.7,
-      velocity: 3 + Math.random() * 2,
-      risks: {
-        budgetOverrun: Math.random() * 40,
-        scheduleDelay: Math.random() * 30,
-        resourceShortage: Math.random() * 20,
-      },
-    }));
-
-    return NextResponse.json({ predictions });
+    return serverError(error, "Failed to fetch analytics predictions.");
   }
+}
+
+function deriveBudgetRisk(summary: {
+  budgetVarianceRatio: number;
+  evm: { cpi: number | null; ac: number; bac: number };
+}) {
+  const ratioRisk = Math.max(0, summary.budgetVarianceRatio) * 220;
+  const cpiRisk =
+    summary.evm.cpi !== null && summary.evm.cpi < 1 ? (1 - summary.evm.cpi) * 120 : 0;
+  const bacRisk = summary.evm.ac > summary.evm.bac ? 25 : 0;
+
+  return Math.min(100, Math.round(ratioRisk + cpiRisk + bacRisk));
+}
+
+function deriveScheduleRisk(summary: {
+  progressVariance: number;
+  daysToDeadline: number;
+  evm: { spi: number | null };
+  evidence: { overdueTasks: number };
+}) {
+  const progressRisk = summary.progressVariance < 0 ? Math.abs(summary.progressVariance) * 3 : 0;
+  const spiRisk =
+    summary.evm.spi !== null && summary.evm.spi < 1 ? (1 - summary.evm.spi) * 100 : 0;
+  const deadlineRisk = summary.daysToDeadline < 0 ? 35 : summary.daysToDeadline <= 14 ? 15 : 0;
+  const overdueRisk = summary.evidence.overdueTasks * 8;
+
+  return Math.min(100, Math.round(progressRisk + spiRisk + deadlineRisk + overdueRisk));
+}
+
+function round(value: number, digits: number) {
+  const multiplier = 10 ** digits;
+  return Math.round(value * multiplier) / multiplier;
 }

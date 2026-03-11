@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { badRequest, databaseUnavailable, notFound, serverError } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 /**
  * PUT /api/time-entries/[id] — Stop timer (set endTime)
@@ -11,10 +13,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json({ success: true, id: "mock-id" });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { id } = await params;
@@ -27,14 +33,11 @@ export async function PUT(
     });
 
     if (!entry) {
-      return NextResponse.json({ error: "Time entry not found" }, { status: 404 });
+      return notFound("Time entry not found");
     }
 
     if (entry.endTime) {
-      return NextResponse.json(
-        { error: "Timer already stopped" },
-        { status: 400 }
-      );
+      return badRequest("Timer already stopped", "TIMER_ALREADY_STOPPED");
     }
 
     const now = endTime ? new Date(endTime) : new Date();
@@ -62,10 +65,7 @@ export async function PUT(
     return NextResponse.json(updatedEntry);
   } catch (error) {
     console.error("[Time Entry Update] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to stop timer" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to stop timer");
   }
 }
 
@@ -74,10 +74,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return success mock response
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       return NextResponse.json({ success: true });
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const { id } = await params;
@@ -89,9 +93,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[Time Entry Delete] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete time entry" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to delete time entry");
   }
 }

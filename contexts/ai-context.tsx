@@ -580,22 +580,27 @@ export function AIProvider({ children }: { children: ReactNode }) {
           setApplyingProposalIds((current) => [...current, proposalId]);
           try {
             const nextRun = await adapter.applyProposal({ runId, proposalId });
-            addTasksBatch(
-              proposal.tasks.map((task) => ({
-                projectId: task.projectId,
-                title: task.title,
-                description: task.description,
-                assignee: task.assignee,
-                dueDate: task.dueDate,
-                priority: task.priority,
-                tags: ["ai-generated", "proposal"],
-              }))
-            );
+            const createdTasks = nextRun.result?.actionResult?.tasksCreated ?? [];
+            if (createdTasks.length > 0) {
+              addTasksBatch(
+                createdTasks.map((task) => ({
+                  projectId: task.projectId,
+                  title: task.title,
+                  description: task.description,
+                  assignee: task.assignee,
+                  dueDate: task.dueDate,
+                  priority: task.priority,
+                  tags: ["ai-generated", "proposal"],
+                }))
+              );
+            }
             mergeRun(nextRun);
             toast.success(t("toast.aiProposalApplied"), {
-              description: t("toast.aiProposalAppliedDesc", {
-                count: proposal.tasks.length,
-              }),
+              description:
+                nextRun.result?.actionResult?.summary ??
+                t("toast.aiProposalAppliedDesc", {
+                  count: proposal.tasks.length,
+                }),
             });
           } catch (error) {
             toast.error(t("toast.aiRunFailed"), {

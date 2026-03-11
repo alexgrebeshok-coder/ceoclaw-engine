@@ -1,8 +1,10 @@
 import { addDays, format } from "date-fns";
 
+import { applyAIProposal } from "@/lib/ai/action-engine";
 import type {
   AIActionProposal,
   AIAdapter,
+  AIActionType,
   AIContextSnapshot,
   AIRunInput,
   AIRunRecord,
@@ -49,9 +51,31 @@ const copy = {
     proposalTitle: "AI предлагает создать пакет задач",
     proposalSummary:
       "Пакет рассчитан на короткий recovery / execution cycle и не будет применён без вашего подтверждения.",
+    updateProposalTitle: "AI предлагает обновить пакет задач",
+    updateProposalSummary:
+      "Изменения собраны как короткий execution patch и не будут применены без вашего подтверждения.",
+    rescheduleProposalTitle: "AI предлагает пересобрать сроки задач",
+    rescheduleProposalSummary:
+      "Сдвиги по срокам подготовлены как управляемый replan и ждут approval.",
+    riskProposalTitle: "AI предлагает поднять новые риски",
+    riskProposalSummary:
+      "Риски сформулированы для risk register и не будут внесены без подтверждения.",
+    statusProposalTitle: "AI предлагает черновик статус-апдейта",
+    statusProposalSummary:
+      "Черновик статуса собран из текущих сигналов проекта и ждёт approval перед публикацией.",
+    notifyProposalTitle: "AI предлагает уведомить команду",
+    notifyProposalSummary:
+      "Сообщения подготовлены для управляемой коммуникации и не будут отправлены без approval.",
     proposalReasonBlocked: "Снять blocker и вернуть поток в предсказуемый execution.",
     proposalReasonBudget: "Сверить бюджет и сроки до следующего управленческого окна.",
     proposalReasonReport: "Подготовить прозрачный статус для руководительского апдейта.",
+    proposalReasonUpdate: "Уточнить owner, срок и приоритет до следующего execution review.",
+    proposalReasonReschedule: "Пересобрать schedule вокруг blockеров и ближайших дедлайнов.",
+    proposalReasonRisk: "Зафиксировать риск до того, как он уйдёт в скрытую зону.",
+    proposalReasonNotify: "Синхронизировать команду вокруг следующего решения и окна исполнения.",
+    reportAudience: "Руководство проекта",
+    reportChannel: "weekly update",
+    notifyChannel: "team-ops",
   },
   en: {
     untitledRun: "AI Workspace Run",
@@ -83,9 +107,31 @@ const copy = {
     proposalTitle: "AI suggests creating a task package",
     proposalSummary:
       "The package is designed for a short recovery / execution cycle and will not be applied without your approval.",
+    updateProposalTitle: "AI suggests updating the task package",
+    updateProposalSummary:
+      "These changes are prepared as a short execution patch and will not be applied without approval.",
+    rescheduleProposalTitle: "AI suggests rescheduling the task set",
+    rescheduleProposalSummary:
+      "The due date changes are prepared as a controlled replan and still require approval.",
+    riskProposalTitle: "AI suggests raising new risks",
+    riskProposalSummary:
+      "The risks are drafted for the register and will not be recorded without approval.",
+    statusProposalTitle: "AI suggests drafting a status update",
+    statusProposalSummary:
+      "The status draft is assembled from current project signals and waits for approval before sharing.",
+    notifyProposalTitle: "AI suggests notifying the team",
+    notifyProposalSummary:
+      "The communication pack is prepared for a controlled rollout and will not be sent without approval.",
     proposalReasonBlocked: "Remove the blocker and return the workflow to predictable execution.",
     proposalReasonBudget: "Reconcile budget and schedule before the next decision window.",
     proposalReasonReport: "Prepare a transparent status update for leadership.",
+    proposalReasonUpdate: "Tighten owner, due date, and priority before the next execution review.",
+    proposalReasonReschedule: "Rebuild the schedule around blockers and the nearest deadlines.",
+    proposalReasonRisk: "Log the risk before it turns into an unmanaged delivery problem.",
+    proposalReasonNotify: "Align the team around the next decision and execution window.",
+    reportAudience: "Project leadership",
+    reportChannel: "weekly update",
+    notifyChannel: "team-ops",
   },
   zh: {
     untitledRun: "AI Workspace Run",
@@ -117,9 +163,31 @@ const copy = {
     proposalTitle: "AI 建议创建一组任务",
     proposalSummary:
       "这组任务面向短周期恢复 / 执行，不会在未获批准前自动应用。",
+    updateProposalTitle: "AI 建议更新任务包",
+    updateProposalSummary:
+      "这些变更被整理成短周期执行补丁，在批准前不会自动应用。",
+    rescheduleProposalTitle: "AI 建议重排任务时间",
+    rescheduleProposalSummary:
+      "这些时间调整被作为可控 replan 准备好，仍需 approval。",
+    riskProposalTitle: "AI 建议新增风险",
+    riskProposalSummary:
+      "这些风险已整理成 risk register 草稿，在批准前不会写入。",
+    statusProposalTitle: "AI 建议生成状态更新草稿",
+    statusProposalSummary:
+      "状态草稿基于当前项目信号整理，在分享前仍需 approval。",
+    notifyProposalTitle: "AI 建议通知团队",
+    notifyProposalSummary:
+      "沟通内容已准备为可控 rollout，在批准前不会发送。",
     proposalReasonBlocked: "解除 blocker，让执行流恢复可预测性。",
     proposalReasonBudget: "在下一个决策窗口前核对预算与进度。",
     proposalReasonReport: "为管理层准备透明的状态更新。",
+    proposalReasonUpdate: "在下一次执行复盘前收紧 owner、日期和优先级。",
+    proposalReasonReschedule: "围绕 blocker 和最近截止日期重排 schedule。",
+    proposalReasonRisk: "在风险演变成失控交付问题前先记录下来。",
+    proposalReasonNotify: "围绕下一次决策和执行窗口同步团队。",
+    reportAudience: "项目管理层",
+    reportChannel: "weekly update",
+    notifyChannel: "team-ops",
   },
 } as const;
 
@@ -201,20 +269,67 @@ function getProjectSnapshot(context: AIContextSnapshot) {
   );
 }
 
-function buildProposal(context: AIContextSnapshot): AIActionProposal | null {
+function getProjectTasks(context: AIContextSnapshot, projectId: string) {
+  return context.tasks.filter((task) => task.projectId === projectId);
+}
+
+function resolveProposalType(input: AIRunInput, kind: AIQuickActionKind): AIActionType | null {
+  const prompt = input.prompt.toLowerCase();
+
+  if (kind === "draft_status_report") {
+    return "draft_status_report";
+  }
+
+  if (kind === "suggest_tasks") {
+    if (/update|assign|priority|owner|обнови|переназнач|приоритет|调整/.test(prompt)) {
+      return "update_tasks";
+    }
+
+    if (/resched|replan|move due|timeline|перенес|сдвиг|срок|重排|延期/.test(prompt)) {
+      return "reschedule_tasks";
+    }
+
+    return "create_tasks";
+  }
+
+  if (/risk|risks|риск|риски|风险|blocker/.test(prompt) || kind === "analyze_project") {
+    return "raise_risks";
+  }
+
+  if (
+    /resched|replan|move due|timeline|перенес|сдвиг|срок|重排|延期/.test(prompt) ||
+    kind === "triage_tasks"
+  ) {
+    return "reschedule_tasks";
+  }
+
+  if (/update|assign|priority|owner|обнови|переназнач|приоритет|调整/.test(prompt)) {
+    return "update_tasks";
+  }
+
+  if (/notify|announce|message|команд|сообщ|уведом|通知/.test(prompt)) {
+    return "notify_team";
+  }
+
+  return null;
+}
+
+function buildCreateTasksProposal(context: AIContextSnapshot): AIActionProposal | null {
   const localeCopy = copy[context.locale];
   const project = getProjectSnapshot(context);
   if (!project) return null;
 
-  const tasks = context.tasks.filter((task) => task.projectId === project.id);
+  const tasks = getProjectTasks(context, project.id);
   const openTasks = tasks.filter((task) => task.status !== "done");
   const primaryOwner = project.team[0] ?? "Owner";
   const secondaryOwner = project.team[1] ?? primaryOwner;
   const blockedTask = openTasks.find((task) => task.status === "blocked") ?? openTasks[0];
-  const latestRisk = context.risks.find((risk) => risk.projectId === project.id && risk.status === "open");
+  const latestRisk = context.risks.find(
+    (risk) => risk.projectId === project.id && risk.status === "open"
+  );
 
   return {
-    id: `proposal-${project.id}`,
+    id: `proposal-create-${project.id}`,
     type: "create_tasks",
     title: localeCopy.proposalTitle,
     summary: localeCopy.proposalSummary,
@@ -251,6 +366,213 @@ function buildProposal(context: AIContextSnapshot): AIActionProposal | null {
       },
     ],
   };
+}
+
+function buildUpdateTasksProposal(context: AIContextSnapshot): AIActionProposal | null {
+  const localeCopy = copy[context.locale];
+  const project = getProjectSnapshot(context);
+  if (!project) return null;
+
+  const openTasks = getProjectTasks(context, project.id).filter((task) => task.status !== "done");
+  const primaryOwner = project.team[0] ?? "Owner";
+  const secondaryOwner = project.team[1] ?? primaryOwner;
+  const taskUpdates = openTasks.slice(0, 3).map((task, index) => ({
+    taskId: task.id,
+    title: task.title,
+    description: task.blockedReason ?? task.description,
+    assignee: task.assignee?.name ?? (index === 0 ? secondaryOwner : primaryOwner),
+    dueDate: format(addDays(new Date(), index + 2), "yyyy-MM-dd"),
+    priority: task.status === "blocked" ? "high" : task.priority,
+    reason: localeCopy.proposalReasonUpdate,
+  }));
+
+  if (!taskUpdates.length) {
+    return null;
+  }
+
+  return {
+    id: `proposal-update-${project.id}`,
+    type: "update_tasks",
+    title: localeCopy.updateProposalTitle,
+    summary: localeCopy.updateProposalSummary,
+    state: "pending",
+    tasks: [],
+    taskUpdates,
+  };
+}
+
+function buildRescheduleTasksProposal(context: AIContextSnapshot): AIActionProposal | null {
+  const localeCopy = copy[context.locale];
+  const project = getProjectSnapshot(context);
+  if (!project) return null;
+
+  const projectTasks = getProjectTasks(context, project.id).filter((task) => task.status !== "done");
+  const today = format(new Date(), "yyyy-MM-dd");
+  const overdueTasks = projectTasks.filter((task) => task.dueDate <= today);
+  const candidates = (overdueTasks.length ? overdueTasks : projectTasks).slice(0, 3);
+
+  const taskReschedules = candidates.map((task, index) => ({
+    taskId: task.id,
+    title: task.title,
+    previousDueDate: task.dueDate,
+    newDueDate: format(addDays(new Date(), index + 3), "yyyy-MM-dd"),
+    assignee: task.assignee?.name ?? project.team[index] ?? project.team[0] ?? "Owner",
+    reason: localeCopy.proposalReasonReschedule,
+  }));
+
+  if (!taskReschedules.length) {
+    return null;
+  }
+
+  return {
+    id: `proposal-reschedule-${project.id}`,
+    type: "reschedule_tasks",
+    title: localeCopy.rescheduleProposalTitle,
+    summary: localeCopy.rescheduleProposalSummary,
+    state: "pending",
+    tasks: [],
+    taskReschedules,
+  };
+}
+
+function buildRaiseRisksProposal(context: AIContextSnapshot): AIActionProposal | null {
+  const localeCopy = copy[context.locale];
+  const project = getProjectSnapshot(context);
+  if (!project) return null;
+
+  const openRisks = context.risks
+    .filter((risk) => risk.projectId === project.id && risk.status === "open")
+    .slice(0, 2)
+    .map((risk) => ({
+      projectId: project.id,
+      title: risk.title,
+      description: risk.mitigation,
+      owner: risk.owner || project.team[0] || "Owner",
+      probability: risk.probability,
+      impact: risk.impact,
+      mitigation: risk.mitigation,
+      reason: localeCopy.proposalReasonRisk,
+    }));
+  const blockedTask = getProjectTasks(context, project.id).find((task) => task.status === "blocked");
+
+  const risks =
+    openRisks.length > 0
+      ? openRisks
+      : blockedTask
+        ? [
+            {
+              projectId: project.id,
+              title: `${project.name}: delivery slip risk`,
+              description: blockedTask.blockedReason ?? blockedTask.description,
+              owner: project.team[0] ?? "Owner",
+              probability: 75,
+              impact: 80,
+              mitigation: localeCopy.proposalReasonBlocked,
+              reason: localeCopy.proposalReasonRisk,
+            },
+          ]
+        : [];
+
+  if (!risks.length) {
+    return null;
+  }
+
+  return {
+    id: `proposal-risks-${project.id}`,
+    type: "raise_risks",
+    title: localeCopy.riskProposalTitle,
+    summary: localeCopy.riskProposalSummary,
+    state: "pending",
+    tasks: [],
+    risks,
+  };
+}
+
+function buildStatusReportProposal(context: AIContextSnapshot): AIActionProposal | null {
+  const localeCopy = copy[context.locale];
+  const project = getProjectSnapshot(context);
+  if (!project) return null;
+
+  const openTasks = getProjectTasks(context, project.id).filter((task) => task.status !== "done");
+  const blockedCount = openTasks.filter((task) => task.status === "blocked").length;
+  const openRiskCount = context.risks.filter(
+    (risk) => risk.projectId === project.id && risk.status === "open"
+  ).length;
+
+  return {
+    id: `proposal-report-${project.id}`,
+    type: "draft_status_report",
+    title: localeCopy.statusProposalTitle,
+    summary: localeCopy.statusProposalSummary,
+    state: "pending",
+    tasks: [],
+    statusReport: {
+      projectId: project.id,
+      title: `${project.name}: weekly status draft`,
+      audience: localeCopy.reportAudience,
+      channel: localeCopy.reportChannel,
+      summary: `${project.name} is at ${project.progress}% progress with ${blockedCount} blocked tasks and ${openRiskCount} open risks.`,
+      body: [
+        `${project.name} currently tracks at ${project.progress}% progress and ${project.health}% health.`,
+        `Open execution load: ${openTasks.length} tasks, ${blockedCount} blocked.`,
+        `Risk posture: ${openRiskCount} open risks. Next milestone: ${project.nextMilestone?.date ?? project.dates.end}.`,
+      ].join(" "),
+      reason: localeCopy.proposalReasonReport,
+    },
+  };
+}
+
+function buildNotifyTeamProposal(context: AIContextSnapshot): AIActionProposal | null {
+  const localeCopy = copy[context.locale];
+  const project = getProjectSnapshot(context);
+  if (!project) return null;
+
+  const primaryOwner = project.team[0] ?? "Owner";
+  const secondaryOwner = project.team[1] ?? primaryOwner;
+
+  return {
+    id: `proposal-notify-${project.id}`,
+    type: "notify_team",
+    title: localeCopy.notifyProposalTitle,
+    summary: localeCopy.notifyProposalSummary,
+    state: "pending",
+    tasks: [],
+    notifications: [
+      {
+        channel: localeCopy.notifyChannel,
+        recipients: [primaryOwner, secondaryOwner].filter(Boolean),
+        message: `${project.name}: sync on the main blocker, confirm owner, and refresh due dates before end of day.`,
+        reason: localeCopy.proposalReasonNotify,
+      },
+      {
+        channel: localeCopy.reportChannel,
+        recipients: [localeCopy.reportAudience],
+        message: `${project.name}: leadership summary is ready once the team confirms blocker status and next milestone confidence.`,
+        reason: localeCopy.proposalReasonNotify,
+      },
+    ],
+  };
+}
+
+function buildProposal(input: AIRunInput, kind: AIQuickActionKind): AIActionProposal | null {
+  const proposalType = resolveProposalType(input, kind);
+
+  switch (proposalType) {
+    case "create_tasks":
+      return buildCreateTasksProposal(input.context);
+    case "update_tasks":
+      return buildUpdateTasksProposal(input.context);
+    case "reschedule_tasks":
+      return buildRescheduleTasksProposal(input.context);
+    case "raise_risks":
+      return buildRaiseRisksProposal(input.context);
+    case "draft_status_report":
+      return buildStatusReportProposal(input.context);
+    case "notify_team":
+      return buildNotifyTeamProposal(input.context);
+    default:
+      return null;
+  }
 }
 
 function buildHighlights(kind: AIQuickActionKind, context: AIContextSnapshot) {
@@ -352,7 +674,7 @@ export function buildMockFinalRun(
     triage_tasks: [localeCopy.triageNextStep1, localeCopy.triageNextStep2],
   } as const;
 
-  const proposal = kind === "suggest_tasks" ? buildProposal(input.context) : null;
+  const proposal = buildProposal(input, kind);
   const summarySuffix =
     project && kind !== "summarize_portfolio" && kind !== "triage_tasks"
       ? ` ${project.name}.`
@@ -374,28 +696,7 @@ export function buildMockFinalRun(
 }
 
 export function applyMockProposal(run: AIRunRecord, proposalId: string): AIRunRecord {
-  const proposal = run.result?.proposal;
-  if (!proposal || proposal.id !== proposalId) {
-    throw new Error(`Proposal ${proposalId} not found in run ${run.id}`);
-  }
-
-  const result = run.result;
-  if (!result) {
-    throw new Error(`Run ${run.id} has no result payload`);
-  }
-
-  return {
-    ...run,
-    status: "done",
-    updatedAt: new Date().toISOString(),
-    result: {
-      ...result,
-      proposal: {
-        ...proposal,
-        state: "applied",
-      },
-    },
-  };
+  return applyAIProposal(run, proposalId);
 }
 
 export function createMockAIAdapter(): AIAdapter {

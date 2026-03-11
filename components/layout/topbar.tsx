@@ -104,7 +104,9 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const { activeWorkspace } = usePreferences();
   const { locale, t } = useLocale();
   const { projects, addTask } = useDashboard();
-  const { eyebrowKey, titleKey } = resolveTitle(pathname);
+  const resolvedTitle = resolveTitle(pathname);
+  const eyebrow = resolvedTitle.eyebrow ?? (resolvedTitle.eyebrowKey ? t(resolvedTitle.eyebrowKey) : "");
+  const title = resolvedTitle.title ?? (resolvedTitle.titleKey ? t(resolvedTitle.titleKey) : "");
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
@@ -170,11 +172,11 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-muted)]">
-                  {t(eyebrowKey)}
+                  {eyebrow}
                 </p>
                 <div className="mt-1 flex flex-wrap items-center gap-3">
                   <h1 className="font-heading text-5xl font-semibold leading-none tracking-[-0.06em] text-[var(--ink)]">
-                    {t(titleKey)}
+                    {title}
                   </h1>
                   <span className="hidden text-sm text-[var(--ink-muted)] md:inline">{localizedDate}</span>
                 </div>

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { buildMockBoards } from "@/lib/mock-boards";
 import { prisma } from "@/lib/prisma";
+import { badRequest, databaseUnavailable, serverError } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 /**
  * GET /api/boards — List all boards
@@ -11,13 +14,17 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get("projectId");
+    const runtime = getServerRuntimeState();
 
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
+    if (runtime.usingMockData) {
       const boards = buildMockBoards();
       return NextResponse.json(
         projectId ? boards.filter((board) => board.projectId === projectId) : boards
       );
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const boards = await prisma.board.findMany({
@@ -46,10 +53,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(boards);
   } catch (error) {
     console.error("[Boards API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch boards" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to fetch boards.");
   }
 }
 
@@ -57,9 +61,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, projectId } = body;
+    const runtime = getServerRuntimeState();
 
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
+    if (runtime.usingMockData) {
       const boards = buildMockBoards();
       const createdBoard =
         boards.find((board) => board.projectId === projectId) ?? boards[0] ?? null;
@@ -75,10 +79,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (!name || !projectId) {
-      return NextResponse.json(
-        { error: "Name and projectId are required" },
-        { status: 400 }
-      );
+      return badRequest("Name and projectId are required");
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     // Create board with default columns
@@ -105,9 +110,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(board, { status: 201 });
   } catch (error) {
     console.error("[Boards API] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to create board" },
-      { status: 500 }
-    );
+    return serverError(error, "Failed to create board.");
   }
 }

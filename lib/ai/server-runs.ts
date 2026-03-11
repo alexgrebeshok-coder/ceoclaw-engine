@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { applyAIProposal, hasPendingProposal } from "@/lib/ai/action-engine";
 import type { AIApplyProposalInput, AIRunInput, AIRunRecord } from "@/lib/ai/types";
 import { invokeOpenClawGateway } from "@/lib/ai/openclaw-gateway";
 import {
@@ -107,7 +108,7 @@ async function executeGatewayRun(runId: string) {
     const result = await invokeOpenClawGateway(entry.input, runId);
     const finalRun: AIRunRecord = {
       ...entry.run,
-      status: result.proposal ? "needs_approval" : "done",
+      status: hasPendingProposal(result) ? "needs_approval" : "done",
       updatedAt: new Date().toISOString(),
       result,
     };
@@ -153,6 +154,15 @@ export async function getServerAIRun(runId: string) {
     throw new Error(`AI run ${runId} not found`);
   }
 
+  if (entry.origin === "mock") {
+    const liveRun = await mockAdapter.getRun(runId);
+    await persistEntry({
+      ...entry,
+      run: liveRun,
+    });
+    return cloneRun(liveRun);
+  }
+
   return cloneRun(entry.run);
 }
 
@@ -162,12 +172,21 @@ export async function applyServerAIProposal(input: AIApplyProposalInput) {
     throw new Error(`AI run ${input.runId} not found`);
   }
 
-  const proposal = entry.run.result?.proposal;
-  if (!proposal || proposal.id !== input.proposalId) {
-    throw new Error(`Proposal ${input.proposalId} not found in run ${input.runId}`);
-  }
-
-  const nextRun = applyMockProposal(entry.run, input.proposalId);
+  const sourceRun =
+    entry.origin === "mock" && !entry.run.result?.proposal
+      ? buildMockFinalRun(entry.input, {
+          id: entry.run.id,
+          createdAt: entry.run.createdAt,
+          updatedAt: new Date().toISOString(),
+          quickActionId: entry.run.quickActionId,
+        })
+      : entry.origin === "mock"
+        ? await mockAdapter.getRun(input.runId)
+        : entry.run;
+  const nextRun =
+    entry.origin === "mock"
+      ? applyMockProposal(sourceRun, input.proposalId)
+      : applyAIProposal(sourceRun, input.proposalId);
   await persistEntry({
     ...entry,
     run: nextRun,

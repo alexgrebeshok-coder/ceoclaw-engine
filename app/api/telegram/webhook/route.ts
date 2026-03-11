@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeCommand } from "@/lib/command-handler";
+import {
+  getTelegramToken,
+  sendTelegramTextMessage,
+} from "@/lib/connectors/telegram-client";
 
 /**
  * Telegram Bot Webhook endpoint
@@ -11,8 +15,7 @@ import { executeCommand } from "@/lib/command-handler";
  *   https://api.telegram.org/bot<TOKEN>/setWebhook
  */
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+const TELEGRAM_BOT_TOKEN = getTelegramToken();
 
 interface TelegramUpdate {
   update_id: number;
@@ -41,15 +44,16 @@ async function sendTelegramMessage(chatId: number, text: string): Promise<void> 
   }
 
   try {
-    await fetch(`${TELEGRAM_API}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: text,
-        parse_mode: "Markdown",
-      }),
+    const result = await sendTelegramTextMessage({
+      token: TELEGRAM_BOT_TOKEN,
+      chatId,
+      text,
+      parseMode: "Markdown",
     });
+
+    if (!result.ok) {
+      console.error("[Telegram] Failed to send message:", result.message);
+    }
   } catch (error) {
     console.error("[Telegram] Failed to send message:", error);
   }

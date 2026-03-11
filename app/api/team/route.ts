@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { badRequest, serverError } from "@/lib/server/api-utils";
+import { badRequest, databaseUnavailable, serverError } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       const { getMockTeam } = await import("@/lib/mock-data");
       return NextResponse.json(getMockTeam());
+    }
+
+    if (!runtime.databaseConfigured) {
+      return databaseUnavailable(runtime.dataMode);
     }
 
     const team = await prisma.teamMember.findMany({
@@ -40,9 +45,7 @@ export async function GET() {
 
     return NextResponse.json(teamWithCapacity);
   } catch (error) {
-    // Fallback to mock data on any error
-    const { getMockTeam } = await import("@/lib/mock-data");
-    return NextResponse.json(getMockTeam());
+    return serverError(error, "Failed to fetch team members.");
   }
 }
 

@@ -6,8 +6,10 @@ import {
   calculateProjectProgress,
   normalizeProjectStatus,
   serverError,
+  serviceUnavailable,
   validationError,
 } from "@/lib/server/api-utils";
+import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 import { createProjectSchema } from "@/lib/validators/project";
 
 export const runtime = "nodejs";
@@ -19,11 +21,19 @@ export async function HEAD(): Promise<NextResponse> {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    // Check if database is available
-    if (!process.env.DATABASE_URL) {
-      // Return mock data if no database
+    const runtime = getServerRuntimeState();
+
+    if (runtime.usingMockData) {
       const { getMockProjects } = await import("@/lib/mock-data");
       return NextResponse.json(getMockProjects());
+    }
+
+    if (!runtime.databaseConfigured) {
+      return serviceUnavailable(
+        "DATABASE_URL is not configured for live mode.",
+        "DATABASE_UNAVAILABLE",
+        { dataMode: runtime.dataMode }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -74,9 +84,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }))
     );
   } catch (error) {
-    // Fallback to mock data on any error
-    const { getMockProjects } = await import("@/lib/mock-data");
-    return NextResponse.json(getMockProjects());
+    return serverError(error, "Failed to fetch projects.");
   }
 }
 

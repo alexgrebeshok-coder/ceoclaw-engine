@@ -76,7 +76,7 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
 
   if (showHydrationSkeleton) {
     return (
-      <div className="grid gap-6">
+      <div className="grid min-w-0 gap-6">
         <AIContextActions />
 
         <Card>
@@ -138,16 +138,16 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
 
   return (
     <>
-      <div className="grid gap-6">
+      <div className="grid min-w-0 gap-6">
         <Card>
-          <CardHeader className="flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <CardHeader className="min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <CardTitle>{t("projects.portfolioView")}</CardTitle>
               <p className="text-sm leading-6 text-[var(--ink-soft)]">
                 {t("projects.portfolioViewDescription")}
               </p>
             </div>
-            <div className="grid gap-3 grid-cols-1 sm:grid-cols-[minmax(280px,1fr)_220px_auto]">
+            <div className="grid min-w-0 gap-3 grid-cols-1 sm:grid-cols-[minmax(0,1fr)_220px_auto]">
               <input
                 className={fieldStyles}
                 onChange={(event) => setQuery(event.target.value)}

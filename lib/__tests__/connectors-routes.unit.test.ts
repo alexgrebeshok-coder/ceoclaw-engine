@@ -1,0 +1,184 @@
+import assert from "node:assert/strict";
+import { NextRequest } from "next/server";
+
+import { GET as getConnectorById } from "../../app/api/connectors/[id]/route";
+import { GET as getConnectors } from "../../app/api/connectors/route";
+import { GET as getHealth } from "../../app/api/health/route";
+
+const CONNECTOR_ENV_KEYS = [
+  "APP_DATA_MODE",
+  "TELEGRAM_BOT_TOKEN",
+  "EMAIL_FROM",
+  "SMTP_HOST",
+  "SMTP_USER",
+  "SMTP_PASSWORD",
+  "GPS_API_URL",
+  "GPS_API_KEY",
+  "ONE_C_BASE_URL",
+  "ONE_C_API_KEY",
+] as const;
+
+function createJsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+function installConnectorFetchMock() {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (input: string | URL | Request) => {
+    const url = String(input);
+
+    if (url.includes("/getMe")) {
+      return createJsonResponse({
+        ok: true,
+        result: {
+          id: 777000,
+          is_bot: true,
+          first_name: "CEOClaw Bot",
+          username: "ceoclaw_bot",
+        },
+      });
+    }
+
+    if (url.includes("/getWebhookInfo")) {
+      return createJsonResponse({
+        ok: true,
+        result: {
+          url: "https://example.com/api/telegram/webhook",
+          pending_update_count: 0,
+        },
+      });
+    }
+
+    if (url.includes("gps.example.com") && url.includes("/session-stats")) {
+      return createJsonResponse({
+        status: "ok",
+        provider: "Teltonika Gateway",
+        total_equipment: 68,
+        online_equipment: 61,
+        offline_equipment: 7,
+      });
+    }
+
+    throw new Error(`Unexpected fetch call: ${url}`);
+  }) as typeof fetch;
+
+  return () => {
+    globalThis.fetch = originalFetch;
+  };
+}
+
+function withEnv(
+  envPatch: Partial<Record<(typeof CONNECTOR_ENV_KEYS)[number], string>>,
+  run: () => Promise<void>
+): Promise<void> {
+  const previousValues = new Map<string, string | undefined>();
+
+  for (const key of CONNECTOR_ENV_KEYS) {
+    previousValues.set(key, process.env[key]);
+  }
+
+  for (const key of CONNECTOR_ENV_KEYS) {
+    const value = envPatch[key];
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  return run().finally(() => {
+    for (const key of CONNECTOR_ENV_KEYS) {
+      const previousValue = previousValues.get(key);
+      if (previousValue === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = previousValue;
+      }
+    }
+  });
+}
+
+async function run() {
+  const restoreFetch = installConnectorFetchMock();
+
+  try {
+    const accessRequest = new NextRequest("http://localhost/api/connectors", {
+      headers: {
+        "x-ceoclaw-role": "PM",
+        "x-ceoclaw-workspace": "executive",
+      },
+    });
+
+    await withEnv(
+      {
+        APP_DATA_MODE: "demo",
+        TELEGRAM_BOT_TOKEN: "telegram-token",
+        GPS_API_URL: "https://gps.example.com/api/v1",
+        GPS_API_KEY: "gps-api-key",
+      },
+      async () => {
+        const connectorsResponse = await getConnectors(accessRequest);
+        const connectorsBody = await connectorsResponse.json();
+
+        assert.equal(connectorsResponse.status, 200);
+        assert.equal(connectorsBody.status, "pending");
+        assert.equal(connectorsBody.summary.total, 4);
+        assert.equal(connectorsBody.summary.configured, 2);
+        assert.equal(connectorsBody.summary.pending, 2);
+        assert.equal(connectorsBody.connectors.length, 4);
+
+        const telegramResponse = await getConnectorById(accessRequest, {
+          params: Promise.resolve({ id: "telegram" }),
+        });
+        const telegramBody = await telegramResponse.json();
+        assert.equal(telegramResponse.status, 200);
+        assert.equal(telegramBody.id, "telegram");
+        assert.equal(telegramBody.status, "ok");
+        assert.equal(telegramBody.stub, false);
+        assert.equal(telegramBody.metadata.webhookConfigured, true);
+
+        const gpsResponse = await getConnectorById(accessRequest, {
+          params: Promise.resolve({ id: "gps" }),
+        });
+        const gpsBody = await gpsResponse.json();
+        assert.equal(gpsResponse.status, 200);
+        assert.equal(gpsBody.id, "gps");
+        assert.equal(gpsBody.status, "ok");
+        assert.equal(gpsBody.stub, false);
+        assert.equal(gpsBody.metadata.equipmentCount, 68);
+
+        const missingResponse = await getConnectorById(accessRequest, {
+          params: Promise.resolve({ id: "missing" }),
+        });
+        const missingBody = await missingResponse.json();
+        assert.equal(missingResponse.status, 404);
+        assert.match(missingBody.error, /Unknown connector/);
+
+        const healthResponse = await getHealth();
+        const healthBody = await healthResponse.json();
+
+        assert.equal(healthResponse.status, 200);
+        assert.equal(healthBody.status, "ok");
+        assert.equal(healthBody.connectors.status, "pending");
+        assert.equal(healthBody.connectors.total, 4);
+        assert.equal(healthBody.connectors.configured, 2);
+        assert.equal(healthBody.connectors.endpoint, "/api/connectors");
+      }
+    );
+
+    console.log("PASS connectors-routes.unit");
+  } finally {
+    restoreFetch();
+  }
+}
+
+run().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
