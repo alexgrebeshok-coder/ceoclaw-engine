@@ -34,7 +34,7 @@ As of 2026-03-11:
 - Session 24 action safety and compensation layer is complete in the lead branch.
 - Wave 1 foundation services are complete. Wave 2 fact capture and connector shell is complete. Wave 3 platform access model is complete through Session 08. Wave 4 vertical pilot now has Session 09, Session 10, Session 11, Session 12, Session 13, and Session 14 complete.
 - Wave 5 evidence and runtime modernization is complete on the lead branch.
-- Wave 6 integration truth expansion is complete on the lead branch through Session 25, with Session 26 next.
+- Wave 6 integration truth expansion is complete on the lead branch through Session 26.
 
 ## 1. Product Direction
 

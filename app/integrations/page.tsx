@@ -4,6 +4,7 @@ import {
   getConnectorRegistry,
   summarizeConnectorStatuses,
 } from "@/lib/connectors";
+import { getEnterpriseTruthOverview } from "@/lib/enterprise-truth";
 import { getGpsTelemetrySampleSnapshot } from "@/lib/connectors/gps-client";
 import { getOneCFinanceSampleSnapshot } from "@/lib/connectors/one-c-client";
 import { getEvidenceFusionOverview, getEvidenceLedgerOverview } from "@/lib/evidence";
@@ -60,6 +61,15 @@ export default async function IntegrationsRoute() {
         },
         facts: [],
       };
+  const enterpriseTruth = await getEnterpriseTruthOverview(
+    { limit: 4, telemetryLimit: 3 },
+    {
+      evidence,
+      fusion,
+      gpsSample,
+      oneCSample,
+    }
+  );
   const runtimeTruth = buildIntegrationsRuntimeTruth({
     connectorSummary: summary,
     evidenceCount: evidence.summary.total,
@@ -73,6 +83,7 @@ export default async function IntegrationsRoute() {
       <IntegrationsPage
         connectors={connectors}
         evidence={evidence}
+        enterpriseTruth={enterpriseTruth}
         fusion={fusion}
         gpsSample={gpsSample}
         oneCSample={oneCSample}

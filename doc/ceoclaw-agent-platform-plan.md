@@ -182,9 +182,10 @@
 - `cross-source confidence fusion`
 - `action safety and compensation layer`
 - `knowledge and benchmark loop`
+- `enterprise truth expansion`
 
 Следующий рекомендованный ход:
-- `enterprise truth expansion`
+- choose the next post-Wave-6 modernization sequence explicitly, instead of adding another shallow surface.
 
 ## Definition of Done по релизу Alpha
 
