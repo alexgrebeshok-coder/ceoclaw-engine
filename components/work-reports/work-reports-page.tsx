@@ -39,6 +39,11 @@ const expectedEndpoints = [
     note: "Собрать signal packet из полевого отчёта и запустить runs для tasks, risks и status.",
     path: "/api/work-reports/:reportId/signal-packet",
   },
+  {
+    method: "GET" as const,
+    note: "Посмотреть provenance/trace summary для конкретного AI run из signal packet.",
+    path: "/api/ai/runs/:runId/trace",
+  },
 ];
 
 export function WorkReportsPage({

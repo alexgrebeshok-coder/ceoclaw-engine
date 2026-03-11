@@ -1,9 +1,16 @@
-# CEOClaw Dashboard — Архитектура для Codex
+# CEOClaw — Архитектура для Codex
 
-**Проект:** PM Dashboard (Project Management)
+**Проект:** CEOClaw AI operating layer
 **Стек:** Next.js 15 + React 18 + TypeScript + Prisma + Tailwind
 **URL:** https://ceoclaw.vercel.app
 **Репозиторий:** https://github.com/alexgrebeshok-coder/ceoclaw
+
+**Важно:** единственный канонический источник текущего execution-state и следующих сессий:
+- `plans/2026-03-11-ceoclaw-master-execution-plan.md`
+
+Поддерживающие документы:
+- `plans/2026-03-11-ceoclaw-session-operating-model.md`
+- `plans/2026-03-11-ceoclaw-modernization-roadmap.md`
 
 ---
 
@@ -180,7 +187,10 @@ interface AppPreferences {
 - Delivery Office — режим для PM (задачи, сроки)
 - Strategy Room — режим для аналитики
 
-⚠️ **Сейчас:** Workspace selector **НЕ фильтрует данные** — только визуальный режим.
+Актуально на 2026-03-11:
+- workspace selector уже больше не purely decorative;
+- workspace access и visibility проходят через policy model;
+- execution details нужно сверять с актуальными planning docs выше.
 
 ### 3. API Routes (app/api/)
 
@@ -489,7 +499,7 @@ vercel --prod        # Автодеплой из GitHub main branch
 
 ## 🎯 Цель проекта
 
-**CEOClaw** — AI-powered PM Dashboard для управления проектами.
+**CEOClaw** — AI operating layer для управления проектно-ориентированными организациями.
 
 **Killer Features:**
 - Built-in AI Agents (OpenClaw integration)
@@ -498,7 +508,7 @@ vercel --prod        # Автодеплой из GitHub main branch
 - Context-aware AI actions
 - Real-time collaboration
 
-**Статус:** MVP готов, в процессе улучшений.
+**Статус:** Alpha operating layer, active modernization.
 
 ---
 

@@ -22,7 +22,12 @@ As of 2026-03-11:
 - Session 12 Telegram brief delivery channel is complete in the lead branch.
 - Session 13 scheduled executive digests and delivery policies is complete in the lead branch.
 - Session 14 second live datasource connector upgrade is complete in the lead branch.
+- Session 15 GPS read-only telemetry ingestion is complete in the lead branch.
+- Session 16 evidence ledger and verification status is complete in the lead branch.
+- Session 17 AI trace, provenance, and eval harness is complete in the lead branch.
 - Wave 1 foundation services are complete. Wave 2 fact capture and connector shell is complete. Wave 3 platform access model is complete through Session 08. Wave 4 vertical pilot now has Session 09, Session 10, Session 11, Session 12, Session 13, and Session 14 complete.
+- Wave 5 evidence and runtime modernization is complete on the lead branch.
+- Wave 6 integration truth expansion is the active next wave.
 
 ## 1. Product Direction
 
@@ -105,7 +110,7 @@ Use a hybrid model:
 
 This is better than:
 - full sequential work only, because it is slower than necessary;
-- uncontrolled parallel work, because the current repo is not stable enough.
+- uncontrolled parallel work, because the current wave still crosses telemetry, evidence, AI runtime, and operator surfaces.
 
 ## 5. Wave Plan
 
@@ -247,6 +252,66 @@ Current state:
 11. `/api/connectors/telegram/briefs/policies/run-due` now executes due policies through the existing cron-safe auth pattern.
 12. `/briefs` now exposes a scheduled digest operator panel with save, pause, and resume controls.
 
+## Wave 5: Evidence and Runtime Modernization
+
+**Mode:** Lead-first sequential delivery with selective parallel implementation only when file zones are isolated
+
+### Sessions
+
+1. Session 15: GPS Read-Only Telemetry Ingestion
+   Status: complete on lead branch.
+2. Session 16: Evidence Ledger and Verification Status
+   Status: complete on lead branch.
+3. Session 17: AI Trace, Provenance, and Eval Harness
+   Status: complete on lead branch.
+
+### Goals
+
+1. Move from connector health to connector truth.
+2. Distinguish reported facts from observed and verified evidence.
+3. Make at least one AI operating loop inspectable and regression-testable.
+
+### Outcome
+
+This wave turned the current alpha from:
+
+`facts -> recommendation -> approval`
+
+into:
+
+`facts -> evidence -> verification -> recommendation -> approval -> trace`
+
+### Current state
+
+1. GPS now has a live sample read path, not only a readiness probe.
+2. Evidence is now surfaced with `reported / observed / verified` states.
+3. One AI operating loop now exposes a trace route, provenance panel, and repeatable eval coverage.
+
+## Wave 6: Integration Truth Expansion
+
+**Mode:** Lead-first sequencing with worker help only for isolated UI or route zones
+
+### Sessions
+
+1. Session 18: 1C Live Read Connector
+   Status: planned.
+2. Session 19: Operator Escalation Queue and SLA Layer
+   Status: planned.
+3. Session 20: Live-vs-Demo Truth in Operator UX
+   Status: planned.
+
+### Goals
+
+1. Extend enterprise truth beyond GPS and work reports.
+2. Turn signals into managed operator workload.
+3. Remove ambiguity between live and simulated product states.
+
+### 30/60/90-day direction
+
+The detailed roadmap for post-alpha modernization is tracked in:
+
+- `plans/2026-03-11-ceoclaw-modernization-roadmap.md`
+
 ## 6. Technical Tracks
 
 ### Track A: Stability and Platform
@@ -287,6 +352,16 @@ Includes:
 - integration status views;
 - role-based interfaces.
 
+### Track E: Evidence and Runtime Modernization
+
+Includes:
+- telemetry reads;
+- evidence ledger;
+- verification state;
+- AI traces;
+- provenance;
+- eval harnesses.
+
 ## 7. Architecture Milestones
 
 ### Milestone A
@@ -308,6 +383,10 @@ Includes:
 ### Milestone E
 
 `vertical pilot with one real integration and one daily operating loop`
+
+### Milestone F
+
+`verified telemetry facts + evidence status + traceable agent runs`
 
 ## 8. Rules for Parallel Sessions
 
@@ -351,27 +430,34 @@ A worker session should:
 
 ### Best option right now
 
-1. I first complete Wave 0 and prepare the repo for parallel work.
-2. After that, you run 2-3 parallel sessions using the prompt files already created.
-3. I then do the merge, review, cleanup, and next-wave planning.
+1. Keep this session on the lead integration track for Wave 6.
+2. Land Session 18 first, because the next truth gain should come from a second real enterprise read source.
+3. Land Session 19 next so signals and evidence can turn into managed operator workload.
+4. Land Session 20 after that so operators stop guessing what is live and what is simulated.
 
 ### Why this is best
 
-Because right now the repository is not yet in a condition where parallel sessions will compound cleanly.
+Because the product already has enough surface area for an alpha. The next meaningful gain is operational trust:
 
-If we start parallel work immediately, we will likely spend more time reconciling build failures, mocks, and schema collisions than shipping product.
+- trustworthy evidence;
+- trustworthy provenance;
+- trustworthy enterprise reads;
+- trustworthy operator control.
+
+That is more valuable now than broadening the UI or adding another shallow connector.
 
 ## 11. Immediate Next Actions
 
-1. Close Wave 0:
-   - build repair;
-   - test repair;
-   - explicit demo mode;
-   - API fallback audit.
-2. Reconfirm session prompts against current code reality.
-3. Launch Wave 1 in parallel.
-4. Merge and verify Wave 1.
-5. Continue wave by wave.
+1. Keep Wave 0 closed and stable; it is no longer the active bottleneck.
+2. Land Session 18:
+   - 1C live read connector;
+   - first operator-visible finance or ERP truth slice.
+3. Land Session 19:
+   - escalation queue;
+   - owner, aging, and SLA visibility.
+4. Land Session 20:
+   - explicit live/demo truth badges and messaging in operator UX.
+5. Reassess Session 21 through Session 24 after the Wave 6 baseline is stable.
 
 ## 12. Definition of Alpha
 
@@ -384,3 +470,7 @@ Alpha is reached when:
 - workspace and policy are real;
 - plan-vs-fact exists;
 - one vertical pilot scenario can be demonstrated end to end.
+
+Current status:
+- this alpha threshold is already met on the lead branch;
+- the active target is now post-alpha modernization, not alpha assembly.

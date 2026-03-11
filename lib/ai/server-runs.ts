@@ -10,10 +10,10 @@ import {
   createMockAIAdapter,
 } from "@/lib/ai/mock-adapter";
 
-type RunOrigin = "gateway" | "mock";
+export type ServerAIRunOrigin = "gateway" | "mock";
 
-type GatewayRunEntry = {
-  origin: RunOrigin;
+export type ServerAIRunEntry = {
+  origin: ServerAIRunOrigin;
   input: AIRunInput;
   run: AIRunRecord;
 };
@@ -62,7 +62,7 @@ function getRunFile(runId: string) {
   return path.join(RUN_CACHE_DIR, `${runId}.json`);
 }
 
-async function persistEntry(entry: GatewayRunEntry) {
+async function persistEntry(entry: ServerAIRunEntry) {
   await mkdir(RUN_CACHE_DIR, { recursive: true });
   await writeFile(getRunFile(entry.run.id), JSON.stringify(entry), "utf8");
 }
@@ -70,7 +70,7 @@ async function persistEntry(entry: GatewayRunEntry) {
 async function readEntry(runId: string) {
   try {
     const payload = await readFile(getRunFile(runId), "utf8");
-    return JSON.parse(payload) as GatewayRunEntry;
+    return JSON.parse(payload) as ServerAIRunEntry;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message.includes("ENOENT")) {
@@ -78,6 +78,10 @@ async function readEntry(runId: string) {
     }
     throw error;
   }
+}
+
+function cloneEntry(entry: ServerAIRunEntry) {
+  return JSON.parse(JSON.stringify(entry)) as ServerAIRunEntry;
 }
 
 async function createMockRun(input: AIRunInput) {
@@ -132,6 +136,25 @@ async function executeGatewayRun(runId: string) {
   }
 }
 
+async function resolveServerAIRunEntry(runId: string) {
+  const entry = await readEntry(runId);
+  if (!entry) {
+    throw new Error(`AI run ${runId} not found`);
+  }
+
+  if (entry.origin === "mock") {
+    const liveRun = await mockAdapter.getRun(runId);
+    const nextEntry = {
+      ...entry,
+      run: liveRun,
+    } satisfies ServerAIRunEntry;
+    await persistEntry(nextEntry);
+    return nextEntry;
+  }
+
+  return entry;
+}
+
 export async function createServerAIRun(input: AIRunInput) {
   if (!shouldUseGateway()) {
     return createMockRun(input);
@@ -149,21 +172,13 @@ export async function createServerAIRun(input: AIRunInput) {
 }
 
 export async function getServerAIRun(runId: string) {
-  const entry = await readEntry(runId);
-  if (!entry) {
-    throw new Error(`AI run ${runId} not found`);
-  }
-
-  if (entry.origin === "mock") {
-    const liveRun = await mockAdapter.getRun(runId);
-    await persistEntry({
-      ...entry,
-      run: liveRun,
-    });
-    return cloneRun(liveRun);
-  }
-
+  const entry = await resolveServerAIRunEntry(runId);
   return cloneRun(entry.run);
+}
+
+export async function getServerAIRunEntry(runId: string) {
+  const entry = await resolveServerAIRunEntry(runId);
+  return cloneEntry(entry);
 }
 
 export async function applyServerAIProposal(input: AIApplyProposalInput) {

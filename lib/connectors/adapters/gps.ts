@@ -21,7 +21,7 @@ const descriptor: ConnectorDescriptor = {
   sourceSystem: "GPS/GLONASS tracking platform REST API",
   operations: [
     "Probe live telemetry readiness via GPS session stats",
-    "Prepare future equipment session and geofence ingestion",
+    "Read sample telemetry sessions via a live GPS API path",
   ],
   credentials: [
     {
@@ -38,6 +38,11 @@ const descriptor: ConnectorDescriptor = {
       method: "GET",
       path: "/api/connectors/gps",
       description: "Connector status for GPS/GLONASS telemetry.",
+    },
+    {
+      method: "GET",
+      path: "/api/connectors/gps/sample",
+      description: "Read one normalized GPS telemetry sample from the live sessions endpoint.",
     },
   ],
   stub: false,

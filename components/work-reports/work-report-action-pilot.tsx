@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AIRunTracePanel } from "@/components/work-reports/ai-run-trace-panel";
 import { fieldStyles } from "@/components/ui/field";
+import type { AIRunTrace } from "@/lib/ai/trace";
 import { getProposalItemCount } from "@/lib/ai/action-engine";
 import type { AIRunRecord } from "@/lib/ai/types";
 import type { WorkReportSignalPacket, WorkReportView } from "@/lib/work-reports/types";
@@ -54,6 +56,10 @@ export function WorkReportActionPilot({ reports }: { reports: WorkReportView[] }
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [applyingRunIds, setApplyingRunIds] = useState<string[]>([]);
+  const [selectedTraceRunId, setSelectedTraceRunId] = useState<string | null>(null);
+  const [loadingTraceIds, setLoadingTraceIds] = useState<string[]>([]);
+  const [traceErrors, setTraceErrors] = useState<Record<string, string | null>>({});
+  const [traces, setTraces] = useState<Record<string, AIRunTrace>>({});
 
   useEffect(() => {
     if (!selectedReportId && candidates[0]?.id) {
@@ -113,6 +119,48 @@ export function WorkReportActionPilot({ reports }: { reports: WorkReportView[] }
   const selectedReport =
     candidates.find((report) => report.id === selectedReportId) ?? candidates[0] ?? null;
 
+  const loadTrace = async (runId: string) => {
+    setLoadingTraceIds((current) => [...current, runId]);
+    setTraceErrors((current) => ({
+      ...current,
+      [runId]: null,
+    }));
+
+    try {
+      const response = await fetch(`/api/ai/runs/${runId}/trace`, { cache: "no-store" });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload?.error?.message ?? "Не удалось загрузить trace summary.");
+      }
+
+      setTraces((current) => ({
+        ...current,
+        [runId]: payload as AIRunTrace,
+      }));
+    } catch (traceError) {
+      setTraceErrors((current) => ({
+        ...current,
+        [runId]:
+          traceError instanceof Error
+            ? traceError.message
+            : "Не удалось загрузить trace summary.",
+      }));
+    } finally {
+      setLoadingTraceIds((current) => current.filter((item) => item !== runId));
+    }
+  };
+
+  const toggleTrace = async (runId: string) => {
+    if (selectedTraceRunId === runId) {
+      setSelectedTraceRunId(null);
+      return;
+    }
+
+    setSelectedTraceRunId(runId);
+    await loadTrace(runId);
+  };
+
   const createPacket = async () => {
     if (!selectedReportId) {
       setError("Выберите отчёт, чтобы собрать signal packet.");
@@ -140,6 +188,9 @@ export function WorkReportActionPilot({ reports }: { reports: WorkReportView[] }
       }
 
       setPacket(payload as WorkReportSignalPacket);
+      setSelectedTraceRunId(null);
+      setTraces({});
+      setTraceErrors({});
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
@@ -179,6 +230,10 @@ export function WorkReportActionPilot({ reports }: { reports: WorkReportView[] }
             }
           : current
       );
+
+      if (selectedTraceRunId === runId) {
+        await loadTrace(runId);
+      }
     } catch (applyError) {
       setError(
         applyError instanceof Error ? applyError.message : "Не удалось применить proposal."
@@ -335,6 +390,25 @@ export function WorkReportActionPilot({ reports }: { reports: WorkReportView[] }
                         {entry.run.result?.summary ?? "AI run ещё не вернул summary."}
                       </div>
 
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        <Button
+                          onClick={() => void toggleTrace(entry.run.id)}
+                          size="sm"
+                          variant="outline"
+                        >
+                          {selectedTraceRunId === entry.run.id ? "Hide trace" : "Open trace"}
+                        </Button>
+                        {canApply && proposal ? (
+                          <Button
+                            disabled={isApplying}
+                            onClick={() => applyProposal(entry.run.id, proposal.id)}
+                            size="sm"
+                          >
+                            {isApplying ? "Применение..." : "Apply proposal"}
+                          </Button>
+                        ) : null}
+                      </div>
+
                       {proposal ? (
                         <div className="mt-3 grid gap-2 rounded-[14px] border border-[var(--line)] bg-[var(--panel-soft)] p-3">
                           <div className="text-sm font-medium text-[var(--ink)]">{proposal.title}</div>
@@ -342,18 +416,16 @@ export function WorkReportActionPilot({ reports }: { reports: WorkReportView[] }
                           <div className="text-xs text-[var(--ink-muted)]">
                             Item count: {getProposalItemCount(proposal)}
                           </div>
-                          {canApply ? (
-                            <div className="flex flex-wrap gap-3">
-                              <Button
-                                disabled={isApplying}
-                                onClick={() => applyProposal(entry.run.id, proposal.id)}
-                                size="sm"
-                              >
-                                {isApplying ? "Применение..." : "Apply proposal"}
-                              </Button>
-                            </div>
-                          ) : null}
                         </div>
+                      ) : null}
+
+                      {selectedTraceRunId === entry.run.id ? (
+                        <AIRunTracePanel
+                          error={traceErrors[entry.run.id]}
+                          isLoading={loadingTraceIds.includes(entry.run.id)}
+                          onRefresh={() => void loadTrace(entry.run.id)}
+                          trace={traces[entry.run.id] ?? null}
+                        />
                       ) : null}
                     </div>
                   );

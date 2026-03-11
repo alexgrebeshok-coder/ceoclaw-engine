@@ -1,11 +1,32 @@
 # CEOClaw Dashboard — История проекта
 
 **Проект:** CEOClaw (ранее SEOClaw)
-**Тип:** AI-powered Project Management Dashboard
+**Тип:** AI operating layer for project-driven organizations
 **Репозиторий:** https://github.com/alexgrebeshok-coder/ceoclaw
 **URL:** https://ceoclaw.vercel.app
 **Начало:** Январь 2026
-**Текущий статус:** MVP готов, в процессе улучшений
+**Текущий статус:** Alpha operating layer, active modernization
+
+---
+
+## Актуальная рамка на 2026-03-11
+
+История ниже полезна как эволюция продукта, но текущая форма CEOClaw уже шире исходного dashboard MVP.
+
+Актуально:
+
+1. продукт движется из `AI-powered PM dashboard` в `AI operating layer`;
+2. уже есть proposal/apply, work reports, executive briefs, plan-vs-fact, policy/workspace model, Telegram delivery, GPS telemetry sample, evidence ledger и AI trace/evals;
+3. следующий этап не про новые страницы, а про enterprise truth expansion и operator control.
+
+Единственный канонический источник текущего execution-state:
+
+- `plans/2026-03-11-ceoclaw-master-execution-plan.md`
+
+Поддерживающие документы:
+
+- `plans/2026-03-11-ceoclaw-session-operating-model.md`
+- `plans/2026-03-11-ceoclaw-modernization-roadmap.md`
 
 ---
 
@@ -122,7 +143,9 @@
 - [x] AI runs API
 - [x] Proposal/apply flow
 - [ ] Voice commands (в процессе)
-- [ ] Telegram sync (в процессе)
+- [x] Telegram live probe
+- [x] Telegram brief delivery
+- [x] Scheduled Telegram digests
 
 ### Phase 3: Desktop App (Апрель 2026)
 
@@ -136,13 +159,13 @@
 
 ### Phase 4: Integrations (Май 2026)
 
-**Цель:** Интеграция с внешними сервисами
+**Цель:** Интеграция с внешними сервисами и источниками операционной правды
 
-- [ ] Gmail Integration (OAuth2)
-- [ ] Google Calendar Integration
-- [ ] Google Drive Integration
-- [ ] Notion Integration
-- [ ] Slack Integration
+- [x] Telegram live probe
+- [x] GPS/GLONASS live readiness probe
+- [ ] 1C live read connector
+- [ ] Email outbound channel
+- [ ] Demo/live operator truth layer
 
 ### Phase 5: AI Documents (Июнь 2026)
 

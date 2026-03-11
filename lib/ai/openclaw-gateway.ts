@@ -376,6 +376,7 @@ function buildContextDigest(input: AIRunInput) {
           kind: input.quickAction.kind,
         }
       : null,
+    source: input.source ?? null,
     currentProject: project
       ? {
           id: project.id,

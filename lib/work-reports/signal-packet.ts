@@ -88,9 +88,18 @@ export async function createWorkReportSignalPacket(
     throw new Error(`Project "${report.projectId}" was not found.`);
   }
 
+  const packetId = packetIdFactory();
   const planFact = buildProjectPlanFactSummary(snapshot, report.projectId);
   const signal = buildSignalSnapshot(report, snapshot, planFact, request.locale ?? context.locale);
-  const blueprints = buildWorkReportSignalRunBlueprints(context, report, signal, request.locale);
+  const blueprints = buildWorkReportSignalRunBlueprints(
+    context,
+    report,
+    signal,
+    request.locale,
+    {
+      packetId,
+    }
+  );
 
   const runs = await Promise.all(
     blueprints.map(async (blueprint) => ({
@@ -102,7 +111,7 @@ export async function createWorkReportSignalPacket(
   );
 
   return {
-    packetId: packetIdFactory(),
+    packetId,
     createdAt: now().toISOString(),
     reportId: report.id,
     reportNumber: report.reportNumber,
@@ -121,7 +130,8 @@ export function buildWorkReportSignalRunBlueprints(
   context: AIContextSnapshot,
   report: WorkReportView,
   signal: WorkReportSignalSnapshot,
-  locale: Locale = context.locale
+  locale: Locale = context.locale,
+  traceMeta: { packetId: string }
 ): WorkReportSignalRunBlueprint[] {
   const planner = requireAgent("execution-planner");
   const riskResearcher = requireAgent("risk-researcher");
@@ -149,6 +159,17 @@ export function buildWorkReportSignalRunBlueprints(
     createBlueprint("tasks", "Execution patch", {
       agent: planner,
       context,
+      source: {
+        workflow: "work_report_signal_packet",
+        purpose: "tasks",
+        packetId: traceMeta.packetId,
+        packetLabel: `${report.reportNumber} · ${report.section}`,
+        entityType: "work_report",
+        entityId: report.id,
+        entityLabel: `${report.reportNumber} · ${report.section}`,
+        projectId: report.projectId,
+        projectName: report.project.name,
+      },
       prompt: [
         `Work-report action packet for project ${projectName}.`,
         `Report ${report.reportNumber} (${report.status}) from ${report.section} on ${report.reportDate}.`,
@@ -172,6 +193,17 @@ export function buildWorkReportSignalRunBlueprints(
     createBlueprint("risks", "Risk additions", {
       agent: riskResearcher,
       context,
+      source: {
+        workflow: "work_report_signal_packet",
+        purpose: "risks",
+        packetId: traceMeta.packetId,
+        packetLabel: `${report.reportNumber} · ${report.section}`,
+        entityType: "work_report",
+        entityId: report.id,
+        entityLabel: `${report.reportNumber} · ${report.section}`,
+        projectId: report.projectId,
+        projectName: report.project.name,
+      },
       prompt: [
         `Work-report risk packet for project ${projectName}.`,
         `Report ${report.reportNumber} (${report.status}) from ${report.section} on ${report.reportDate}.`,
@@ -192,6 +224,17 @@ export function buildWorkReportSignalRunBlueprints(
     createBlueprint("status", "Executive status draft", {
       agent: statusReporter,
       context,
+      source: {
+        workflow: "work_report_signal_packet",
+        purpose: "status",
+        packetId: traceMeta.packetId,
+        packetLabel: `${report.reportNumber} · ${report.section}`,
+        entityType: "work_report",
+        entityId: report.id,
+        entityLabel: `${report.reportNumber} · ${report.section}`,
+        projectId: report.projectId,
+        projectName: report.project.name,
+      },
       prompt: [
         `Work-report executive update for project ${projectName}.`,
         `Report ${report.reportNumber} (${report.status}) from ${report.section} on ${report.reportDate}.`,

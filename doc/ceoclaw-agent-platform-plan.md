@@ -8,17 +8,18 @@
 
 `facts -> verification -> agent analysis -> recommendation -> approval -> action`
 
-## Боевые план-файлы
+## Канонический источник истины
 
-Актуальные execution-планы для работы лежат в:
+Единственный канонический источник текущего execution-state и следующих сессий:
 
 - `plans/2026-03-11-ceoclaw-master-execution-plan.md`
-- `plans/2026-03-11-ceoclaw-session-operating-model.md`
 
-Именно они определяют:
-- когда работать последовательно;
-- когда запускать параллельные сессии;
-- кто должен делать интеграцию между волнами.
+Поддерживающие документы:
+
+- `plans/2026-03-11-ceoclaw-session-operating-model.md` — только правила работы по сессиям;
+- `plans/2026-03-11-ceoclaw-modernization-roadmap.md` — только детальный roadmap modernization.
+
+Этот файл нужен как продуктовая рамка и карта происхождения идей, а не как дублирующий live checklist.
 
 ## Что уже можно переиспользовать из AI-PMO
 
@@ -169,6 +170,16 @@
 - `/api/connectors/telegram/briefs/policies` и cron-safe `run-due` route уже дают scheduled Telegram digest flow;
 - task / risk / status packets проходят через existing proposal/apply engine.
 
+Фактически этот modernization chain уже закрыт на lead branch:
+- `GPS read`
+- `evidence ledger`
+- `AI trace/evals`
+
+Следующий рекомендованный ход:
+- `1C live read`
+- `operator escalation queue`
+- `demo/live truth in operator UX`
+
 ## Definition of Done по релизу Alpha
 
 1. Можно импортировать проект из табличных данных и документов.
@@ -185,6 +196,15 @@
 12. Есть второй live datasource connector upgrade: GPS/GLONASS health больше не stub, а реальный `/session-stats` probe.
 13. Есть первый live outbound channel: portfolio/project brief можно preview/send в Telegram.
 14. Есть первый scheduled outbound policy layer: executive digests можно сохранять и выполнять по расписанию через cron-safe route.
+
+## Roadmap
+
+Текущий live roadmap больше не дублируется здесь.
+
+Использовать:
+
+- `plans/2026-03-11-ceoclaw-master-execution-plan.md` — что уже сделано и что идёт следующим;
+- `plans/2026-03-11-ceoclaw-modernization-roadmap.md` — 30/60/90-day detail.
 
 ## Правила merge между волнами
 
@@ -209,4 +229,11 @@
 - `doc/session-prompts/session-07-org-workspace-policy.md`
 - `doc/session-prompts/session-08-plan-vs-fact.md`
 - `doc/session-prompts/session-09-meeting-to-action.md`
+- `doc/session-prompts/session-10-work-report-signal-loop.md`
+- `doc/session-prompts/session-11-live-connector-upgrade.md`
+- `doc/session-prompts/session-12-telegram-brief-delivery.md`
 - `doc/session-prompts/session-13-scheduled-digests.md`
+- `doc/session-prompts/session-14-second-live-datasource-connector.md`
+- `doc/session-prompts/session-15-gps-telemetry-ingestion.md`
+- `doc/session-prompts/session-16-evidence-ledger.md`
+- `doc/session-prompts/session-17-ai-trace-evals.md`

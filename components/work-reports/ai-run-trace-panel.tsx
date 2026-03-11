@@ -1,0 +1,158 @@
+"use client";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type { AIRunTrace, AIRunTraceStepStatus } from "@/lib/ai/trace";
+
+function stepVariant(status: AIRunTraceStepStatus) {
+  switch (status) {
+    case "done":
+      return "success";
+    case "running":
+      return "info";
+    case "failed":
+      return "danger";
+    case "pending":
+      return "warning";
+    case "not_applicable":
+    default:
+      return "neutral";
+  }
+}
+
+function formatDateTime(value?: string) {
+  if (!value) return "n/a";
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+export function AIRunTracePanel({
+  error,
+  isLoading,
+  onRefresh,
+  trace,
+}: {
+  error?: string | null;
+  isLoading?: boolean;
+  onRefresh?: () => void;
+  trace: AIRunTrace | null;
+}) {
+  if (isLoading) {
+    return (
+      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel-soft)] p-4 text-sm text-[var(--ink-soft)]">
+        Загружаю trace summary...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-[14px] border border-rose-300/70 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+        {error}
+      </div>
+    );
+  }
+
+  if (!trace) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-3 rounded-[16px] border border-[var(--line)] bg-[var(--panel-soft)] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="grid gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="info">{trace.source.workflowLabel}</Badge>
+            {trace.source.purposeLabel ? <Badge variant="neutral">{trace.source.purposeLabel}</Badge> : null}
+            <Badge variant={stepVariant(trace.model.status)}>{trace.model.name}</Badge>
+          </div>
+          <div className="text-sm font-medium text-[var(--ink)]">{trace.source.entityLabel}</div>
+          <div className="text-xs text-[var(--ink-muted)]">
+            Packet: {trace.source.packetId ?? "n/a"} · Run: {trace.runId}
+          </div>
+        </div>
+
+        {onRefresh ? (
+          <Button onClick={onRefresh} size="sm" variant="outline">
+            Refresh trace
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="rounded-[14px] border border-[var(--line)] bg-[var(--surface-panel)] p-3">
+          <div className="text-xs uppercase tracking-[0.18em] text-[var(--ink-muted)]">Facts loaded</div>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-[var(--ink-soft)]">
+            <span>Projects: {trace.context.facts.projects}</span>
+            <span>Tasks: {trace.context.facts.tasks}</span>
+            <span>Risks: {trace.context.facts.risks}</span>
+            <span>Team: {trace.context.facts.team}</span>
+            <span>Notifications: {trace.context.facts.notifications}</span>
+            <span>Context: {trace.context.title}</span>
+          </div>
+        </div>
+
+        <div className="rounded-[14px] border border-[var(--line)] bg-[var(--surface-panel)] p-3">
+          <div className="text-xs uppercase tracking-[0.18em] text-[var(--ink-muted)]">Prompt preview</div>
+          <div className="mt-2 text-sm text-[var(--ink-soft)]">{trace.promptPreview}</div>
+        </div>
+      </div>
+
+      <div className="grid gap-2">
+        {trace.steps.map((step) => (
+          <div
+            key={step.id}
+            className="grid gap-2 rounded-[14px] border border-[var(--line)] bg-[var(--surface-panel)] p-3"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-sm font-medium text-[var(--ink)]">{step.label}</div>
+              <Badge variant={stepVariant(step.status)}>{step.status}</Badge>
+            </div>
+            <div className="text-sm text-[var(--ink-soft)]">{step.summary}</div>
+            <div className="text-xs text-[var(--ink-muted)]">
+              {formatDateTime(step.startedAt)} → {formatDateTime(step.endedAt)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {trace.proposal.type ? (
+        <div className="rounded-[14px] border border-[var(--line)] bg-[var(--surface-panel)] p-3">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="warning">{trace.proposal.type}</Badge>
+            {trace.proposal.state ? <Badge variant="neutral">{trace.proposal.state}</Badge> : null}
+          </div>
+          <div className="mt-2 text-sm font-medium text-[var(--ink)]">{trace.proposal.title}</div>
+          <div className="mt-1 text-sm text-[var(--ink-soft)]">{trace.proposal.summary}</div>
+          <div className="mt-2 text-xs text-[var(--ink-muted)]">
+            Items: {trace.proposal.itemCount}
+            {trace.proposal.previewItems.length > 0
+              ? ` · ${trace.proposal.previewItems.join(" · ")}`
+              : ""}
+          </div>
+        </div>
+      ) : null}
+
+      {trace.apply ? (
+        <div className="rounded-[14px] border border-emerald-300/40 bg-emerald-500/10 p-3">
+          <div className="text-xs uppercase tracking-[0.18em] text-emerald-200/90">Apply result</div>
+          <div className="mt-2 text-sm text-[var(--ink)]">{trace.apply.summary}</div>
+          <div className="mt-1 text-xs text-[var(--ink-muted)]">
+            Applied: {formatDateTime(trace.apply.appliedAt)} · Items: {trace.apply.itemCount}
+          </div>
+        </div>
+      ) : null}
+
+      {trace.failure ? (
+        <div className="rounded-[14px] border border-rose-300/70 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+          {trace.failure.message}
+        </div>
+      ) : null}
+    </div>
+  );
+}

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 
 import { GET as getConnectorById } from "../../app/api/connectors/[id]/route";
+import { GET as getGpsSample } from "../../app/api/connectors/gps/sample/route";
 import { GET as getConnectors } from "../../app/api/connectors/route";
 import { GET as getHealth } from "../../app/api/health/route";
 
@@ -62,6 +63,22 @@ function installConnectorFetchMock() {
         total_equipment: 68,
         online_equipment: 61,
         offline_equipment: 7,
+      });
+    }
+
+    if (url.includes("gps.example.com") && url.includes("/sessions")) {
+      return createJsonResponse({
+        equipment_id: "EXC-KOM-01",
+        sessions: [
+          {
+            session_id: "sess-20260207-EXC-KOM-01-003",
+            session_type: "work",
+            started_at: "2026-02-07T08:00:00Z",
+            ended_at: "2026-02-07T10:30:00Z",
+            duration_seconds: 9000,
+            geofence_name: "Salekhard-Labytnangi Earthwork Zone",
+          },
+        ],
       });
     }
 
@@ -152,6 +169,15 @@ async function run() {
         assert.equal(gpsBody.status, "ok");
         assert.equal(gpsBody.stub, false);
         assert.equal(gpsBody.metadata.equipmentCount, 68);
+
+        const gpsSampleResponse = await getGpsSample(accessRequest);
+        const gpsSampleBody = await gpsSampleResponse.json();
+        assert.equal(gpsSampleResponse.status, 200);
+        assert.equal(gpsSampleBody.id, "gps");
+        assert.equal(gpsSampleBody.status, "ok");
+        assert.equal(gpsSampleBody.samples.length, 1);
+        assert.equal(gpsSampleBody.samples[0].equipmentId, "EXC-KOM-01");
+        assert.equal(gpsSampleBody.samples[0].status, "work");
 
         const missingResponse = await getConnectorById(accessRequest, {
           params: Promise.resolve({ id: "missing" }),

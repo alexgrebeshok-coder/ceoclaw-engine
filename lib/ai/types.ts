@@ -69,6 +69,18 @@ export interface AIContextSnapshot {
   projectTasks?: Task[];
 }
 
+export interface AIRunSourceRef {
+  workflow: string;
+  purpose?: string;
+  packetId?: string;
+  packetLabel?: string;
+  entityType: string;
+  entityId: string;
+  entityLabel: string;
+  projectId?: string;
+  projectName?: string;
+}
+
 export interface AIAgentDefinition {
   id: string;
   kind: AIAgentKind;
@@ -237,6 +249,7 @@ export interface AIRunInput {
   prompt: string;
   context: AIContextSnapshot;
   quickAction?: AIQuickActionDefinition;
+  source?: AIRunSourceRef;
 }
 
 export interface AIApplyProposalInput {

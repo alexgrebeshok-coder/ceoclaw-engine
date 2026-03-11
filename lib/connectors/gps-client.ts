@@ -1,6 +1,32 @@
 type GpsFetch = typeof fetch;
 
 type GpsProbeMetadata = Record<string, string | number | boolean | null>;
+type GpsSampleMetadata = Record<string, string | number | boolean | null>;
+
+export interface GpsTelemetrySample {
+  source: "gps";
+  sessionId: string | null;
+  equipmentId: string | null;
+  equipmentType: string | null;
+  status: string;
+  startedAt: string | null;
+  endedAt: string | null;
+  durationSeconds: number | null;
+  geofenceId: string | null;
+  geofenceName: string | null;
+}
+
+export interface GpsTelemetrySampleSnapshot {
+  id: "gps";
+  checkedAt: string;
+  configured: boolean;
+  status: "ok" | "pending" | "degraded";
+  message: string;
+  missingSecrets: string[];
+  sampleUrl?: string;
+  samples: GpsTelemetrySample[];
+  metadata?: GpsSampleMetadata;
+}
 
 export function getGpsApiUrl(env: NodeJS.ProcessEnv = process.env) {
   return env.GPS_API_URL?.trim() || null;
@@ -16,6 +42,29 @@ export function buildGpsProbeUrl(baseUrl: string) {
 
   if (!url.search && !hasExplicitProbePath(normalizedPath)) {
     url.pathname = `${normalizedPath}/session-stats`;
+  }
+
+  return url.toString();
+}
+
+export function buildGpsSampleUrl(baseUrl: string) {
+  const url = new URL(baseUrl);
+  const normalizedPath = url.pathname.replace(/\/$/, "");
+
+  if (!url.search) {
+    if (normalizedPath.endsWith("/sessions")) {
+      url.pathname = normalizedPath;
+    } else if (normalizedPath.endsWith("/session-stats")) {
+      url.pathname = normalizedPath.replace(/\/session-stats$/, "/sessions");
+    } else if (normalizedPath.endsWith("/health") || normalizedPath.endsWith("/status")) {
+      url.pathname = normalizedPath.replace(/\/(health|status)$/, "/sessions");
+    } else {
+      url.pathname = `${normalizedPath}/sessions`;
+    }
+  }
+
+  if (!url.searchParams.has("page_size")) {
+    url.searchParams.set("page_size", "3");
   }
 
   return url.toString();
@@ -96,6 +145,170 @@ export async function probeGpsApi(
   };
 }
 
+export async function fetchGpsTelemetrySample(
+  input: {
+    baseUrl: string;
+    apiKey: string;
+  },
+  fetchImpl: GpsFetch = fetch
+): Promise<
+  | {
+      ok: true;
+      sampleUrl: string;
+      message: string;
+      samples: GpsTelemetrySample[];
+      metadata: GpsSampleMetadata;
+    }
+  | {
+      ok: false;
+      sampleUrl: string;
+      message: string;
+      status?: number;
+      metadata?: GpsSampleMetadata;
+    }
+> {
+  const sampleUrl = buildGpsSampleUrl(input.baseUrl);
+  const response = await fetchImpl(sampleUrl, {
+    method: "GET",
+    headers: buildGpsHeaders(input.apiKey),
+    cache: "no-store",
+  });
+
+  const text = await response.text();
+  const parsedPayload = parseJson(text);
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      sampleUrl,
+      status: response.status,
+      message: `HTTP ${response.status} while calling GPS telemetry sample`,
+      metadata: {
+        sampleUrl,
+        responseShape: describePayloadShape(parsedPayload),
+      },
+    };
+  }
+
+  if (parsedPayload === undefined || parsedPayload === null) {
+    return {
+      ok: false,
+      sampleUrl,
+      message:
+        parsedPayload === null
+          ? "GPS telemetry sample returned an empty payload."
+          : "GPS telemetry sample returned a non-JSON payload.",
+      metadata: {
+        sampleUrl,
+        contentLength: text.length,
+      },
+    };
+  }
+
+  const samples = normalizeGpsTelemetrySamples(parsedPayload);
+
+  if (samples.length === 0) {
+    return {
+      ok: false,
+      sampleUrl,
+      message: "GPS telemetry sample returned JSON, but no session-like records were found.",
+      metadata: {
+        sampleUrl,
+        responseShape: describePayloadShape(parsedPayload),
+      },
+    };
+  }
+
+  const provider = readStringField(parsedPayload, ["provider", "source", "vendor", "platform"]);
+
+  return {
+    ok: true,
+    sampleUrl,
+    message: `GPS telemetry sample returned ${samples.length} session record${samples.length === 1 ? "" : "s"} from ${new URL(sampleUrl).pathname}.`,
+    samples,
+    metadata: {
+      sampleUrl,
+      responseShape: describePayloadShape(parsedPayload),
+      sampleCount: samples.length,
+      ...(provider ? { provider } : {}),
+    },
+  };
+}
+
+export async function getGpsTelemetrySampleSnapshot(
+  env: NodeJS.ProcessEnv = process.env,
+  fetchImpl: GpsFetch = fetch
+): Promise<GpsTelemetrySampleSnapshot> {
+  const checkedAt = new Date().toISOString();
+  const apiUrl = getGpsApiUrl(env);
+  const apiKey = getGpsApiKey(env);
+  const missingSecrets = [
+    ...(apiUrl ? [] : ["GPS_API_URL"]),
+    ...(apiKey ? [] : ["GPS_API_KEY"]),
+  ];
+
+  if (missingSecrets.length > 0) {
+    return {
+      id: "gps",
+      checkedAt,
+      configured: false,
+      status: "pending",
+      message: "GPS telemetry sample is waiting for GPS_API_URL and GPS_API_KEY.",
+      missingSecrets,
+      samples: [],
+    };
+  }
+
+  try {
+    const result = await fetchGpsTelemetrySample(
+      {
+        baseUrl: apiUrl!,
+        apiKey: apiKey!,
+      },
+      fetchImpl
+    );
+
+    if (!result.ok) {
+      return {
+        id: "gps",
+        checkedAt,
+        configured: true,
+        status: "degraded",
+        message: `GPS telemetry sample failed: ${result.message}`,
+        missingSecrets: [],
+        sampleUrl: result.sampleUrl,
+        samples: [],
+        metadata: result.metadata,
+      };
+    }
+
+    return {
+      id: "gps",
+      checkedAt,
+      configured: true,
+      status: "ok",
+      message: result.message,
+      missingSecrets: [],
+      sampleUrl: result.sampleUrl,
+      samples: result.samples,
+      metadata: result.metadata,
+    };
+  } catch (error) {
+    return {
+      id: "gps",
+      checkedAt,
+      configured: true,
+      status: "degraded",
+      message:
+        error instanceof Error
+          ? `GPS telemetry sample failed: ${error.message}`
+          : "GPS telemetry sample failed with an unknown error.",
+      missingSecrets: [],
+      samples: [],
+    };
+  }
+}
+
 function interpretGpsPayload(payload: unknown, probeUrl: string) {
   const metadata: GpsProbeMetadata = {
     probeUrl,
@@ -145,6 +358,143 @@ function interpretGpsPayload(payload: unknown, probeUrl: string) {
     message,
     metadata,
   };
+}
+
+function normalizeGpsTelemetrySamples(payload: unknown): GpsTelemetrySample[] {
+  const { entries, defaults } = extractSessionEntries(payload);
+
+  return entries
+    .map((entry) => normalizeGpsTelemetrySample(entry, defaults))
+    .filter((entry): entry is GpsTelemetrySample => entry !== null);
+}
+
+function extractSessionEntries(payload: unknown) {
+  if (Array.isArray(payload)) {
+    return {
+      entries: payload,
+      defaults: null,
+    };
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return {
+      entries: [],
+      defaults: null,
+    };
+  }
+
+  const record = payload as Record<string, unknown>;
+
+  if (Array.isArray(record.sessions)) {
+    return {
+      entries: record.sessions,
+      defaults: record,
+    };
+  }
+
+  if (Array.isArray(record.items)) {
+    return {
+      entries: record.items,
+      defaults: record,
+    };
+  }
+
+  if (looksLikeSessionRecord(record)) {
+    return {
+      entries: [record],
+      defaults: record,
+    };
+  }
+
+  return {
+    entries: [],
+    defaults: record,
+  };
+}
+
+function normalizeGpsTelemetrySample(
+  payload: unknown,
+  defaults: Record<string, unknown> | null
+): GpsTelemetrySample | null {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+  const sessionId =
+    readStringField(record, ["session_id", "sessionId", "id"]) ??
+    readStringField(defaults, ["session_id", "sessionId", "id"]);
+  const equipmentId =
+    readStringField(record, ["equipment_id", "equipmentId"]) ??
+    readStringField(defaults, ["equipment_id", "equipmentId"]);
+  const equipmentType =
+    readStringField(record, ["equipment_type", "equipmentType"]) ??
+    readStringField(defaults, ["equipment_type", "equipmentType"]);
+  const status =
+    readStringField(record, ["session_type", "sessionType", "status", "type"]) ?? "session";
+  const startedAt =
+    readStringField(record, ["started_at", "startedAt", "start_time", "startTime"]) ??
+    readStringField(defaults, ["started_at", "startedAt", "start_time", "startTime"]);
+  const endedAt =
+    readStringField(record, ["ended_at", "endedAt", "end_time", "endTime"]) ??
+    readStringField(defaults, ["ended_at", "endedAt", "end_time", "endTime"]);
+  const durationSeconds =
+    readNumberField(record, ["duration_seconds", "durationSeconds", "duration"]) ??
+    deriveDurationSeconds(startedAt, endedAt);
+  const geofenceId =
+    readStringField(record, ["geofence_id", "geofenceId"]) ??
+    readStringField(defaults, ["geofence_id", "geofenceId"]);
+  const geofenceName =
+    readStringField(record, ["geofence_name", "geofenceName"]) ??
+    readStringField(defaults, ["geofence_name", "geofenceName"]);
+
+  if (
+    !sessionId &&
+    !equipmentId &&
+    !startedAt &&
+    !endedAt &&
+    durationSeconds === null &&
+    status === "session"
+  ) {
+    return null;
+  }
+
+  return {
+    source: "gps",
+    sessionId,
+    equipmentId,
+    equipmentType,
+    status,
+    startedAt,
+    endedAt,
+    durationSeconds,
+    geofenceId,
+    geofenceName,
+  };
+}
+
+function looksLikeSessionRecord(record: Record<string, unknown>) {
+  return Boolean(
+    readStringField(record, ["session_id", "sessionId"]) ||
+      readStringField(record, ["equipment_id", "equipmentId"]) ||
+      readStringField(record, ["started_at", "startedAt", "start_time", "startTime"]) ||
+      readStringField(record, ["ended_at", "endedAt", "end_time", "endTime"])
+  );
+}
+
+function deriveDurationSeconds(startedAt: string | null, endedAt: string | null) {
+  if (!startedAt || !endedAt) {
+    return null;
+  }
+
+  const startedMs = Date.parse(startedAt);
+  const endedMs = Date.parse(endedAt);
+
+  if (!Number.isFinite(startedMs) || !Number.isFinite(endedMs) || endedMs < startedMs) {
+    return null;
+  }
+
+  return Math.round((endedMs - startedMs) / 1000);
 }
 
 function hasExplicitProbePath(pathname: string) {
@@ -199,7 +549,18 @@ function describePayloadShape(payload: unknown) {
   return typeof payload;
 }
 
-function readStringField(payload: unknown, keys: string[]) {
+function buildGpsHeaders(apiKey: string) {
+  return {
+    Accept: "application/json",
+    Authorization: `Bearer ${apiKey}`,
+    "X-API-Key": apiKey,
+  };
+}
+
+function readStringField(
+  payload: unknown,
+  keys: string[]
+): string | null {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     return null;
   }
@@ -214,7 +575,10 @@ function readStringField(payload: unknown, keys: string[]) {
   return null;
 }
 
-function readNumberField(payload: unknown, keys: string[]) {
+function readNumberField(
+  payload: unknown,
+  keys: string[]
+): number | null {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     return null;
   }

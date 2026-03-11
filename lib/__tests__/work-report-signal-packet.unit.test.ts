@@ -268,12 +268,16 @@ function testBlueprintsStayPurposeScoped() {
     ],
   };
 
-  const blueprints = buildWorkReportSignalRunBlueprints(context, report, signal, "ru");
+  const blueprints = buildWorkReportSignalRunBlueprints(context, report, signal, "ru", {
+    packetId: "work-report-packet-test",
+  });
 
   assert.equal(blueprints.length, 3);
   assert.equal(blueprints[0]?.purpose, "tasks");
   assert.match(blueprints[0]?.input.prompt ?? "", /Update the execution plan/);
   assert.match(blueprints[0]?.input.prompt ?? "", /#202603110001/);
+  assert.equal(blueprints[0]?.input.source?.workflow, "work_report_signal_packet");
+  assert.equal(blueprints[0]?.input.source?.packetId, "work-report-packet-test");
   assert.equal(blueprints[1]?.purpose, "risks");
   assert.match(blueprints[1]?.input.prompt ?? "", /Raise risks or blockers/);
   assert.equal(blueprints[2]?.purpose, "status");

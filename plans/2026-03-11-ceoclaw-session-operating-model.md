@@ -3,6 +3,10 @@
 **Date:** 2026-03-11
 **Status:** Active
 
+**Canonical source of current execution truth:** `plans/2026-03-11-ceoclaw-master-execution-plan.md`
+
+This document defines operating rules. It is not the canonical place for live session status.
+
 ## 1. Working Modes
 
 There are two valid ways to work on CEOClaw.
@@ -27,19 +31,22 @@ Use this when:
 
 ### Right now
 
-Use `Mode A` first.
+Use a hybrid of `Mode A` and `Mode B`.
 
 Reason:
-- build is not stable enough yet;
-- test boundaries are not clean;
-- mock vs production behavior is still fuzzy.
+- Wave 0 is already closed;
+- build and unit verification are stable enough for controlled worker use;
+- the repo now needs narrow deepening passes, not repo-wide rescue work.
 
-### After Wave 0
+### For the next batch
 
-Switch to `Mode B`.
+Prefer lead-first sequencing for the active sessions defined in the master execution plan.
+
+As of 2026-03-11 after the Wave 5 base landed, that means Session 18 through Session 20.
 
 Recommended concurrency:
-- 2 sessions minimum if you want acceleration;
+- 1 lead session for schema or cross-cutting evidence/runtime work;
+- 2 worker sessions maximum when a session prompt has isolated ownership;
 - 3 sessions maximum per wave for now.
 
 ## 3. Session Roles
@@ -92,7 +99,14 @@ Use exactly one of the files from:
 - [session-07-org-workspace-policy.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-07-org-workspace-policy.md)
 - [session-08-plan-vs-fact.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-08-plan-vs-fact.md)
 - [session-09-meeting-to-action.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-09-meeting-to-action.md)
+- [session-10-work-report-signal-loop.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-10-work-report-signal-loop.md)
+- [session-11-live-connector-upgrade.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-11-live-connector-upgrade.md)
+- [session-12-telegram-brief-delivery.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-12-telegram-brief-delivery.md)
 - [session-13-scheduled-digests.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-13-scheduled-digests.md)
+- [session-14-second-live-datasource-connector.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-14-second-live-datasource-connector.md)
+- [session-15-gps-telemetry-ingestion.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-15-gps-telemetry-ingestion.md)
+- [session-16-evidence-ledger.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-16-evidence-ledger.md)
+- [session-17-ai-trace-evals.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-17-ai-trace-evals.md)
 
 Do not combine prompt files in one worker session.
 
@@ -143,7 +157,7 @@ Status: complete on 2026-03-11. Lead track landed shared plan-vs-fact services, 
 ### Stage 7
 
 Repeat the same pattern for the next wave: workers implement in isolated zones, lead session integrates and verifies.
-Status: Session 09, Session 10, Session 11, Session 12, Session 13, and Session 14 are complete on 2026-03-11. Meeting-to-action, work-report signal packets, Telegram live probing, Telegram brief delivery, scheduled Telegram digest policies, and GPS live datasource probing now work on the lead branch, so the next worker batch can move toward the first honest telemetry ingestion slice instead of another status-only connector pass.
+Status: Sessions 09 through 17 are complete on 2026-03-11. Meeting-to-action, work-report signal packets, Telegram live probing, Telegram brief delivery, scheduled Telegram digests, GPS telemetry sample reads, evidence ledger, and AI trace/eval coverage now work on the lead branch.
 
 ## 8. When Not to Parallelize
 
@@ -172,19 +186,10 @@ That means:
 Right now:
 
 1. Wave 0 no longer blocks parallel execution.
-2. Wave 1 is complete on the lead branch.
-3. Session 04 is complete on the lead branch.
-4. Session 05 and Session 06 have been integrated on the lead branch.
-5. Wave 2 is complete.
-6. Session 07 is complete on the lead branch.
-7. Session 08 is complete on the lead branch.
-8. Session 09 is complete on the lead branch.
-9. Session 10 is complete on the lead branch.
-10. Session 11 is complete on the lead branch.
-11. Session 12 is complete on the lead branch.
-12. Session 13 is complete on the lead branch.
-13. Session 14 is complete on the lead branch.
-14. Keep this session as the integration track for the first telemetry ingestion slice or another narrow connector deepening pass.
+2. Sessions 01 through 17 are complete on the lead branch.
+3. Keep exact active session selection in the master execution plan, not here.
+4. Current likely next batch is Session 18 through Session 20.
+5. Avoid broad new feature waves until the 1C read, escalation queue, and demo/live truth slices are landed.
 
 ## 11. Success Condition for This Operating Model
 

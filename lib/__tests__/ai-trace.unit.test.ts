@@ -1,0 +1,144 @@
+import assert from "node:assert/strict";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import path from "node:path";
+
+import { GET as getTraceRoute } from "../../app/api/ai/runs/[id]/trace/route";
+import { runAIRunEvalSuite } from "@/lib/ai/evals";
+import { buildMockFinalRun } from "@/lib/ai/mock-adapter";
+import { buildAIRunTrace } from "@/lib/ai/trace";
+
+import { createWorkReportSignalFixtureBundle } from "./fixtures/work-report-signal-fixtures";
+
+async function testTraceSummarizesWorkReportRun() {
+  const { blueprints } = createWorkReportSignalFixtureBundle();
+  const input = blueprints.find((blueprint) => blueprint.purpose === "tasks")?.input;
+
+  assert.ok(input);
+
+  const run = buildMockFinalRun(input, {
+    id: "ai-run-trace-tasks",
+    createdAt: "2026-03-11T09:00:00.000Z",
+    updatedAt: "2026-03-11T09:00:05.000Z",
+    quickActionId: input?.quickAction?.id,
+  });
+  const trace = buildAIRunTrace({
+    origin: "mock",
+    input,
+    run,
+  });
+
+  assert.equal(trace.workflow, "work_report_signal_packet");
+  assert.equal(trace.source.entityType, "work_report");
+  assert.equal(trace.source.purpose, "tasks");
+  assert.equal(trace.model.name, "mock-adapter");
+  assert.equal(trace.proposal.type, "update_tasks");
+  assert.ok(trace.proposal.itemCount >= 1);
+  assert.equal(trace.steps[2]?.id, "model");
+  assert.equal(trace.steps[2]?.status, "done");
+  assert.equal(trace.steps[3]?.status, "done");
+  assert.equal(trace.steps[4]?.status, "pending");
+}
+
+async function testEvalSuitePassesStableFixturesAndCatchesMissingContext() {
+  const { blueprints } = createWorkReportSignalFixtureBundle();
+  const tasksInput = blueprints.find((blueprint) => blueprint.purpose === "tasks")?.input;
+  const risksInput = blueprints.find((blueprint) => blueprint.purpose === "risks")?.input;
+
+  assert.ok(tasksInput);
+  assert.ok(risksInput);
+
+  const missingContextInput = {
+    ...tasksInput,
+    context: {
+      ...tasksInput.context,
+      activeContext: {
+        ...tasksInput.context.activeContext,
+        projectId: undefined,
+      },
+      project: undefined,
+      projectTasks: undefined,
+    },
+  };
+
+  const suite = runAIRunEvalSuite([
+    {
+      id: "work-report-tasks",
+      label: "work report tasks",
+      input: tasksInput,
+      expectedProposalType: "update_tasks",
+      minProposalItems: 1,
+    },
+    {
+      id: "work-report-risks",
+      label: "work report risks",
+      input: risksInput,
+      expectedProposalType: "raise_risks",
+      minProposalItems: 1,
+    },
+    {
+      id: "missing-project-context",
+      label: "missing project context",
+      input: missingContextInput,
+      expectedFailure: "missing_project_context",
+    },
+  ]);
+
+  assert.equal(suite.summary.total, 3);
+  assert.equal(suite.summary.failed, 0);
+  assert.equal(suite.results[0]?.status, "passed");
+  assert.equal(suite.results[1]?.proposalType, "raise_risks");
+  assert.equal(suite.results[2]?.status, "passed");
+  assert.deepEqual(suite.results[2]?.issues, ["missing_project_context"]);
+}
+
+async function testTraceRouteReturnsPersistedRunTrace() {
+  const { blueprints } = createWorkReportSignalFixtureBundle();
+  const input = blueprints.find((blueprint) => blueprint.purpose === "status")?.input;
+
+  assert.ok(input);
+
+  const runId = "ai-run-trace-route-status";
+  const run = buildMockFinalRun(input, {
+    id: runId,
+    createdAt: "2026-03-11T09:10:00.000Z",
+    updatedAt: "2026-03-11T09:10:05.000Z",
+    quickActionId: input?.quickAction?.id,
+  });
+  const cacheDir = path.join(process.cwd(), ".ceoclaw-cache", "ai-runs");
+  const cacheFile = path.join(cacheDir, `${runId}.json`);
+
+  await mkdir(cacheDir, { recursive: true });
+  await writeFile(
+    cacheFile,
+    JSON.stringify({
+      origin: "gateway",
+      input,
+      run,
+    }),
+    "utf8"
+  );
+
+  try {
+    const response = await getTraceRoute(new Request(`http://localhost/api/ai/runs/${runId}/trace`), {
+      params: Promise.resolve({ id: runId }),
+    });
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.runId, runId);
+    assert.equal(body.source.workflow, "work_report_signal_packet");
+    assert.equal(body.proposal.type, "draft_status_report");
+    assert.equal(body.steps[3].status, "done");
+  } finally {
+    await rm(cacheFile, { force: true });
+  }
+}
+
+async function main() {
+  await testTraceSummarizesWorkReportRun();
+  await testEvalSuitePassesStableFixturesAndCatchesMissingContext();
+  await testTraceRouteReturnsPersistedRunTrace();
+  console.log("PASS ai-trace.unit");
+}
+
+void main();

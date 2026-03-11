@@ -79,6 +79,7 @@ model Project {
   boards      Board[]
   workReports WorkReport[]
   telegramBriefPolicies TelegramBriefDeliveryPolicy[]
+  evidenceRecords EvidenceRecord[]
   
   @@index([status])
   @@index([direction])
@@ -465,6 +466,31 @@ model WorkReport {
   @@index([reportDate])
   @@index([status])
   @@index([projectId, reportDate])
+}
+
+model EvidenceRecord {
+  id                 String    @id @default(cuid())
+  sourceType         String
+  sourceRef          String?
+  entityType         String
+  entityRef          String
+  projectId          String?
+  project            Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  title              String
+  summary            String?
+  observedAt         DateTime
+  reportedAt         DateTime?
+  confidence         Float
+  verificationStatus String
+  metadataJson       String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([sourceType, entityType, entityRef])
+  @@index([verificationStatus])
+  @@index([entityType, entityRef])
+  @@index([projectId])
+  @@index([observedAt])
 }
 
 // ============================================
