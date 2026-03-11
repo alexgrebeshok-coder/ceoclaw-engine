@@ -526,6 +526,46 @@ model EscalationItem {
   @@index([slaTargetAt])
 }
 
+model AiRunLedger {
+  id               String   @id
+  origin           String
+  agentId          String
+  title            String
+  status           String
+  quickActionId    String?
+  projectId        String?
+  workflow         String?
+  sourceEntityType String?
+  sourceEntityId   String?
+  inputJson        String
+  runJson          String
+  runCreatedAt     DateTime
+  runUpdatedAt     DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status, runUpdatedAt])
+  @@index([workflow])
+  @@index([projectId])
+  @@index([runCreatedAt])
+}
+
+model DerivedSyncState {
+  key             String   @id
+  status          String
+  lastStartedAt   DateTime?
+  lastCompletedAt DateTime?
+  lastSuccessAt   DateTime?
+  lastError       String?
+  lastResultCount Int?
+  metadataJson    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status, updatedAt])
+  @@index([lastSuccessAt])
+}
+
 // ============================================
 // TASK MODEL (updated)
 // ============================================

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { applyServerAIProposal } from "@/lib/ai/server-runs";
+import { syncEscalationQueue } from "@/lib/escalations";
 import { badRequest } from "@/lib/server/api-utils";
 
 export const runtime = "nodejs";
@@ -19,6 +20,9 @@ export async function POST(
     const run = await applyServerAIProposal({
       runId: id,
       proposalId,
+    });
+    void syncEscalationQueue().catch((error) => {
+      console.error("Failed to sync escalation queue after AI proposal apply.", error);
     });
     return NextResponse.json(run);
   } catch (error) {

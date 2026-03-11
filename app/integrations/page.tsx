@@ -31,7 +31,7 @@ export default async function IntegrationsRoute() {
         }
       )
     : {
-        syncedAt: new Date().toISOString(),
+        syncedAt: null,
         summary: {
           total: 0,
           reported: 0,
@@ -41,6 +41,7 @@ export default async function IntegrationsRoute() {
           lastObservedAt: null,
         },
         records: [],
+        sync: null,
       };
   const fusion = runtimeState.databaseConfigured
     ? await getEvidenceFusionOverview(

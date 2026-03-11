@@ -432,7 +432,7 @@ function compareTimestampsDesc(left: string | null, right: string | null) {
   return Date.parse(right ?? "") - Date.parse(left ?? "");
 }
 
-function resolveSyncedAt(now: Date, ...values: Array<string | undefined>) {
+function resolveSyncedAt(now: Date, ...values: Array<string | null | undefined>) {
   return values
     .filter((value): value is string => Boolean(value))
     .sort(compareTimestampsDesc)[0] ?? now.toISOString();

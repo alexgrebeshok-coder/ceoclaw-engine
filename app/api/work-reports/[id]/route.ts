@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { authorizeRequest } from "@/app/api/middleware/auth";
 import {
+  removeEvidenceRecordForEntity,
+  syncWorkReportEvidenceRecord,
+} from "@/lib/evidence";
+import {
   deleteWorkReport,
   getWorkReportById,
   updateWorkReport,
@@ -83,6 +87,9 @@ export async function PUT(
 
     const { id } = await params;
     const report = await updateWorkReport(id, parsed.data);
+    void syncWorkReportEvidenceRecord(report).catch((error) => {
+      console.error("Failed to sync work-report evidence after update.", error);
+    });
     return NextResponse.json(report);
   } catch (error) {
     if (error instanceof Error && /Work report not found/u.test(error.message)) {
@@ -114,6 +121,9 @@ export async function DELETE(
 
     const { id } = await params;
     await deleteWorkReport(id);
+    void removeEvidenceRecordForEntity("work_report", id).catch((error) => {
+      console.error("Failed to remove work-report evidence after delete.", error);
+    });
     return NextResponse.json({ deleted: true });
   } catch (error) {
     if (error instanceof Error && /Record to delete does not exist/u.test(error.message)) {

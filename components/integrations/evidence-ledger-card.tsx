@@ -1,6 +1,12 @@
+"use client";
+
+import { useState } from "react";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { EvidenceListResult, EvidenceRecordView } from "@/lib/evidence";
+import type { DerivedSyncStatus } from "@/lib/sync-state";
 
 function statusVariant(status: EvidenceRecordView["verificationStatus"]) {
   switch (status) {
@@ -11,6 +17,20 @@ function statusVariant(status: EvidenceRecordView["verificationStatus"]) {
     case "reported":
     default:
       return "warning";
+  }
+}
+
+function syncVariant(status: DerivedSyncStatus) {
+  switch (status) {
+    case "success":
+      return "success";
+    case "running":
+      return "info";
+    case "error":
+      return "danger";
+    case "idle":
+    default:
+      return "neutral";
   }
 }
 
@@ -31,12 +51,60 @@ function formatTimestamp(value: string | null) {
   }).format(new Date(value));
 }
 
+function formatSyncStatus(evidence: EvidenceListResult) {
+  if (!evidence.sync) {
+    return "Pending";
+  }
+
+  switch (evidence.sync.status) {
+    case "success":
+      return "Success";
+    case "running":
+      return "Running";
+    case "error":
+      return "Failed";
+    case "idle":
+    default:
+      return "Idle";
+  }
+}
+
 export function EvidenceLedgerCard({
-  evidence,
+  evidence: initialEvidence,
 }: {
   evidence: EvidenceListResult;
 }) {
+  const [evidence, setEvidence] = useState(initialEvidence);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const visibleRecords = evidence.records.slice(0, 6);
+
+  const syncEvidence = async () => {
+    setIsSyncing(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/evidence/sync?limit=24", {
+        method: "POST",
+        cache: "no-store",
+      });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload?.error?.message ?? "Не удалось синхронизировать evidence ledger.");
+      }
+
+      setEvidence(payload as EvidenceListResult);
+    } catch (syncError) {
+      setError(
+        syncError instanceof Error
+          ? syncError.message
+          : "Не удалось синхронизировать evidence ledger."
+      );
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <Card className="min-w-0">
@@ -45,20 +113,23 @@ export function EvidenceLedgerCard({
           <div className="min-w-0">
             <CardTitle>Evidence ledger</CardTitle>
             <CardDescription>
-              Первый provenance-слой поверх work reports, GPS sample и visual facts. Он разделяет `reported`, `observed` и `verified` факты в одной operator view.
+              Provenance-слой поверх work reports, GPS sample и visual facts. Read path теперь только читает persisted ledger, а sync идёт отдельным job boundary.
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
             <Badge variant="warning">Reported {evidence.summary.reported}</Badge>
             <Badge variant="info">Observed {evidence.summary.observed}</Badge>
             <Badge variant="success">Verified {evidence.summary.verified}</Badge>
+            <Badge variant={syncVariant(evidence.sync?.status ?? "idle")}>
+              Sync {formatSyncStatus(evidence)}
+            </Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent className="grid min-w-0 gap-4">
-        <div className="grid gap-3 rounded-[16px] border border-[var(--line)] bg-[var(--panel-soft)] p-4 text-sm text-[var(--ink-soft)] sm:grid-cols-3">
+        <div className="grid gap-3 rounded-[16px] border border-[var(--line)] bg-[var(--panel-soft)] p-4 text-sm text-[var(--ink-soft)] sm:grid-cols-2 xl:grid-cols-4">
           <div>
-            <div className="font-medium text-[var(--ink)]">Synced at</div>
+            <div className="font-medium text-[var(--ink)]">Last sync</div>
             <div className="mt-1">{formatTimestamp(evidence.syncedAt)}</div>
           </div>
           <div>
@@ -73,7 +144,32 @@ export function EvidenceLedgerCard({
             <div className="font-medium text-[var(--ink)]">Last observed fact</div>
             <div className="mt-1">{formatTimestamp(evidence.summary.lastObservedAt)}</div>
           </div>
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <div className="font-medium text-[var(--ink)]">Last sync result</div>
+              <div className="mt-1">
+                {evidence.sync?.lastResultCount !== null && evidence.sync?.lastResultCount !== undefined
+                  ? `${evidence.sync.lastResultCount} record${evidence.sync.lastResultCount === 1 ? "" : "s"}`
+                  : "Unavailable"}
+              </div>
+            </div>
+            <Button disabled={isSyncing} onClick={syncEvidence} size="sm" variant="outline">
+              {isSyncing ? "Syncing..." : "Sync ledger"}
+            </Button>
+          </div>
         </div>
+
+        {evidence.sync?.lastError ? (
+          <div className="rounded-[14px] border border-rose-300/70 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+            {evidence.sync.lastError}
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="rounded-[14px] border border-rose-300/70 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+            {error}
+          </div>
+        ) : null}
 
         {visibleRecords.length > 0 ? (
           <div className="grid gap-3">
@@ -111,7 +207,7 @@ export function EvidenceLedgerCard({
           </div>
         ) : (
           <div className="rounded-[16px] border border-dashed border-[var(--line)] bg-[var(--panel-soft)] p-4 text-sm text-[var(--ink-soft)]">
-            Пока нет evidence records. Добавьте work reports или настройте live GPS sample.
+            Пока нет evidence records. Создайте work report, добавьте visual fact или запустите live ledger sync.
           </div>
         )}
       </CardContent>

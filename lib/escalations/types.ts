@@ -1,3 +1,5 @@
+import type { DerivedSyncCheckpointView } from "@/lib/sync-state";
+
 export type EscalationQueueStatus = "open" | "acknowledged" | "resolved";
 export type EscalationUrgency = "critical" | "high" | "medium" | "low";
 export type EscalationSourceStatus =
@@ -73,9 +75,10 @@ export interface EscalationQuery {
 }
 
 export interface EscalationListResult {
-  syncedAt: string;
+  syncedAt: string | null;
   summary: EscalationSummary;
   items: EscalationRecordView[];
+  sync: DerivedSyncCheckpointView | null;
 }
 
 export interface EscalationUpdateInput {

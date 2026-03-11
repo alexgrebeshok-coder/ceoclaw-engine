@@ -100,6 +100,7 @@ async function testKnowledgeLoopBuildsRepeatedPlaybooksAndGuidance() {
         slaState: "breached",
       }),
     ],
+    sync: null,
   };
 
   const overview = await getKnowledgeLoopOverview(
@@ -156,6 +157,7 @@ async function testKnowledgeLoopFallsBackToSlaWindowWhenNoAckHistoryExists() {
         slaState: "due_soon",
       }),
     ],
+    sync: null,
   };
 
   const overview = await getKnowledgeLoopOverview({ limit: 4 }, { escalations: queue });

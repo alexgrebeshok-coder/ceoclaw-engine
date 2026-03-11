@@ -88,6 +88,7 @@ const queue: EscalationListResult = {
     unassigned: 2,
   },
   items: [],
+  sync: null,
 };
 
 const integrationsTruth = buildIntegrationsRuntimeTruth({

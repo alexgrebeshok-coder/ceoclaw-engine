@@ -4,10 +4,9 @@ import path from "node:path";
 import { applyAIProposal, hasPendingProposal } from "@/lib/ai/action-engine";
 import type { AIApplyProposalInput, AIRunInput, AIRunRecord } from "@/lib/ai/types";
 import { invokeOpenClawGateway } from "@/lib/ai/openclaw-gateway";
-import {
-  buildMockFinalRun,
-  createMockAIAdapter,
-} from "@/lib/ai/mock-adapter";
+import { buildMockFinalRun } from "@/lib/ai/mock-adapter";
+import { prisma } from "@/lib/prisma";
+import { isDatabaseConfigured } from "@/lib/server/runtime-mode";
 
 export type ServerAIRunOrigin = "gateway" | "mock";
 
@@ -18,7 +17,6 @@ export type ServerAIRunEntry = {
 };
 
 const RUN_CACHE_DIR = path.join(process.cwd(), ".ceoclaw-cache", "ai-runs");
-const mockAdapter = createMockAIAdapter();
 
 function cloneRun(run: AIRunRecord) {
   return JSON.parse(JSON.stringify(run)) as AIRunRecord;
@@ -62,11 +60,42 @@ function getRunFile(runId: string) {
 }
 
 async function persistEntry(entry: ServerAIRunEntry) {
+  if (shouldUseDatabaseRunStore()) {
+    const ledgerRow = serializeLedgerRow(entry);
+    await prisma.aiRunLedger.upsert({
+      where: { id: entry.run.id },
+      create: ledgerRow,
+      update: {
+        origin: ledgerRow.origin,
+        agentId: ledgerRow.agentId,
+        title: ledgerRow.title,
+        status: ledgerRow.status,
+        quickActionId: ledgerRow.quickActionId,
+        projectId: ledgerRow.projectId,
+        workflow: ledgerRow.workflow,
+        sourceEntityType: ledgerRow.sourceEntityType,
+        sourceEntityId: ledgerRow.sourceEntityId,
+        inputJson: ledgerRow.inputJson,
+        runJson: ledgerRow.runJson,
+        runCreatedAt: ledgerRow.runCreatedAt,
+        runUpdatedAt: ledgerRow.runUpdatedAt,
+      },
+    });
+    return;
+  }
+
   await mkdir(RUN_CACHE_DIR, { recursive: true });
   await writeFile(getRunFile(entry.run.id), JSON.stringify(entry), "utf8");
 }
 
 async function readEntry(runId: string) {
+  if (shouldUseDatabaseRunStore()) {
+    const record = await prisma.aiRunLedger.findUnique({
+      where: { id: runId },
+    });
+    return record ? deserializeLedgerRow(record) : null;
+  }
+
   try {
     const payload = await readFile(getRunFile(runId), "utf8");
     return JSON.parse(payload) as ServerAIRunEntry;
@@ -80,6 +109,14 @@ async function readEntry(runId: string) {
 }
 
 async function listRunIds() {
+  if (shouldUseDatabaseRunStore()) {
+    const rows = await prisma.aiRunLedger.findMany({
+      select: { id: true },
+      orderBy: [{ runCreatedAt: "desc" }, { createdAt: "desc" }],
+    });
+    return rows.map((row) => row.id);
+  }
+
   try {
     const filenames = await readdir(RUN_CACHE_DIR, { withFileTypes: true });
     return filenames
@@ -99,7 +136,8 @@ function cloneEntry(entry: ServerAIRunEntry) {
 }
 
 async function createMockRun(input: AIRunInput) {
-  const run = await mockAdapter.runAgent(input);
+  const runId = createRunId();
+  const run = createQueuedGatewayRun(input, runId);
   await persistEntry({
     origin: "mock",
     input,
@@ -157,12 +195,10 @@ async function resolveServerAIRunEntry(runId: string) {
   }
 
   if (entry.origin === "mock") {
-    const liveRun = await mockAdapter.getRun(runId);
-    const nextEntry = {
-      ...entry,
-      run: liveRun,
-    } satisfies ServerAIRunEntry;
-    await persistEntry(nextEntry);
+    const nextEntry = resolveMockRunEntry(entry);
+    if (hasEntryChanged(entry, nextEntry)) {
+      await persistEntry(nextEntry);
+    }
     return nextEntry;
   }
 
@@ -214,19 +250,100 @@ export async function listServerAIRunEntries() {
 }
 
 export async function applyServerAIProposal(input: AIApplyProposalInput) {
-  const entry = await readEntry(input.runId);
+  const entry = await resolveServerAIRunEntry(input.runId);
   if (!entry) {
     throw new Error(`AI run ${input.runId} not found`);
   }
 
-  const nextRun =
-    entry.origin === "mock"
-      ? await mockAdapter.applyProposal(input)
-      : applyAIProposal(entry.run, input.proposalId);
+  const nextRun = applyAIProposal(entry.run, input.proposalId);
   await persistEntry({
     ...entry,
     run: nextRun,
   });
 
   return cloneRun(nextRun);
+}
+
+function shouldUseDatabaseRunStore(env: NodeJS.ProcessEnv = process.env) {
+  return isDatabaseConfigured(env);
+}
+
+function resolveMockRunEntry(entry: ServerAIRunEntry) {
+  const elapsedMs = Date.now() - Date.parse(entry.run.createdAt);
+  const nextUpdatedAt = new Date().toISOString();
+
+  if (entry.run.result?.proposal || entry.run.result?.actionResult || entry.run.status === "done") {
+    return entry;
+  }
+
+  if (elapsedMs < 550) {
+    return entry;
+  }
+
+  if (elapsedMs < 1800) {
+    if (entry.run.status === "running") {
+      return entry;
+    }
+
+    return {
+      ...entry,
+      run: {
+        ...entry.run,
+        status: "running",
+        updatedAt: nextUpdatedAt,
+      },
+    } satisfies ServerAIRunEntry;
+  }
+
+  const finalRun = buildMockFinalRun(entry.input, {
+    id: entry.run.id,
+    createdAt: entry.run.createdAt,
+    updatedAt: nextUpdatedAt,
+    quickActionId: entry.run.quickActionId,
+  });
+
+  return {
+    ...entry,
+    run: finalRun,
+  } satisfies ServerAIRunEntry;
+}
+
+function hasEntryChanged(left: ServerAIRunEntry, right: ServerAIRunEntry) {
+  return JSON.stringify(left.run) !== JSON.stringify(right.run);
+}
+
+function serializeLedgerRow(entry: ServerAIRunEntry) {
+  return {
+    id: entry.run.id,
+    origin: entry.origin,
+    agentId: entry.run.agentId,
+    title: entry.run.title,
+    status: entry.run.status,
+    quickActionId: entry.run.quickActionId ?? null,
+    projectId:
+      entry.input.source?.projectId ??
+      entry.input.context.project?.id ??
+      entry.run.context.projectId ??
+      null,
+    workflow: entry.input.source?.workflow ?? null,
+    sourceEntityType: entry.input.source?.entityType ?? null,
+    sourceEntityId: entry.input.source?.entityId ?? null,
+    inputJson: JSON.stringify(entry.input),
+    runJson: JSON.stringify(entry.run),
+    runCreatedAt: new Date(entry.run.createdAt),
+    runUpdatedAt: new Date(entry.run.updatedAt),
+  };
+}
+
+function deserializeLedgerRow(row: {
+  id: string;
+  origin: string;
+  inputJson: string;
+  runJson: string;
+}) {
+  return {
+    origin: row.origin as ServerAIRunOrigin,
+    input: JSON.parse(row.inputJson) as AIRunInput,
+    run: JSON.parse(row.runJson) as AIRunRecord,
+  } satisfies ServerAIRunEntry;
 }

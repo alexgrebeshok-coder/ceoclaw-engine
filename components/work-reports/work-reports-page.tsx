@@ -67,8 +67,13 @@ const expectedEndpoints = [
   },
   {
     method: "GET" as const,
-    note: "Синхронизировать operator escalation queue поверх work-report signal runs.",
+    note: "Прочитать persisted operator escalation queue и увидеть freshness последнего sync job.",
     path: "/api/escalations",
+  },
+  {
+    method: "POST" as const,
+    note: "Явно запустить derived sync job для escalation queue поверх work-report signal runs.",
+    path: "/api/escalations/sync",
   },
   {
     method: "PATCH" as const,

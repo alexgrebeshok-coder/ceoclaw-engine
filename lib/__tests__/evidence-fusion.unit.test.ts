@@ -192,6 +192,7 @@ async function testFusionOverviewSummarizesStatuses() {
           secondReport,
           createVideoFactRecord({ id: "video-2", reportId: "report-2", status: "observed" }),
         ],
+        sync: null,
       },
     }
   );

@@ -37,6 +37,19 @@ type StoredEscalationItem = {
   updatedAt: Date;
 };
 
+type StoredSyncState = {
+  key: string;
+  status: string;
+  lastStartedAt: Date | null;
+  lastCompletedAt: Date | null;
+  lastSuccessAt: Date | null;
+  lastError: string | null;
+  lastResultCount: number | null;
+  metadataJson: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 function createEscalationStore() {
   const records = new Map<string, StoredEscalationItem>();
 
@@ -72,7 +85,7 @@ function createEscalationStore() {
           record.entityRef === args.where.sourceType_entityType_entityRef.entityRef
       );
 
-      const now = new Date();
+      const now = new Date("2026-03-11T12:00:00.000Z");
       const next: StoredEscalationItem = existing
         ? {
             ...existing,
@@ -133,9 +146,52 @@ function createEscalationStore() {
       const next: StoredEscalationItem = {
         ...record,
         ...args.data,
-        updatedAt: new Date(),
+        updatedAt: new Date("2026-03-11T12:30:00.000Z"),
       };
       records.set(next.id, next);
+      return clone(next);
+    },
+  };
+}
+
+function createFakeSyncStore() {
+  const states = new Map<string, StoredSyncState>();
+
+  function clone(state: StoredSyncState) {
+    return {
+      ...state,
+      lastStartedAt: state.lastStartedAt ? new Date(state.lastStartedAt) : null,
+      lastCompletedAt: state.lastCompletedAt ? new Date(state.lastCompletedAt) : null,
+      lastSuccessAt: state.lastSuccessAt ? new Date(state.lastSuccessAt) : null,
+      createdAt: new Date(state.createdAt),
+      updatedAt: new Date(state.updatedAt),
+    };
+  }
+
+  return {
+    async findUnique(args: { where: { key: string } }) {
+      const state = states.get(args.where.key);
+      return state ? clone(state) : null;
+    },
+    async upsert(args: {
+      where: { key: string };
+      create: Omit<StoredSyncState, "createdAt" | "updatedAt">;
+      update: Omit<StoredSyncState, "key" | "createdAt" | "updatedAt">;
+    }) {
+      const existing = states.get(args.where.key);
+      const next = existing
+        ? {
+            ...existing,
+            ...args.update,
+            updatedAt: new Date("2026-03-11T12:00:00.000Z"),
+          }
+        : {
+            ...args.create,
+            createdAt: new Date("2026-03-11T12:00:00.000Z"),
+            updatedAt: new Date("2026-03-11T12:00:00.000Z"),
+          };
+
+      states.set(args.where.key, next);
       return clone(next);
     },
   };
@@ -217,16 +273,24 @@ function buildRunEntries() {
   ] satisfies ServerAIRunEntry[];
 }
 
-async function testQueueOverviewBuildsSlaBacklog() {
+async function testQueueSyncAndReadOnlyOverview() {
   const store = createEscalationStore();
+  const syncStore = createFakeSyncStore();
   const runEntries = buildRunEntries();
+
+  await syncEscalationQueue({
+    escalationStore: store,
+    listRunEntries: async () => runEntries,
+    now: () => new Date("2026-03-11T12:00:00.000Z"),
+    syncStore,
+  });
 
   const queue = await getEscalationQueueOverview(
     { includeResolved: true, limit: 10 },
     {
       escalationStore: store,
-      listRunEntries: async () => runEntries,
       now: () => new Date("2026-03-11T12:00:00.000Z"),
+      syncStore,
     }
   );
 
@@ -239,18 +303,28 @@ async function testQueueOverviewBuildsSlaBacklog() {
   assert.equal(queue.items[1]?.queueStatus, "open");
   assert.equal(queue.items[1]?.sourceStatus, "needs_approval");
   assert.equal(queue.items[1]?.recommendedOwnerRole, "OPS");
+  assert.equal(queue.sync?.status, "success");
+  assert.equal(queue.syncedAt, "2026-03-11T12:00:00.000Z");
 }
 
 async function testOwnerAssignmentAndAcknowledgementPersist() {
   const store = createEscalationStore();
+  const syncStore = createFakeSyncStore();
   const runEntries = buildRunEntries();
+
+  await syncEscalationQueue({
+    escalationStore: store,
+    listRunEntries: async () => runEntries,
+    now: () => new Date("2026-03-11T12:00:00.000Z"),
+    syncStore,
+  });
 
   const queue = await getEscalationQueueOverview(
     { includeResolved: true, limit: 10 },
     {
       escalationStore: store,
-      listRunEntries: async () => runEntries,
       now: () => new Date("2026-03-11T12:00:00.000Z"),
+      syncStore,
     }
   );
 
@@ -282,14 +356,22 @@ async function testOwnerAssignmentAndAcknowledgementPersist() {
 
 async function testStaleQueueItemsResolveWhenSourceDisappears() {
   const store = createEscalationStore();
+  const syncStore = createFakeSyncStore();
   const runEntries = buildRunEntries();
+
+  await syncEscalationQueue({
+    escalationStore: store,
+    listRunEntries: async () => runEntries,
+    now: () => new Date("2026-03-11T12:00:00.000Z"),
+    syncStore,
+  });
 
   const queue = await getEscalationQueueOverview(
     { includeResolved: true, limit: 10 },
     {
       escalationStore: store,
-      listRunEntries: async () => runEntries,
       now: () => new Date("2026-03-11T12:00:00.000Z"),
+      syncStore,
     }
   );
 
@@ -297,6 +379,7 @@ async function testStaleQueueItemsResolveWhenSourceDisappears() {
     escalationStore: store,
     listRunEntries: async () => [],
     now: () => new Date("2026-03-11T14:00:00.000Z"),
+    syncStore,
   });
 
   const record = await getEscalationItemById(queue.items[0]!.id, {
@@ -311,7 +394,7 @@ async function testStaleQueueItemsResolveWhenSourceDisappears() {
 }
 
 async function main() {
-  await testQueueOverviewBuildsSlaBacklog();
+  await testQueueSyncAndReadOnlyOverview();
   await testOwnerAssignmentAndAcknowledgementPersist();
   await testStaleQueueItemsResolveWhenSourceDisappears();
   console.log("PASS escalations.service.unit");

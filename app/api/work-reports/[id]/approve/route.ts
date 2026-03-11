@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { authorizeRequest } from "@/app/api/middleware/auth";
+import { syncWorkReportEvidenceRecord } from "@/lib/evidence";
 import { approveWorkReport } from "@/lib/work-reports/service";
 import {
   badRequest,
@@ -48,6 +49,9 @@ export async function POST(
 
     const { id } = await params;
     const report = await approveWorkReport(id, parsed.data);
+    void syncWorkReportEvidenceRecord(report).catch((error) => {
+      console.error("Failed to sync work-report evidence after approval.", error);
+    });
     return NextResponse.json(report);
   } catch (error) {
     if (error instanceof Error && /Reviewer not found/u.test(error.message)) {

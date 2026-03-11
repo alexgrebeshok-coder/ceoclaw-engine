@@ -1,12 +1,16 @@
 import assert from "node:assert/strict";
 
+import type { GpsTelemetrySampleSnapshot } from "@/lib/connectors/gps-client";
 import {
   getEvidenceLedgerOverview,
   getEvidenceRecordById,
   mapGpsSnapshotToEvidenceInputs,
   mapWorkReportToEvidenceInput,
+  removeEvidenceRecordForEntity,
+  syncEvidenceLedger,
+  syncWorkReportEvidenceRecord,
 } from "@/lib/evidence";
-import type { GpsTelemetrySampleSnapshot } from "@/lib/connectors/gps-client";
+import type { DerivedSyncMetadata } from "@/lib/sync-state";
 import type { WorkReportView } from "@/lib/work-reports/types";
 
 type StoredRecord = {
@@ -22,6 +26,19 @@ type StoredRecord = {
   reportedAt: Date | null;
   confidence: number;
   verificationStatus: string;
+  metadataJson: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type StoredSyncState = {
+  key: string;
+  status: string;
+  lastStartedAt: Date | null;
+  lastCompletedAt: Date | null;
+  lastSuccessAt: Date | null;
+  lastError: string | null;
+  lastResultCount: number | null;
   metadataJson: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -158,6 +175,60 @@ function createFakeEvidenceStore() {
     async findUnique(args: { where: { id: string } }) {
       return Array.from(records.values()).find((record) => record.id === args.where.id) ?? null;
     },
+    async deleteMany(args: { where: { entityRef?: string; entityType?: string; sourceType?: string } }) {
+      let count = 0;
+      for (const [key, record] of records.entries()) {
+        if (args.where.entityRef && record.entityRef !== args.where.entityRef) continue;
+        if (args.where.entityType && record.entityType !== args.where.entityType) continue;
+        if (args.where.sourceType && record.sourceType !== args.where.sourceType) continue;
+        records.delete(key);
+        count += 1;
+      }
+      return { count };
+    },
+  };
+}
+
+function createFakeSyncStore() {
+  const states = new Map<string, StoredSyncState>();
+
+  function clone(state: StoredSyncState) {
+    return {
+      ...state,
+      lastStartedAt: state.lastStartedAt ? new Date(state.lastStartedAt) : null,
+      lastCompletedAt: state.lastCompletedAt ? new Date(state.lastCompletedAt) : null,
+      lastSuccessAt: state.lastSuccessAt ? new Date(state.lastSuccessAt) : null,
+      createdAt: new Date(state.createdAt),
+      updatedAt: new Date(state.updatedAt),
+    };
+  }
+
+  return {
+    async findUnique(args: { where: { key: string } }) {
+      const state = states.get(args.where.key);
+      return state ? clone(state) : null;
+    },
+    async upsert(args: {
+      where: { key: string };
+      create: Omit<StoredSyncState, "createdAt" | "updatedAt">;
+      update: Omit<StoredSyncState, "key" | "createdAt" | "updatedAt">;
+    }) {
+      const existing = states.get(args.where.key);
+      const next = existing
+        ? {
+            ...existing,
+            ...args.update,
+            updatedAt: new Date("2026-03-11T13:00:00.000Z"),
+          }
+        : {
+            ...args.create,
+            createdAt: new Date("2026-03-11T13:00:00.000Z"),
+            updatedAt: new Date("2026-03-11T13:00:00.000Z"),
+          };
+
+      states.set(args.where.key, next);
+      return clone(next);
+    },
   };
 }
 
@@ -180,15 +251,29 @@ async function testGpsSnapshotMappingStaysObserved() {
   assert.equal(inputs[0]?.confidence, 0.95);
 }
 
-async function testEvidenceOverviewSyncsAndListsRecords() {
+async function testEvidenceSyncAndReadOnlyOverview() {
   const store = createFakeEvidenceStore();
-  const overview = await getEvidenceLedgerOverview(
-    { limit: 10 },
+  const syncStore = createFakeSyncStore();
+
+  await syncEvidenceLedger(
     {
       evidenceStore: store,
       gpsSnapshot: createGpsSnapshot(),
       listReports: async () => [createWorkReport("submitted"), createWorkReport("approved")],
       now: () => new Date("2026-03-11T13:00:00.000Z"),
+      syncStore,
+    },
+    {
+      includeGpsSample: true,
+      includeWorkReports: true,
+    }
+  );
+
+  const overview = await getEvidenceLedgerOverview(
+    { limit: 10 },
+    {
+      evidenceStore: store,
+      syncStore,
     }
   );
 
@@ -196,10 +281,9 @@ async function testEvidenceOverviewSyncsAndListsRecords() {
   assert.equal(overview.summary.reported, 1);
   assert.equal(overview.summary.observed, 1);
   assert.equal(overview.summary.verified, 1);
-  assert.deepEqual(
-    overview.records.map((record) => record.verificationStatus).sort(),
-    ["observed", "reported", "verified"]
-  );
+  assert.equal(overview.sync?.status, "success");
+  assert.equal((overview.sync?.metadata as DerivedSyncMetadata).workReportCount, 2);
+  assert.equal(overview.syncedAt, "2026-03-11T13:00:00.000Z");
 
   const detail = await getEvidenceRecordById(overview.records[0]!.id, {
     evidenceStore: store,
@@ -208,10 +292,52 @@ async function testEvidenceOverviewSyncsAndListsRecords() {
   assert.equal(detail?.id, overview.records[0]?.id);
 }
 
+async function testWorkReportEvidenceUpsertAndDelete() {
+  const store = createFakeEvidenceStore();
+  const syncStore = createFakeSyncStore();
+  const report = createWorkReport("submitted");
+
+  await syncWorkReportEvidenceRecord(report, {
+    evidenceStore: store,
+    now: () => new Date("2026-03-11T14:00:00.000Z"),
+    syncStore,
+  });
+
+  let overview = await getEvidenceLedgerOverview(
+    { limit: 10 },
+    {
+      evidenceStore: store,
+      syncStore,
+    }
+  );
+
+  assert.equal(overview.summary.total, 1);
+  assert.equal(overview.records[0]?.entityRef, report.id);
+
+  const deletedCount = await removeEvidenceRecordForEntity("work_report", report.id, {
+    evidenceStore: store,
+    now: () => new Date("2026-03-11T15:00:00.000Z"),
+    syncStore,
+  });
+
+  overview = await getEvidenceLedgerOverview(
+    { limit: 10 },
+    {
+      evidenceStore: store,
+      syncStore,
+    }
+  );
+
+  assert.equal(deletedCount, 1);
+  assert.equal(overview.summary.total, 0);
+  assert.equal(overview.sync?.lastResultCount, 1);
+}
+
 async function main() {
   await testWorkReportMappingStates();
   await testGpsSnapshotMappingStaysObserved();
-  await testEvidenceOverviewSyncsAndListsRecords();
+  await testEvidenceSyncAndReadOnlyOverview();
+  await testWorkReportEvidenceUpsertAndDelete();
   console.log("PASS evidence.service.unit");
 }
 

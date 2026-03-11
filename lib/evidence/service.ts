@@ -4,6 +4,13 @@ import type {
   GpsTelemetrySampleSnapshot,
 } from "@/lib/connectors/gps-client";
 import { getGpsTelemetrySampleSnapshot } from "@/lib/connectors/gps-client";
+import {
+  getDerivedSyncCheckpoint,
+  markDerivedSyncError,
+  markDerivedSyncStarted,
+  markDerivedSyncSuccess,
+  type DerivedSyncStore,
+} from "@/lib/sync-state";
 import { listWorkReports } from "@/lib/work-reports/service";
 import type { WorkReportView } from "@/lib/work-reports/types";
 
@@ -58,6 +65,13 @@ interface EvidenceStore {
     };
   }): Promise<StoredEvidenceRecord[]>;
   findUnique(args: { where: { id: string } }): Promise<StoredEvidenceRecord | null>;
+  deleteMany(args: {
+    where: {
+      entityRef?: string;
+      entityType?: string;
+      sourceType?: string;
+    };
+  }): Promise<{ count: number }>;
 }
 
 interface EvidenceServiceDeps {
@@ -65,6 +79,12 @@ interface EvidenceServiceDeps {
   gpsSnapshot?: GpsTelemetrySampleSnapshot;
   listReports?: (input?: { limit?: number }) => Promise<WorkReportView[]>;
   now?: () => Date;
+  syncStore?: DerivedSyncStore;
+}
+
+interface SyncEvidenceOptions {
+  includeGpsSample?: boolean;
+  includeWorkReports?: boolean;
 }
 
 type EvidenceWriteShape = {
@@ -92,45 +112,21 @@ const defaultEvidenceStore: EvidenceStore = {
   findUnique(args) {
     return prisma.evidenceRecord.findUnique(args);
   },
+  deleteMany(args) {
+    return prisma.evidenceRecord.deleteMany(args);
+  },
 };
+
+export const EVIDENCE_LEDGER_SYNC_KEY = "evidence_ledger";
 
 export async function getEvidenceLedgerOverview(
   query: EvidenceQuery = {},
   deps: EvidenceServiceDeps = {}
 ): Promise<EvidenceListResult> {
-  const now = deps.now ?? (() => new Date());
-  const syncedAt = now().toISOString();
   const evidenceStore = deps.evidenceStore ?? defaultEvidenceStore;
-  const listReports =
-    deps.listReports ?? ((input?: { limit?: number }) => listWorkReports({ limit: input?.limit ?? 24 }));
-
-  const gpsSnapshot =
-    deps.gpsSnapshot ??
-    (await getGpsTelemetrySampleSnapshot());
-  const workReports = await listReports({ limit: 24 });
-
-  const upsertInputs = [
-    ...workReports
-      .map(mapWorkReportToEvidenceInput)
-      .filter((item): item is EvidenceUpsertInput => item !== null),
-    ...mapGpsSnapshotToEvidenceInputs(gpsSnapshot),
-  ];
-
-  await Promise.all(
-    upsertInputs.map((input) =>
-      evidenceStore.upsert({
-        where: {
-          sourceType_entityType_entityRef: {
-            sourceType: input.sourceType,
-            entityType: input.entityType,
-            entityRef: input.entityRef,
-          },
-        },
-        create: toEvidenceWriteShape(input),
-        update: toEvidenceWriteShape(input),
-      })
-    )
-  );
+  const sync = await getDerivedSyncCheckpoint(EVIDENCE_LEDGER_SYNC_KEY, {
+    syncStore: deps.syncStore,
+  });
 
   const records = await evidenceStore.findMany({
     where: {
@@ -146,10 +142,140 @@ export async function getEvidenceLedgerOverview(
   const views = records.map(serializeEvidenceRecord);
 
   return {
-    syncedAt,
+    syncedAt: sync?.lastCompletedAt ?? sync?.lastSuccessAt ?? null,
     summary: summarizeEvidenceRecords(views),
     records: views,
+    sync,
   };
+}
+
+export async function syncEvidenceLedger(
+  deps: EvidenceServiceDeps = {},
+  options: SyncEvidenceOptions = {}
+): Promise<void> {
+  const includeGpsSample = options.includeGpsSample ?? true;
+  const includeWorkReports = options.includeWorkReports ?? true;
+  const evidenceStore = deps.evidenceStore ?? defaultEvidenceStore;
+  const listReports =
+    deps.listReports ?? ((input?: { limit?: number }) => listWorkReports({ limit: input?.limit ?? 100 }));
+
+  await markDerivedSyncStarted(EVIDENCE_LEDGER_SYNC_KEY, {
+    now: deps.now,
+    syncStore: deps.syncStore,
+  });
+
+  try {
+    const [gpsSnapshot, workReports] = await Promise.all([
+      includeGpsSample ? deps.gpsSnapshot ?? getGpsTelemetrySampleSnapshot() : Promise.resolve(null),
+      includeWorkReports ? listReports({ limit: 100 }) : Promise.resolve([]),
+    ]);
+
+    const upsertInputs = [
+      ...workReports
+        .map(mapWorkReportToEvidenceInput)
+        .filter((item): item is EvidenceUpsertInput => item !== null),
+      ...(gpsSnapshot ? mapGpsSnapshotToEvidenceInputs(gpsSnapshot) : []),
+    ];
+
+    await Promise.all(
+      upsertInputs.map((input) => upsertEvidenceInput(input, evidenceStore))
+    );
+
+    await markDerivedSyncSuccess(
+      EVIDENCE_LEDGER_SYNC_KEY,
+      {
+        metadata: {
+          gpsIncluded: includeGpsSample,
+          gpsStatus: gpsSnapshot?.status ?? null,
+          gpsSampleCount: gpsSnapshot?.status === "ok" ? gpsSnapshot.samples.length : 0,
+          workReportCount: workReports.length,
+        },
+        resultCount: upsertInputs.length,
+      },
+      {
+        now: deps.now,
+        syncStore: deps.syncStore,
+      }
+    );
+  } catch (error) {
+    await markDerivedSyncError(
+      EVIDENCE_LEDGER_SYNC_KEY,
+      error,
+      {
+        metadata: {
+          gpsIncluded: includeGpsSample,
+          workReportsIncluded: includeWorkReports,
+        },
+      },
+      {
+        now: deps.now,
+        syncStore: deps.syncStore,
+      }
+    );
+    throw error;
+  }
+}
+
+export async function syncWorkReportEvidenceRecord(
+  report: WorkReportView,
+  deps: Pick<EvidenceServiceDeps, "evidenceStore" | "now" | "syncStore"> = {}
+): Promise<void> {
+  const evidenceStore = deps.evidenceStore ?? defaultEvidenceStore;
+  const input = mapWorkReportToEvidenceInput(report);
+
+  if (!input) {
+    await removeEvidenceRecordForEntity("work_report", report.id, deps);
+    return;
+  }
+
+  await upsertEvidenceInput(input, evidenceStore);
+  await markDerivedSyncSuccess(
+    EVIDENCE_LEDGER_SYNC_KEY,
+    {
+      metadata: {
+        lastEntityRef: report.id,
+        lastSourceType: input.sourceType,
+        lastWrite: "work_report_upsert",
+      },
+      resultCount: 1,
+    },
+    {
+      now: deps.now,
+      syncStore: deps.syncStore,
+    }
+  );
+}
+
+export async function removeEvidenceRecordForEntity(
+  entityType: string,
+  entityRef: string,
+  deps: Pick<EvidenceServiceDeps, "evidenceStore" | "now" | "syncStore"> = {}
+): Promise<number> {
+  const evidenceStore = deps.evidenceStore ?? defaultEvidenceStore;
+  const result = await evidenceStore.deleteMany({
+    where: {
+      entityType,
+      entityRef,
+    },
+  });
+
+  await markDerivedSyncSuccess(
+    EVIDENCE_LEDGER_SYNC_KEY,
+    {
+      metadata: {
+        lastEntityRef: entityRef,
+        lastEntityType: entityType,
+        lastWrite: "evidence_delete",
+      },
+      resultCount: result.count,
+    },
+    {
+      now: deps.now,
+      syncStore: deps.syncStore,
+    }
+  );
+
+  return result.count;
 }
 
 export async function getEvidenceRecordById(
@@ -286,6 +412,23 @@ function mapGpsSampleToEvidenceInput(
       sessionStatus: sample.status,
     },
   };
+}
+
+async function upsertEvidenceInput(
+  input: EvidenceUpsertInput,
+  evidenceStore: EvidenceStore
+) {
+  return evidenceStore.upsert({
+    where: {
+      sourceType_entityType_entityRef: {
+        sourceType: input.sourceType,
+        entityType: input.entityType,
+        entityRef: input.entityRef,
+      },
+    },
+    create: toEvidenceWriteShape(input),
+    update: toEvidenceWriteShape(input),
+  });
 }
 
 function serializeEvidenceRecord(record: StoredEvidenceRecord): EvidenceRecordView {

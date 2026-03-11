@@ -16,8 +16,8 @@
 Актуально:
 
 1. продукт движется из `AI-powered PM dashboard` в `AI operating layer`;
-2. уже есть proposal/apply, work reports, executive briefs, plan-vs-fact, policy/workspace model, Telegram delivery, SMTP email delivery, GPS telemetry sample, 1C finance sample, evidence ledger, visual facts, AI trace/evals, operator escalation queue, live/demo truth layer, knowledge loop и enterprise truth expansion;
-3. следующий этап теперь требует явного выбора нового post-Wave-6 modernization track, а не ещё одного стихийного feature slice.
+2. уже есть proposal/apply, work reports, executive briefs, plan-vs-fact, policy/workspace model, Telegram delivery, SMTP email delivery, GPS telemetry sample, 1C finance sample, evidence ledger, visual facts, AI trace/evals, operator escalation queue, live/demo truth layer, knowledge loop, enterprise truth expansion, durable AI run ledger и explicit sync jobs для evidence/escalation;
+3. следующий этап уже выбран как явный post-Wave-6 track: durable runtime hardening -> source-of-truth depth -> pilot-grade operatorization.
 
 Единственный канонический источник текущего execution-state:
 

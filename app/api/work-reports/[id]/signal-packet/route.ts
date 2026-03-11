@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { authorizeRequest } from "@/app/api/middleware/auth";
+import { syncEscalationQueue } from "@/lib/escalations";
 import { createWorkReportSignalPacket } from "@/lib/work-reports/signal-packet";
 import {
   badRequest,
@@ -60,6 +61,9 @@ export async function POST(
     }
 
     const packet = await createWorkReportSignalPacket(id, parsed.data);
+    void syncEscalationQueue().catch((error) => {
+      console.error("Failed to sync escalation queue after signal packet creation.", error);
+    });
     return NextResponse.json(packet, { status: 201 });
   } catch (error) {
     if (error instanceof Error && /not found/i.test(error.message)) {

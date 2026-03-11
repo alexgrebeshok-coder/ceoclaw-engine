@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fieldStyles } from "@/components/ui/field";
 import type { EscalationListResult, EscalationRecordView } from "@/lib/escalations";
+import type { DerivedSyncStatus } from "@/lib/sync-state";
 import type { WorkReportMemberOption } from "@/lib/work-reports/types";
 
 function urgencyVariant(urgency: EscalationRecordView["urgency"]) {
@@ -65,6 +66,20 @@ function slaVariant(status: EscalationRecordView["slaState"]) {
   }
 }
 
+function syncVariant(status: DerivedSyncStatus) {
+  switch (status) {
+    case "success":
+      return "success";
+    case "running":
+      return "info";
+    case "error":
+      return "danger";
+    case "idle":
+    default:
+      return "neutral";
+  }
+}
+
 function formatDateTime(value: string | null) {
   if (!value) {
     return "n/a";
@@ -86,6 +101,24 @@ function formatAge(hours: number) {
   return `${hours.toFixed(hours >= 10 ? 0 : 1)}h`;
 }
 
+function formatSyncStatus(queue: EscalationListResult) {
+  if (!queue.sync) {
+    return "Pending";
+  }
+
+  switch (queue.sync.status) {
+    case "success":
+      return "Success";
+    case "running":
+      return "Running";
+    case "error":
+      return "Failed";
+    case "idle":
+    default:
+      return "Idle";
+  }
+}
+
 export function EscalationQueueCard({
   initialQueue,
   members,
@@ -98,18 +131,32 @@ export function EscalationQueueCard({
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const loadQueue = async () => {
+    const response = await fetch("/api/escalations?limit=8", {
+      cache: "no-store",
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload?.error?.message ?? "Не удалось обновить escalation queue.");
+    }
+
+    setQueue(payload as EscalationListResult);
+  };
+
   const refreshQueue = async () => {
     setIsRefreshing(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/escalations?limit=8", {
+      const response = await fetch("/api/escalations/sync?limit=8", {
+        method: "POST",
         cache: "no-store",
       });
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload?.error?.message ?? "Не удалось обновить escalation queue.");
+        throw new Error(payload?.error?.message ?? "Не удалось синхронизировать escalation queue.");
       }
 
       setQueue(payload as EscalationListResult);
@@ -117,7 +164,7 @@ export function EscalationQueueCard({
       setError(
         refreshError instanceof Error
           ? refreshError.message
-          : "Не удалось обновить escalation queue."
+          : "Не удалось синхронизировать escalation queue."
       );
     } finally {
       setIsRefreshing(false);
@@ -148,7 +195,7 @@ export function EscalationQueueCard({
         throw new Error(payload?.error?.message ?? "Не удалось обновить escalation item.");
       }
 
-      await refreshQueue();
+      await loadQueue();
     } catch (updateError) {
       setError(
         updateError instanceof Error
@@ -175,11 +222,14 @@ export function EscalationQueueCard({
             <Badge variant="info">Ack {queue.summary.acknowledged}</Badge>
             <Badge variant="danger">Breached {queue.summary.breached}</Badge>
             <Badge variant="warning">Unassigned {queue.summary.unassigned}</Badge>
+            <Badge variant={syncVariant(queue.sync?.status ?? "idle")}>
+              Sync {formatSyncStatus(queue)}
+            </Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent className="grid min-w-0 gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[16px] border border-[var(--line)] bg-[var(--panel-soft)] p-4 text-sm text-[var(--ink-soft)]">
+        <div className="grid gap-3 rounded-[16px] border border-[var(--line)] bg-[var(--panel-soft)] p-4 text-sm text-[var(--ink-soft)] md:grid-cols-[minmax(0,1fr)_auto]">
           <div className="grid gap-1">
             <div>
               Active items: <span className="font-semibold text-[var(--ink)]">{queue.summary.total}</span>
@@ -190,11 +240,30 @@ export function EscalationQueueCard({
                 {queue.summary.critical + queue.summary.high}
               </span>
             </div>
+            <div>
+              Last sync: <span className="font-semibold text-[var(--ink)]">{formatDateTime(queue.syncedAt)}</span>
+            </div>
+            <div>
+              Last sync result:{" "}
+              <span className="font-semibold text-[var(--ink)]">
+                {queue.sync?.lastResultCount !== null && queue.sync?.lastResultCount !== undefined
+                  ? `${queue.sync.lastResultCount} item${queue.sync.lastResultCount === 1 ? "" : "s"}`
+                  : "Unavailable"}
+              </span>
+            </div>
           </div>
-          <Button disabled={isRefreshing} onClick={refreshQueue} size="sm" variant="outline">
-            {isRefreshing ? "Обновляю..." : "Refresh queue"}
-          </Button>
+          <div className="flex items-end justify-end">
+            <Button disabled={isRefreshing} onClick={refreshQueue} size="sm" variant="outline">
+              {isRefreshing ? "Syncing..." : "Sync queue"}
+            </Button>
+          </div>
         </div>
+
+        {queue.sync?.lastError ? (
+          <div className="rounded-[14px] border border-rose-300/70 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+            {queue.sync.lastError}
+          </div>
+        ) : null}
 
         {error ? (
           <div className="rounded-[14px] border border-rose-300/70 bg-rose-50 px-4 py-3 text-sm text-rose-900">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { authorizeRequest } from "@/app/api/middleware/auth";
+import { removeEvidenceRecordForEntity } from "@/lib/evidence";
 import { rejectWorkReport } from "@/lib/work-reports/service";
 import {
   badRequest,
@@ -50,6 +51,9 @@ export async function POST(
     const report = await rejectWorkReport(id, {
       reviewerId: parsed.data.reviewerId,
       reviewComment: parsed.data.reviewComment!.trim(),
+    });
+    void removeEvidenceRecordForEntity("work_report", report.id).catch((error) => {
+      console.error("Failed to remove work-report evidence after rejection.", error);
     });
     return NextResponse.json(report);
   } catch (error) {

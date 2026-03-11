@@ -3,7 +3,10 @@ export {
   getEvidenceRecordById,
   mapGpsSnapshotToEvidenceInputs,
   mapWorkReportToEvidenceInput,
+  removeEvidenceRecordForEntity,
   summarizeEvidenceRecords,
+  syncEvidenceLedger,
+  syncWorkReportEvidenceRecord,
 } from "@/lib/evidence/service";
 export { getEvidenceFusionOverview, buildEvidenceFusionFacts } from "@/lib/evidence/fusion";
 export type {

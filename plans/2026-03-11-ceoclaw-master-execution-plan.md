@@ -32,9 +32,13 @@ As of 2026-03-11:
 - Session 22 Video Fact MVP is complete in the lead branch.
 - Session 23 cross-source confidence fusion is complete in the lead branch.
 - Session 24 action safety and compensation layer is complete in the lead branch.
+- Session 28 evidence and escalation sync jobs is complete in the lead branch.
+- Session 27 AI run persistence and workflow ledger is complete in the lead branch.
 - Wave 1 foundation services are complete. Wave 2 fact capture and connector shell is complete. Wave 3 platform access model is complete through Session 08. Wave 4 vertical pilot now has Session 09, Session 10, Session 11, Session 12, Session 13, and Session 14 complete.
 - Wave 5 evidence and runtime modernization is complete on the lead branch.
 - Wave 6 integration truth expansion is complete on the lead branch through Session 26.
+- Wave 7 durable runtime hardening is now active, with Sessions 27 and 28 complete on the lead branch.
+- The next canonical sequence remains: Wave 7 durable runtime hardening, Wave 8 source-of-truth depth, and Wave 9 pilot-grade operatorization.
 
 ## 1. Product Direction
 
@@ -331,6 +335,102 @@ The detailed roadmap for post-alpha modernization is tracked in:
 
 - `plans/2026-03-11-ceoclaw-modernization-roadmap.md`
 
+## Wave 7: Durable Runtime Hardening
+
+**Mode:** Lead-first sequential delivery. Worker help only for isolated route, UI, or test zones after state ownership is fixed.
+
+### Sessions
+
+1. Session 27: AI Run Persistence and Workflow Ledger
+   Status: complete on lead branch.
+2. Session 28: Evidence and Escalation Sync Jobs
+   Status: complete on lead branch.
+3. Session 29: Delivery Ledger and Idempotent Execution
+   Status: planned.
+
+### Goals
+
+1. Replace file-backed workflow state with durable database truth.
+2. Remove critical sync-on-read behavior from evidence and escalation surfaces.
+3. Make outbound execution auditable, retry-safe, and explainable.
+
+### Target outcome
+
+`durable runs + explicit sync jobs + idempotent delivery ledger`
+
+### Why this wave is next
+
+1. The current alpha already has enough product surface.
+2. The largest architectural weakness is durability, not missing screens.
+3. Pilot-grade trust requires that runs, jobs, and deliveries survive process restarts and partial failures.
+
+### Current state
+
+1. AI runs now persist in Prisma through `AiRunLedger`, not only in `.ceoclaw-cache`.
+2. Mock-mode run progression no longer depends on in-memory adapter state to build traceable operator runs.
+3. Existing `POST /api/ai/runs`, `GET /api/ai/runs/:id`, `POST /api/ai/runs/:id/proposals/:proposalId/apply`, and `GET /api/ai/runs/:id/trace` now read from the durable ledger when `DATABASE_URL` is configured.
+4. File-backed run storage remains only as a fallback when no database is configured.
+5. `GET /api/evidence` and `GET /api/escalations` are now read-only views over persisted derivation, with explicit `POST /api/evidence/sync` and `POST /api/escalations/sync` job boundaries and operator-visible freshness metadata.
+6. Work-report writes now trigger narrow evidence sync jobs, and signal-packet / proposal-apply flows trigger narrow escalation sync jobs without recreating truth during reads.
+
+## Wave 8: Source-of-Truth Depth
+
+**Mode:** Sequential by default. Limited worker help only after schema and matching rules are fixed by the lead session.
+
+### Sessions
+
+1. Session 30: GPS Telemetry Domain Expansion
+   Status: planned.
+2. Session 31: 1C Financial Truth Deepening
+   Status: planned.
+3. Session 32: Reconciliation Casefile and Fact Linking
+   Status: planned.
+
+### Goals
+
+1. Expand GPS and 1C from narrow sample reads into deeper truth domains.
+2. Link finance, telemetry, work reports, and visual evidence through deterministic reconciliation.
+3. Turn mismatches into inspectable casefiles instead of hiding them inside rollups.
+
+### Target outcome
+
+`telemetry depth + finance depth + linked reconciliation casefiles`
+
+### Why this wave follows Wave 7
+
+1. Deeper truth is more valuable after runtime state is durable.
+2. Reconciliation logic becomes safer once jobs and traces are persisted.
+3. This is the wedge that best fits construction and infrastructure pilots.
+
+## Wave 9: Pilot-Grade Operatorization
+
+**Mode:** Lead-first sequencing with selective worker help for isolated UI and export surfaces.
+
+### Sessions
+
+1. Session 33: Executive Command Center and Exception Inbox
+   Status: planned.
+2. Session 34: Audit Pack and Operational Exports
+   Status: planned.
+3. Session 35: Pilot Controls and Tenant Readiness
+   Status: planned.
+
+### Goals
+
+1. Unify operator control around exceptions, owners, and follow-through.
+2. Produce audit-friendly packs that explain evidence, decisions, and applied changes.
+3. Make the product safer to run for real pilots across tenants, workspaces, and environments.
+
+### Target outcome
+
+`operator command center + audit packs + tenant-safe pilot controls`
+
+### Why this wave comes last
+
+1. It productizes the trust layers built in Waves 7 and 8.
+2. It turns the system from a strong alpha into a pilot-grade operating layer.
+3. It avoids polishing operator UX before the underlying truth and runtime are strong enough.
+
 ## 6. Technical Tracks
 
 ### Track A: Stability and Platform
@@ -407,6 +507,18 @@ Includes:
 
 `verified telemetry facts + evidence status + traceable agent runs`
 
+### Milestone G
+
+`durable workflow state + explicit sync jobs + auditable outbound execution`
+
+### Milestone H
+
+`deeper telemetry and finance truth + linked reconciliation casefiles`
+
+### Milestone I
+
+`pilot-grade operator control + auditability + tenant-safe rollout posture`
+
 ## 8. Rules for Parallel Sessions
 
 1. Never run parallel sessions before Wave 0 is closed.
@@ -449,29 +561,31 @@ A worker session should:
 
 ### Best option right now
 
-1. Keep this session on the lead integration track for Wave 6.
-2. Session 25 is now complete and turns repeated operating patterns into reusable benchmark-guided knowledge.
-3. Reassess Session 26 next, now that the knowledge loop is coherent.
+1. Keep the lead track on Wave 7 first.
+2. Move directly to Session 29 after Session 28.
+3. Use worker help only after workflow state ownership is fixed.
 
 ### Why this is best
 
-Because the product already has enough surface area for an alpha. The next meaningful gain is operational trust:
+Because the product already has enough surface area for an alpha. The next meaningful gain is durable operational trust:
 
 - trustworthy evidence;
 - trustworthy provenance;
 - trustworthy enterprise reads;
-- trustworthy operator control.
+- trustworthy operator control;
+- trustworthy execution state.
 
 That is more valuable now than broadening the UI or adding another shallow connector.
 
 ## 11. Immediate Next Actions
 
 1. Keep Wave 0 closed and stable; it is no longer the active bottleneck.
-2. Session 25 is complete:
-   - reusable playbooks and lessons are derived from repeated operator patterns;
-   - benchmark-guided recommendations now complement one-off advice;
-   - one visible knowledge loop now feeds the operator surface.
-3. Land Session 26 after the post-Wave-6 baseline remains stable.
+2. Keep Sessions 01 through 28 as the locked baseline.
+3. Start Session 29:
+   - add a durable delivery ledger for Telegram, email, and scheduled sends;
+   - introduce idempotency keys and retry posture for outbound actions;
+   - surface per-target execution history to operators.
+4. Land Wave 8 only after Session 29 stabilizes.
 
 ## 12. Definition of Alpha
 

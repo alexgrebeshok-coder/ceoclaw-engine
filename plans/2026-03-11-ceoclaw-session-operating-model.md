@@ -42,11 +42,13 @@ Reason:
 
 Prefer lead-first sequencing for the active sessions defined in the master execution plan.
 
-As of 2026-03-11 after Session 24 landed, that means Session 25 and Session 26.
+As of 2026-03-11 after Session 28 landed, that means the remaining Wave 7 queue:
+- Session 29.
 
 Recommended concurrency:
-- 1 lead session for schema or cross-cutting evidence/runtime work;
-- 2 worker sessions maximum when a session prompt has isolated ownership;
+- 1 lead session for schema or durable workflow state;
+- 1 worker session maximum for isolated route/UI work during Session 28;
+- 2 worker sessions maximum only after the Wave 7 storage boundary is stable;
 - 3 sessions maximum per wave for now.
 
 ## 3. Session Roles
@@ -110,6 +112,21 @@ Use exactly one of the files from:
 - [session-18-1c-live-read-connector.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-18-1c-live-read-connector.md)
 - [session-19-operator-escalation-queue.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-19-operator-escalation-queue.md)
 - [session-20-live-vs-demo-truth.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-20-live-vs-demo-truth.md)
+- [session-21-email-delivery-channel.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-21-email-delivery-channel.md)
+- [session-22-video-fact-mvp.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-22-video-fact-mvp.md)
+- [session-23-cross-source-confidence-fusion.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-23-cross-source-confidence-fusion.md)
+- [session-24-action-safety-compensation-layer.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-24-action-safety-compensation-layer.md)
+- [session-25-knowledge-and-benchmark-loop.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-25-knowledge-and-benchmark-loop.md)
+- [session-26-enterprise-truth-expansion.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-26-enterprise-truth-expansion.md)
+- [session-27-ai-run-persistence-ledger.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-27-ai-run-persistence-ledger.md)
+- [session-28-evidence-and-escalation-sync-jobs.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-28-evidence-and-escalation-sync-jobs.md)
+- [session-29-delivery-ledger-idempotent-execution.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-29-delivery-ledger-idempotent-execution.md)
+- [session-30-gps-telemetry-domain-expansion.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-30-gps-telemetry-domain-expansion.md)
+- [session-31-1c-financial-truth-deepening.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-31-1c-financial-truth-deepening.md)
+- [session-32-reconciliation-casefile-fact-linking.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-32-reconciliation-casefile-fact-linking.md)
+- [session-33-executive-command-center-exception-inbox.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-33-executive-command-center-exception-inbox.md)
+- [session-34-audit-pack-and-operational-exports.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-34-audit-pack-and-operational-exports.md)
+- [session-35-pilot-controls-and-tenant-readiness.md](/Users/aleksandrgrebeshok/CODEBASE/pm-dashboard-visual-test/doc/session-prompts/session-35-pilot-controls-and-tenant-readiness.md)
 
 Do not combine prompt files in one worker session.
 
@@ -160,7 +177,12 @@ Status: complete on 2026-03-11. Lead track landed shared plan-vs-fact services, 
 ### Stage 7
 
 Repeat the same pattern for the next wave: workers implement in isolated zones, lead session integrates and verifies.
-Status: Sessions 09 through 20 are complete on 2026-03-11. Meeting-to-action, work-report signal packets, Telegram live probing, Telegram brief delivery, scheduled Telegram digests, GPS telemetry sample reads, evidence ledger, AI trace/eval coverage, the first 1C live finance read, the operator escalation queue, and the live-vs-demo truth layer now work on the lead branch.
+Status: Sessions 09 through 26 are complete on 2026-03-11. Meeting-to-action, work-report signal packets, live connector reads, outbound delivery, evidence fusion, action safety, knowledge loop, and enterprise truth expansion now work on the lead branch.
+
+### Stage 8
+
+Start the next sequence only after the previous one is canonically fixed in the master plan.
+Status: the next active sequence is now chosen. Sessions 27 and 28 are complete, and Wave 7 should continue lead-first through Session 29.
 
 ## 8. When Not to Parallelize
 
@@ -189,10 +211,10 @@ That means:
 Right now:
 
 1. Wave 0 no longer blocks parallel execution.
-2. Sessions 01 through 26 are complete on the lead branch.
+2. Sessions 01 through 28 are complete on the lead branch.
 3. Keep exact active session selection in the master execution plan, not here.
 4. Wave 6 is now complete on the lead branch.
-5. Avoid broad new feature waves until a new post-Wave-6 sequence is explicitly chosen.
+5. The active sequence is Wave 7 durable runtime hardening, with Session 29 next.
 
 ## 11. Success Condition for This Operating Model
 

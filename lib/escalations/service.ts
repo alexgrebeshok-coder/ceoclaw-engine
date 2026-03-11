@@ -1,6 +1,13 @@
 import { getProposalItemCount } from "@/lib/ai/action-engine";
 import { listServerAIRunEntries, type ServerAIRunEntry } from "@/lib/ai/server-runs";
 import { prisma } from "@/lib/prisma";
+import {
+  getDerivedSyncCheckpoint,
+  markDerivedSyncError,
+  markDerivedSyncStarted,
+  markDerivedSyncSuccess,
+  type DerivedSyncStore,
+} from "@/lib/sync-state";
 
 import type {
   EscalationListResult,
@@ -105,6 +112,7 @@ interface EscalationServiceDeps {
   listRunEntries?: () => Promise<ServerAIRunEntry[]>;
   lookupMember?: (memberId: string) => Promise<MemberLookupResult | null>;
   now?: () => Date;
+  syncStore?: DerivedSyncStore;
 }
 
 interface EscalationSyncInput {
@@ -126,6 +134,7 @@ interface EscalationSyncInput {
 }
 
 const WORK_REPORT_SIGNAL_SOURCE = "ai_run:work_report_signal_packet";
+export const ESCALATION_QUEUE_SYNC_KEY = "escalation_queue";
 const defaultEscalationStore: EscalationStore = {
   upsert(args) {
     return prisma.escalationItem.upsert(args);
@@ -169,11 +178,11 @@ export async function getEscalationQueueOverview(
   query: EscalationQuery = {},
   deps: EscalationServiceDeps = {}
 ): Promise<EscalationListResult> {
-  const now = deps.now ?? (() => new Date());
-  const syncedAt = now().toISOString();
   const escalationStore = deps.escalationStore ?? defaultEscalationStore;
-
-  await syncEscalationQueue(deps);
+  const sync = await getDerivedSyncCheckpoint(ESCALATION_QUEUE_SYNC_KEY, {
+    syncStore: deps.syncStore,
+  });
+  const now = deps.now ?? (() => new Date());
 
   const records = await escalationStore.findMany({
     where: {
@@ -199,9 +208,10 @@ export async function getEscalationQueueOverview(
     .slice(0, sanitizeLimit(query.limit));
 
   return {
-    syncedAt,
+    syncedAt: sync?.lastCompletedAt ?? sync?.lastSuccessAt ?? null,
     summary: summarizeEscalations(items),
     items,
+    sync,
   };
 }
 
@@ -289,81 +299,119 @@ export async function syncEscalationQueue(
   const listRunEntries = deps.listRunEntries ?? listServerAIRunEntries;
   const now = deps.now ?? (() => new Date());
   const timestamp = now();
-  const runEntries = await listRunEntries();
-  const existing = await escalationStore.findMany({
-    where: {
-      sourceType: WORK_REPORT_SIGNAL_SOURCE,
-    },
+  await markDerivedSyncStarted(ESCALATION_QUEUE_SYNC_KEY, {
+    now: deps.now,
+    syncStore: deps.syncStore,
   });
-  const existingByKey = new Map(existing.map((record) => [buildCompositeKey(record), record]));
-  const activeKeys = new Set<string>();
 
-  await Promise.all(
-    runEntries
-      .map(mapRunEntryToEscalationInput)
-      .filter((input): input is EscalationSyncInput => input !== null)
-      .map(async (input) => {
-        const key = buildCompositeKey(input);
-        activeKeys.add(key);
+  try {
+    const runEntries = await listRunEntries();
+    const existing = await escalationStore.findMany({
+      where: {
+        sourceType: WORK_REPORT_SIGNAL_SOURCE,
+      },
+    });
+    const existingByKey = new Map(existing.map((record) => [buildCompositeKey(record), record]));
+    const activeKeys = new Set<string>();
 
-        const existingRecord = existingByKey.get(key);
-        const preservedQueueStatus =
-          existingRecord && normalizeQueueStatus(existingRecord.queueStatus) === "acknowledged"
-            ? "acknowledged"
-            : "open";
+    await Promise.all(
+      runEntries
+        .map(mapRunEntryToEscalationInput)
+        .filter((input): input is EscalationSyncInput => input !== null)
+        .map(async (input) => {
+          const key = buildCompositeKey(input);
+          activeKeys.add(key);
 
-        await escalationStore.upsert({
-          where: {
-            sourceType_entityType_entityRef: {
-              sourceType: input.sourceType,
-              entityType: input.entityType,
-              entityRef: input.entityRef,
+          const existingRecord = existingByKey.get(key);
+          const preservedQueueStatus =
+            existingRecord && normalizeQueueStatus(existingRecord.queueStatus) === "acknowledged"
+              ? "acknowledged"
+              : "open";
+
+          await escalationStore.upsert({
+            where: {
+              sourceType_entityType_entityRef: {
+                sourceType: input.sourceType,
+                entityType: input.entityType,
+                entityRef: input.entityRef,
+              },
             },
-          },
-          create: toEscalationWriteShape(input, {
-            queueStatus: "open",
-            ownerId: null,
-            ownerName: null,
-            ownerRole: null,
-            firstObservedAt: input.firstObservedAt,
-            acknowledgedAt: null,
-            resolvedAt: null,
-          }),
-          update: toEscalationWriteShape(input, {
-            queueStatus:
-              existingRecord && normalizeQueueStatus(existingRecord.queueStatus) === "resolved"
-                ? "open"
-                : preservedQueueStatus,
-            ownerId: existingRecord?.ownerId ?? null,
-            ownerName: existingRecord?.ownerName ?? null,
-            ownerRole: existingRecord?.ownerRole ?? null,
-            firstObservedAt: existingRecord?.firstObservedAt.toISOString() ?? input.firstObservedAt,
-            acknowledgedAt:
-              preservedQueueStatus === "acknowledged"
-                ? existingRecord?.acknowledgedAt?.toISOString() ?? input.lastObservedAt
-                : null,
-            resolvedAt: null,
-          }),
-        });
-      })
-  );
-
-  await Promise.all(
-    existing
-      .filter((record) => !activeKeys.has(buildCompositeKey(record)))
-      .filter((record) => normalizeQueueStatus(record.queueStatus) !== "resolved" || normalizeSourceStatus(record.sourceStatus) !== "resolved")
-      .map((record) =>
-        escalationStore.update({
-          where: { id: record.id },
-          data: {
-            queueStatus: "resolved",
-            sourceStatus: "resolved",
-            acknowledgedAt: record.acknowledgedAt ?? timestamp,
-            resolvedAt: record.resolvedAt ?? timestamp,
-          },
+            create: toEscalationWriteShape(input, {
+              queueStatus: "open",
+              ownerId: null,
+              ownerName: null,
+              ownerRole: null,
+              firstObservedAt: input.firstObservedAt,
+              acknowledgedAt: null,
+              resolvedAt: null,
+            }),
+            update: toEscalationWriteShape(input, {
+              queueStatus:
+                existingRecord && normalizeQueueStatus(existingRecord.queueStatus) === "resolved"
+                  ? "open"
+                  : preservedQueueStatus,
+              ownerId: existingRecord?.ownerId ?? null,
+              ownerName: existingRecord?.ownerName ?? null,
+              ownerRole: existingRecord?.ownerRole ?? null,
+              firstObservedAt: existingRecord?.firstObservedAt.toISOString() ?? input.firstObservedAt,
+              acknowledgedAt:
+                preservedQueueStatus === "acknowledged"
+                  ? existingRecord?.acknowledgedAt?.toISOString() ?? input.lastObservedAt
+                  : null,
+              resolvedAt: null,
+            }),
+          });
         })
-      )
-  );
+    );
+
+    await Promise.all(
+      existing
+        .filter((record) => !activeKeys.has(buildCompositeKey(record)))
+        .filter((record) => normalizeQueueStatus(record.queueStatus) !== "resolved" || normalizeSourceStatus(record.sourceStatus) !== "resolved")
+        .map((record) =>
+          escalationStore.update({
+            where: { id: record.id },
+            data: {
+              queueStatus: "resolved",
+              sourceStatus: "resolved",
+              acknowledgedAt: record.acknowledgedAt ?? timestamp,
+              resolvedAt: record.resolvedAt ?? timestamp,
+            },
+          })
+        )
+    );
+
+    await markDerivedSyncSuccess(
+      ESCALATION_QUEUE_SYNC_KEY,
+      {
+        metadata: {
+          runEntryCount: runEntries.length,
+          activeQueueItems: activeKeys.size,
+          sourceType: WORK_REPORT_SIGNAL_SOURCE,
+        },
+        resultCount: activeKeys.size,
+      },
+      {
+        now: deps.now,
+        syncStore: deps.syncStore,
+      }
+    );
+  } catch (error) {
+    await markDerivedSyncError(
+      ESCALATION_QUEUE_SYNC_KEY,
+      error,
+      {
+        metadata: {
+          sourceType: WORK_REPORT_SIGNAL_SOURCE,
+        },
+      },
+      {
+        now: deps.now,
+        syncStore: deps.syncStore,
+      }
+    );
+    throw error;
+  }
 }
 
 export function summarizeEscalations(items: EscalationRecordView[]): EscalationSummary {

@@ -100,6 +100,7 @@ function createEvidence(): EvidenceListResult {
         },
       }),
     ],
+    sync: null,
   };
 }
 

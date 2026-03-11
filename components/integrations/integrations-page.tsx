@@ -45,8 +45,13 @@ const expectedEndpoints = [
   },
   {
     method: "GET" as const,
-    note: "Синхронизировать и получить evidence ledger по work reports и GPS sample.",
+    note: "Прочитать persisted evidence ledger и freshness последнего derived sync.",
     path: "/api/evidence",
+  },
+  {
+    method: "POST" as const,
+    note: "Явно запустить derived sync job для evidence ledger по work reports и GPS sample.",
+    path: "/api/evidence/sync",
   },
   {
     method: "GET" as const,

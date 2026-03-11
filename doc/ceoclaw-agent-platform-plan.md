@@ -183,9 +183,14 @@
 - `action safety and compensation layer`
 - `knowledge and benchmark loop`
 - `enterprise truth expansion`
+- `durable AI run workflow ledger`
+- `explicit evidence and escalation sync jobs`
 
 Следующий рекомендованный ход:
-- choose the next post-Wave-6 modernization sequence explicitly, instead of adding another shallow surface.
+- execute the chosen post-Wave-6 sequence explicitly:
+  - Wave 7: durable runtime hardening;
+  - Wave 8: source-of-truth depth;
+  - Wave 9: pilot-grade operatorization.
 
 ## Definition of Done по релизу Alpha
 
@@ -247,3 +252,18 @@
 - `doc/session-prompts/session-18-1c-live-read-connector.md`
 - `doc/session-prompts/session-19-operator-escalation-queue.md`
 - `doc/session-prompts/session-20-live-vs-demo-truth.md`
+- `doc/session-prompts/session-21-email-delivery-channel.md`
+- `doc/session-prompts/session-22-video-fact-mvp.md`
+- `doc/session-prompts/session-23-cross-source-confidence-fusion.md`
+- `doc/session-prompts/session-24-action-safety-compensation-layer.md`
+- `doc/session-prompts/session-25-knowledge-and-benchmark-loop.md`
+- `doc/session-prompts/session-26-enterprise-truth-expansion.md`
+- `doc/session-prompts/session-27-ai-run-persistence-ledger.md`
+- `doc/session-prompts/session-28-evidence-and-escalation-sync-jobs.md`
+- `doc/session-prompts/session-29-delivery-ledger-idempotent-execution.md`
+- `doc/session-prompts/session-30-gps-telemetry-domain-expansion.md`
+- `doc/session-prompts/session-31-1c-financial-truth-deepening.md`
+- `doc/session-prompts/session-32-reconciliation-casefile-fact-linking.md`
+- `doc/session-prompts/session-33-executive-command-center-exception-inbox.md`
+- `doc/session-prompts/session-34-audit-pack-and-operational-exports.md`
+- `doc/session-prompts/session-35-pilot-controls-and-tenant-readiness.md`

@@ -7,6 +7,8 @@ import {
   createServerAIRun,
   getServerAIRun,
 } from "@/lib/ai/server-runs";
+import { prisma } from "@/lib/prisma";
+import { isDatabaseConfigured } from "@/lib/server/runtime-mode";
 
 import { createWorkReportSignalFixtureBundle } from "./fixtures/work-report-signal-fixtures";
 
@@ -16,6 +18,11 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function cleanup(runId?: string) {
   if (!runId) return;
   await rm(path.join(cacheDir, `${runId}.json`), { force: true });
+  if (isDatabaseConfigured()) {
+    await prisma.aiRunLedger.deleteMany({
+      where: { id: runId },
+    });
+  }
 }
 
 async function testMockApplyPersistsToSubsequentReads() {

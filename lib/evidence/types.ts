@@ -1,3 +1,5 @@
+import type { DerivedSyncCheckpointView } from "@/lib/sync-state";
+
 export type EvidenceVerificationStatus = "reported" | "observed" | "verified";
 
 export interface EvidenceMetadata {
@@ -32,9 +34,10 @@ export interface EvidenceSummary {
 }
 
 export interface EvidenceListResult {
-  syncedAt: string;
+  syncedAt: string | null;
   summary: EvidenceSummary;
   records: EvidenceRecordView[];
+  sync: DerivedSyncCheckpointView | null;
 }
 
 export interface EvidenceQuery {

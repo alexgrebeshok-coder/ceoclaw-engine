@@ -1,14 +1,28 @@
 import assert from "node:assert/strict";
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { rm } from "node:fs/promises";
 
 import { GET as getTraceRoute } from "../../app/api/ai/runs/[id]/trace/route";
 import { applyAIProposal } from "@/lib/ai/action-engine";
 import { runAIRunEvalSuite } from "@/lib/ai/evals";
 import { buildMockFinalRun } from "@/lib/ai/mock-adapter";
+import { createServerAIRun, getServerAIRun } from "@/lib/ai/server-runs";
 import { buildAIRunTrace } from "@/lib/ai/trace";
+import { prisma } from "@/lib/prisma";
+import { isDatabaseConfigured } from "@/lib/server/runtime-mode";
 
 import { createWorkReportSignalFixtureBundle } from "./fixtures/work-report-signal-fixtures";
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function cleanupPersistedRun(runId?: string) {
+  if (!runId) return;
+  await rm(`${process.cwd()}/.ceoclaw-cache/ai-runs/${runId}.json`, { force: true });
+  if (isDatabaseConfigured()) {
+    await prisma.aiRunLedger.deleteMany({
+      where: { id: runId },
+    });
+  }
+}
 
 async function testTraceSummarizesWorkReportRun() {
   const { blueprints } = createWorkReportSignalFixtureBundle();
@@ -128,28 +142,25 @@ async function testTraceRouteReturnsPersistedRunTrace() {
 
   assert.ok(input);
 
-  const runId = "ai-run-trace-route-status";
-  const run = buildMockFinalRun(input, {
-    id: runId,
-    createdAt: "2026-03-11T09:10:00.000Z",
-    updatedAt: "2026-03-11T09:10:05.000Z",
-    quickActionId: input?.quickAction?.id,
-  });
-  const cacheDir = path.join(process.cwd(), ".ceoclaw-cache", "ai-runs");
-  const cacheFile = path.join(cacheDir, `${runId}.json`);
-
-  await mkdir(cacheDir, { recursive: true });
-  await writeFile(
-    cacheFile,
-    JSON.stringify({
-      origin: "gateway",
-      input,
-      run,
-    }),
-    "utf8"
-  );
+  const previousMode = process.env.SEOCLAW_AI_MODE;
+  process.env.SEOCLAW_AI_MODE = "mock";
+  let runId: string | undefined;
 
   try {
+    const created = await createServerAIRun(input);
+    runId = created.id;
+
+    let finalRun = created;
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      await sleep(300);
+      finalRun = await getServerAIRun(runId);
+      if (finalRun.result?.proposal) {
+        break;
+      }
+    }
+
+    assert.ok(finalRun.result?.proposal);
+
     const response = await getTraceRoute(new Request(`http://localhost/api/ai/runs/${runId}/trace`), {
       params: Promise.resolve({ id: runId }),
     });
@@ -161,7 +172,12 @@ async function testTraceRouteReturnsPersistedRunTrace() {
     assert.equal(body.proposal.type, "draft_status_report");
     assert.equal(body.steps[3].status, "done");
   } finally {
-    await rm(cacheFile, { force: true });
+    await cleanupPersistedRun(runId);
+    if (previousMode === undefined) {
+      delete process.env.SEOCLAW_AI_MODE;
+    } else {
+      process.env.SEOCLAW_AI_MODE = previousMode;
+    }
   }
 }
 

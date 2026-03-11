@@ -10,28 +10,30 @@ This roadmap explains the modernization direction and 30/60/90-day shape. It is 
 
 ## 1. Why This Roadmap Exists
 
-CEOClaw has already crossed the alpha threshold for an AI operating layer:
-- facts can enter the product;
-- AI can generate proposals;
-- humans can review and apply changes;
-- executive briefs and alerts exist;
-- Telegram, GPS/GLONASS, and 1C are no longer pure stubs.
+CEOClaw has already crossed the alpha threshold for an AI operating layer. Sessions 01 through 28 are complete on the lead branch, and the product already spans:
+- enterprise fact intake;
+- evidence and verification;
+- proposal and apply;
+- outbound delivery;
+- operator control;
+- knowledge and enterprise truth rollups.
 
-The next stage should not be "more surfaces." It should be:
+The next 90 days should not add more shallow surfaces. They should turn the current alpha into a pilot-grade operating layer.
 
-`reported facts -> observed evidence -> verified truth -> agent analysis -> recommendation -> approval -> action -> trace -> learning`
+The new 90-day target is:
 
-That is the modernization target for the next 90 days.
+`durable execution -> deeper source truth -> pilot-grade operator control`
 
 ## 2. Modernization Thesis
 
-CEOClaw should evolve from a dashboard-shaped alpha into an evidence-backed operating system for project-driven organizations.
+CEOClaw should evolve from a strong alpha into a pilot-grade, evidence-backed operating system for project-driven organizations.
 
-The strongest gap versus the original AI-PMO vision is not UI breadth. It is:
+The highest-leverage gaps are now:
 
-1. too little verified operational truth;
-2. too little runtime traceability and evaluation;
-3. too little cross-system confidence fusion.
+1. workflow state is not yet durable enough;
+2. truth derivation still happens too much on read paths;
+3. source-of-truth domains are still too narrow;
+4. operator control is spread across pages instead of one pilot-grade command model.
 
 ## 3. Current Baseline
 
@@ -44,147 +46,158 @@ As of 2026-03-11 the lead branch already has:
 5. workspace, membership, and policy model;
 6. plan-vs-fact and financial truth layer;
 7. meeting-to-action and work-report-to-action vertical slices;
-8. live Telegram probe and Telegram digest delivery;
-9. live GPS/GLONASS readiness probe;
-10. GPS read-only telemetry sample path;
-11. evidence ledger with `reported / observed / verified` states;
-12. AI trace, provenance, and eval coverage for one live operator workflow;
-13. 1C live read-only finance sample path.
+8. live Telegram and SMTP outbound channels;
+9. live GPS/GLONASS and 1C read paths;
+10. evidence ledger with `reported / observed / verified` states;
+11. Video Fact MVP and cross-source confidence fusion;
+12. AI trace, provenance, eval coverage, and action safety/compensation;
+13. escalation queue, knowledge loop, and enterprise truth rollup.
 
 ## 4. Gaps Still Open
 
 The following high-value gaps remain open:
 
-1. Email remains a stub outbound channel.
-2. Demo mode versus live mode is not surfaced consistently across operator views.
-3. Video Fact and cross-source verification have not been ported from AI-PMO ideas into product reality.
-4. Action safety stops at approval; there is no compensation or rollback model yet.
-5. The current evidence layer is intentionally narrow and still needs multi-source fusion.
-6. 1C currently exposes one narrow finance slice, not broader enterprise truth coverage.
-7. Live-vs-demo truth is still not surfaced consistently in operator-facing UX.
+1. AI runs and workflow traces still rely on file-backed state in `.ceoclaw-cache`.
+2. Evidence and escalation state now have explicit sync boundaries, but outbound delivery execution still lacks a durable ledger.
+3. GPS and 1C are still narrow read domains, not deeper operational truth models.
+4. There is no durable reconciliation casefile linking finance, telemetry, work reports, and video evidence.
+5. Operator control is distributed across multiple pages instead of one exception-driven command view.
+6. Audit/export and pilot controls are not yet strong enough for enterprise rollout.
 
 ## 5. 30-Day Plan
 
-The first modernization foundation is already landed on the lead branch:
+### Wave 7: Durable Runtime Hardening
 
-1. Session 15: GPS read-only telemetry ingestion.
-2. Session 16: evidence ledger and verification status.
-3. Session 17: AI trace, provenance, and eval harness.
-4. Session 18: 1C live read connector.
-5. Session 19: operator escalation queue and SLA layer.
-6. Session 20: live-vs-demo truth in operator UX.
-
-That changes the active next 30-day plan to the next truth-expansion wave.
-
-### Session 19: Operator Escalation Queue and SLA Layer
+#### Session 27: AI Run Persistence and Workflow Ledger
 
 Goal:
-- convert signals into a managed queue with owner, urgency, and aging.
+- move AI runs, packet state, apply state, and trace metadata from file cache into durable database truth.
 
 Deliver:
-- escalation queue;
-- owner assignment and aging fields;
-- SLA-oriented operator view for unresolved signals and proposals.
+- Prisma-backed workflow ledger for runs and traces;
+- migration-safe server-run persistence layer;
+- compatibility path for existing operator trace views.
 
 Exit criteria:
-- unresolved signals become managed workload instead of passive lists;
-- aging and urgency are visible without opening each item;
-- operator follow-through becomes measurable.
+- process restarts do not lose canonical run state;
+- `.ceoclaw-cache` stops being the source of truth for live workflows;
+- at least one existing operator workflow reads its run state from durable storage.
 
 Status:
 - complete on 2026-03-11 in the lead branch.
 
-### Session 20: Live-vs-Demo Truth in Operator UX
+#### Session 28: Evidence and Escalation Sync Jobs
 
 Goal:
-- remove ambiguity about what is simulated versus what is sourced from real systems.
+- remove critical sync-on-read behavior from evidence and escalation derivation.
 
 Deliver:
-- consistent demo/live badges and messaging;
-- source provenance labels across key pages;
-- runtime truth surfaced in the main operator workflows.
+- explicit sync jobs or outbox-driven derivation for evidence and escalation layers;
+- idempotent job boundaries;
+- operator-visible sync freshness instead of hidden background work during reads.
 
 Exit criteria:
-- non-technical operators can tell live from simulated states without guessing;
-- demo-safe screens and live-truth screens stop contradicting each other;
-- the product is safer to pilot in mixed environments.
+- `/api/evidence` and `/api/escalations` no longer need to create truth as part of every read;
+- derivation failures can be diagnosed without replaying page loads;
+- freshness and lag are visible.
 
 Status:
 - complete on 2026-03-11 in the lead branch.
+
+#### Session 29: Delivery Ledger and Idempotent Execution
+
+Goal:
+- make outbound delivery auditable, retry-safe, and deterministic across Telegram, email, and scheduled sends.
+
+Deliver:
+- delivery job ledger;
+- idempotency keys and retry posture;
+- operator-visible execution history for outbound actions.
+
+Exit criteria:
+- repeated sends are controllable and explainable;
+- delivery retries stop depending on blind re-execution;
+- outbound actions become auditable per run and per target.
 
 ## 6. 60-Day Plan
 
-### Session 21: Email Delivery Channel
+### Wave 8: Source-of-Truth Depth
+
+#### Session 30: GPS Telemetry Domain Expansion
 
 Goal:
-- create the second real outbound channel after Telegram.
+- expand GPS from sample snapshots into a richer telemetry truth domain.
 
 Deliver:
-- live email probe and delivery path;
-- operator-visible send target and delivery status;
-- policy-safe outbound behavior consistent with the Telegram brief model.
+- richer session, equipment, and geofence truth;
+- narrow but honest telemetry views beyond the current sample card;
+- deterministic mappings that other truth layers can reference.
 
-Status:
-- complete on 2026-03-11 in the lead branch.
-
-### Session 22: Video Fact MVP
+#### Session 31: 1C Financial Truth Deepening
 
 Goal:
-- port the smallest useful visual evidence loop from AI-PMO into CEOClaw.
+- deepen 1C from one finance sample into a more useful project truth source.
 
 Deliver:
-- one visual evidence ingestion path;
-- one operator-facing evidence summary;
-- one narrow verification rule linking visual fact to existing signals.
+- broader project finance slices suitable for reconciliation;
+- operator-visible financial truth deltas that can be linked to field evidence;
+- no write-back semantics yet.
 
-Status:
-- complete on 2026-03-11 in the lead branch.
-
-### Session 23: Cross-Source Confidence Fusion
+#### Session 32: Reconciliation Casefile and Fact Linking
 
 Goal:
-- combine work reports, GPS, and future evidence streams into one confidence model.
+- create a durable, inspectable reconciliation casefile that links finance, telemetry, work reports, and video evidence.
 
 Deliver:
-- confidence merge rules for at least two independent sources;
-- visible provenance and confidence rollup;
-- one UI/API surface showing why a fact is treated as verified or not.
+- casefile model or equivalent linked read layer;
+- explainable matching and mismatch reasons;
+- one operator surface for unresolved reconciliation gaps.
 
-Status:
-- complete on 2026-03-11 in the lead branch.
+Exit criteria across Wave 8:
+
+1. GPS and 1C truth become materially deeper than narrow sample reads.
+2. Cross-source mismatches are inspectable as cases, not only summary counters.
+3. Operators can answer why a project is corroborated, partial, or contradictory.
 
 ## 7. 90-Day Plan
 
-### Session 24: Action Safety and Compensation Layer
+### Wave 9: Pilot-Grade Operatorization
+
+#### Session 33: Executive Command Center and Exception Inbox
 
 Goal:
-- add explicit safety boundaries for applied actions beyond manual approval.
+- unify operator follow-through around one exception-driven command model.
 
-Status:
-- complete on 2026-03-11 in the lead branch.
+Deliver:
+- shared command center for escalations, truth gaps, and pending follow-through;
+- owner-first exception inbox;
+- clearer management path from signal to action to closure.
 
-### Session 25: Knowledge and Benchmark Loop
-
-Goal:
-- turn repeated operating patterns into reusable playbooks, lessons, and benchmark-guided recommendations.
-
-Status:
-- complete on 2026-03-11 in the lead branch.
-
-### Session 26: Enterprise Truth Expansion
+#### Session 34: Audit Pack and Operational Exports
 
 Goal:
-- extend the evidence-backed model beyond the pilot sources into broader enterprise systems without collapsing the product into a generic integration hub.
+- make the system auditable for pilot stakeholders, not only explorable in the UI.
 
-Status:
-- complete on 2026-03-11 in the lead branch.
+Deliver:
+- exportable audit packs for evidence, decisions, traces, and applied changes;
+- operator-friendly reporting surfaces for pilot review;
+- deterministic export boundaries.
+
+#### Session 35: Pilot Controls and Tenant Readiness
+
+Goal:
+- make the product safe to run in real pilots across tenants, workspaces, and environments.
+
+Deliver:
+- tenant-safe pilot controls;
+- workspace/environment rollout guardrails;
+- clearer onboarding and cutover posture for live pilots.
 
 Deliver across the 90-day horizon:
-- outbound redundancy;
-- evidence fusion;
-- stronger operational truth;
-- safer execution;
-- reusable operator knowledge.
+- durable runtime;
+- deeper source truth;
+- unified operator control;
+- auditability and safer pilot rollout.
 
 ## 8. Research Principles Behind This Roadmap
 
@@ -210,23 +223,21 @@ This roadmap follows the most consistent guidance from current agent-system prac
 
 This modernization is working if:
 
-1. connector health is no longer the primary integration signal;
-2. operators can inspect evidence and provenance for key facts;
-3. at least one AI workflow is traceable, queue-backed, and regression-tested;
-4. live versus demo state is obvious to non-technical users;
-5. external truth sources start to outrank manually reported facts when confidence is higher;
-6. the next active sessions can be chosen from the master plan without contradicting this roadmap;
-7. 1C no longer appears as a permanent stub in operator-facing connector views;
-8. unresolved signal packets now become owned operator workload with SLA context.
+1. canonical workflow state survives restarts and partial failures;
+2. evidence and escalation freshness are visible without deriving truth during every read;
+3. GPS and 1C become richer truth domains, not just sample proofs;
+4. reconciliation gaps become explicit operator workload;
+5. outbound actions are auditable and idempotent;
+6. one operator command layer can drive pilot follow-through end to end;
+7. audit packs exist for pilot review without manual screenshot assembly.
 
 ## 10. What We Still Have Not Done
 
 For planning clarity, the following remain explicitly out of scope or unfinished:
 
-1. full GPS sync engine;
+1. full autonomous multi-agent runtime;
 2. 1C write-back;
-3. enterprise-wide knowledge or benchmark loop is no longer unfinished;
-4. Video Fact production module;
-5. cross-source confidence fusion;
-6. compensation or rollback model for applied changes beyond the current bounded safety layer;
-7. full enterprise-scale multi-source verification beyond the current narrow evidence slice.
+3. full GPS sync engine across all telemetry entities;
+4. enterprise-wide reconciliation beyond the chosen wedge domains;
+5. generalized tenant platform or marketplace abstractions;
+6. arbitrary rollback of downstream side effects beyond bounded compensation guidance.
