@@ -8,11 +8,16 @@ import { IntegrationsOverviewCard } from "@/components/integrations/integrations
 import { OneCFinanceSampleCard } from "@/components/integrations/one-c-finance-sample-card";
 import { DomainApiCard } from "@/components/layout/domain-api-card";
 import { DomainPageHeader } from "@/components/layout/domain-page-header";
+import { OperatorRuntimeCard } from "@/components/layout/operator-runtime-card";
 import { buttonVariants } from "@/components/ui/button";
 import type { ConnectorStatus, ConnectorStatusSummary } from "@/lib/connectors";
 import type { GpsTelemetrySampleSnapshot } from "@/lib/connectors/gps-client";
 import type { OneCFinanceSampleSnapshot } from "@/lib/connectors/one-c-client";
 import type { EvidenceListResult } from "@/lib/evidence";
+import {
+  getOperatorTruthBadge,
+  type OperatorRuntimeTruth,
+} from "@/lib/server/runtime-truth";
 
 const expectedEndpoints = [
   {
@@ -57,15 +62,18 @@ export function IntegrationsPage({
   evidence,
   gpsSample,
   oneCSample,
+  runtimeTruth,
   summary,
 }: {
   connectors: ConnectorStatus[];
   evidence: EvidenceListResult;
   gpsSample: GpsTelemetrySampleSnapshot;
   oneCSample: OneCFinanceSampleSnapshot;
+  runtimeTruth: OperatorRuntimeTruth;
   summary: ConnectorStatusSummary;
 }) {
   const liveConnectors = connectors.filter((connector) => !connector.stub).length;
+  const runtimeBadge = getOperatorTruthBadge(runtimeTruth);
   const gpsSampleLabel =
     gpsSample.status === "ok"
       ? "GPS sample live"
@@ -88,6 +96,7 @@ export function IntegrationsPage({
           </Link>
         }
         chips={[
+          { label: runtimeBadge.label, variant: runtimeBadge.variant },
           { label: "Registry-backed", variant: "success" },
           { label: summary.pending > 0 ? "Secrets required" : "Configured", variant: summary.pending > 0 ? "warning" : "success" },
           { label: liveConnectors > 0 ? `${liveConnectors} live probe${liveConnectors === 1 ? "" : "s"}` : "Stub adapters", variant: liveConnectors > 0 ? "success" : "info" },
@@ -99,6 +108,8 @@ export function IntegrationsPage({
         eyebrow="Platform trust"
         title="Connector Health"
       />
+
+      <OperatorRuntimeCard truth={runtimeTruth} />
 
       <IntegrationsOverviewCard summary={summary} />
 

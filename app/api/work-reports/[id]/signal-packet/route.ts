@@ -4,10 +4,15 @@ import { authorizeRequest } from "@/app/api/middleware/auth";
 import { createWorkReportSignalPacket } from "@/lib/work-reports/signal-packet";
 import {
   badRequest,
+  liveOperatorDataUnavailable,
   notFound,
   serverError,
   validationError,
 } from "@/lib/server/api-utils";
+import {
+  getLiveOperatorDataBlockReason,
+  getServerRuntimeState,
+} from "@/lib/server/runtime-mode";
 import { workReportSignalPacketSchema } from "@/lib/validators/work-report-signal-packet";
 
 export const runtime = "nodejs";
@@ -24,6 +29,11 @@ export async function POST(
 
   if (authResult instanceof NextResponse) {
     return authResult;
+  }
+
+  const runtimeState = getServerRuntimeState();
+  if (getLiveOperatorDataBlockReason(runtimeState)) {
+    return liveOperatorDataUnavailable(runtimeState);
   }
 
   const { id } = await context.params;

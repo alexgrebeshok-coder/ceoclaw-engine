@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 
 import {
+  canReadLiveOperatorData,
   getServerDataMode,
+  getLiveOperatorDataBlockReason,
   getServerRuntimeState,
   isDatabaseConfigured,
   shouldServeMockData,
@@ -52,5 +54,18 @@ const demoRuntime = getServerRuntimeState({
 } as NodeJS.ProcessEnv);
 assert.equal(demoRuntime.healthStatus, "ok");
 assert.equal(demoRuntime.usingMockData, true);
+assert.equal(canReadLiveOperatorData(demoRuntime), false);
+assert.equal(getLiveOperatorDataBlockReason(demoRuntime), "demo_mode");
+
+const autoFallbackRuntime = getServerRuntimeState({} as NodeJS.ProcessEnv);
+assert.equal(canReadLiveOperatorData(autoFallbackRuntime), false);
+assert.equal(getLiveOperatorDataBlockReason(autoFallbackRuntime), "database_unavailable");
+
+const liveRuntime = getServerRuntimeState({
+  APP_DATA_MODE: "live",
+  DATABASE_URL: "file:./dev.db",
+} as NodeJS.ProcessEnv);
+assert.equal(canReadLiveOperatorData(liveRuntime), true);
+assert.equal(getLiveOperatorDataBlockReason(liveRuntime), null);
 
 console.log("PASS runtime-mode.unit");

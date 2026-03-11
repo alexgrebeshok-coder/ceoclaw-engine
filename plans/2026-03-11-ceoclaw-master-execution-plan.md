@@ -27,9 +27,10 @@ As of 2026-03-11:
 - Session 17 AI trace, provenance, and eval harness is complete in the lead branch.
 - Session 18 1C live read connector is complete in the lead branch.
 - Session 19 operator escalation queue and SLA layer is complete in the lead branch.
+- Session 20 live-vs-demo truth in operator UX is complete in the lead branch.
 - Wave 1 foundation services are complete. Wave 2 fact capture and connector shell is complete. Wave 3 platform access model is complete through Session 08. Wave 4 vertical pilot now has Session 09, Session 10, Session 11, Session 12, Session 13, and Session 14 complete.
 - Wave 5 evidence and runtime modernization is complete on the lead branch.
-- Wave 6 integration truth expansion is active on the lead branch through Session 19, with Session 20 next.
+- Wave 6 integration truth expansion is complete on the lead branch through Session 20, with Session 21 next.
 
 ## 1. Product Direction
 
@@ -300,7 +301,7 @@ into:
 2. Session 19: Operator Escalation Queue and SLA Layer
    Status: complete on lead branch.
 3. Session 20: Live-vs-Demo Truth in Operator UX
-   Status: planned.
+   Status: complete on lead branch.
 
 ### Goals
 
@@ -315,6 +316,8 @@ into:
 3. `/integrations` now shows a live 1C finance sample alongside GPS telemetry evidence.
 4. `/api/escalations` and `/api/escalations/:id` now turn work-report signal runs into operator-managed queue items.
 5. `/work-reports` now surfaces owner assignment, acknowledgment state, urgency, aging, and SLA context for unresolved signal items.
+6. `/integrations`, `/work-reports`, and `/briefs` now surface a shared runtime truth card with live, demo, mixed, or degraded state.
+7. Demo mode now blocks live delivery workflows and keeps `/work-reports` plus `/api/escalations` in a safe preview posture.
 
 ### 30/60/90-day direction
 
@@ -441,8 +444,8 @@ A worker session should:
 ### Best option right now
 
 1. Keep this session on the lead integration track for Wave 6.
-2. Land Session 20 next so operators stop guessing what is live and what is simulated.
-3. Reassess Session 21 only after the operator queue and live/demo truth are coherent.
+2. Land Session 21 next to add the first honest outbound email channel.
+3. Reassess Session 22 only after email delivery semantics are coherent.
 
 ### Why this is best
 
@@ -458,9 +461,10 @@ That is more valuable now than broadening the UI or adding another shallow conne
 ## 11. Immediate Next Actions
 
 1. Keep Wave 0 closed and stable; it is no longer the active bottleneck.
-2. Land Session 20:
-   - explicit live/demo truth badges and messaging in operator UX.
-3. Reassess Session 21 through Session 24 after the Wave 6 baseline is stable.
+2. Land Session 21:
+   - outbound email delivery;
+   - operator-safe preview/send semantics.
+3. Reassess Session 22 through Session 24 after the post-Wave-6 baseline is stable.
 
 ## 12. Definition of Alpha
 

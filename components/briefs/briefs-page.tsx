@@ -5,8 +5,13 @@ import { BriefRequestForm } from "@/components/briefs/brief-request-form";
 import { BriefsOverviewCard } from "@/components/briefs/briefs-overview-card";
 import { DomainApiCard } from "@/components/layout/domain-api-card";
 import { DomainPageHeader } from "@/components/layout/domain-page-header";
+import { OperatorRuntimeCard } from "@/components/layout/operator-runtime-card";
 import { buttonVariants } from "@/components/ui/button";
 import type { PortfolioBrief, ProjectBrief } from "@/lib/briefs/types";
+import {
+  getOperatorTruthBadge,
+  type OperatorRuntimeTruth,
+} from "@/lib/server/runtime-truth";
 
 const expectedEndpoints = [
   {
@@ -45,12 +50,15 @@ export function BriefsPage({
   portfolioBrief,
   projectBriefs,
   projectOptions,
+  runtimeTruth,
 }: {
   portfolioBrief: PortfolioBrief;
   projectBriefs: ProjectBrief[];
   projectOptions: Array<{ id: string; name: string }>;
+  runtimeTruth: OperatorRuntimeTruth;
 }) {
   const leadProjectBrief = projectBriefs[0] ?? null;
+  const runtimeBadge = getOperatorTruthBadge(runtimeTruth);
 
   return (
     <div className="grid gap-6">
@@ -61,7 +69,7 @@ export function BriefsPage({
           </Link>
         }
         chips={[
-          { label: "Live generator", variant: "success" },
+          { label: runtimeBadge.label, variant: runtimeBadge.variant },
           { label: `${portfolioBrief.topAlerts.length} top alerts`, variant: portfolioBrief.topAlerts.length > 0 ? "warning" : "success" },
           { label: "ru/en formats", variant: "info" },
           { label: "Telegram delivery", variant: "success" },
@@ -71,6 +79,8 @@ export function BriefsPage({
         eyebrow="Executive comms"
         title="Executive Briefs"
       />
+
+      <OperatorRuntimeCard truth={runtimeTruth} />
 
       <BriefsOverviewCard portfolioBrief={portfolioBrief} />
 

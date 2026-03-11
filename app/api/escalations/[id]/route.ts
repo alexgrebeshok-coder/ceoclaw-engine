@@ -7,12 +7,15 @@ import {
 } from "@/lib/escalations";
 import {
   badRequest,
-  databaseUnavailable,
+  liveOperatorDataUnavailable,
   notFound,
   serverError,
   validationError,
 } from "@/lib/server/api-utils";
-import { getServerRuntimeState } from "@/lib/server/runtime-mode";
+import {
+  getLiveOperatorDataBlockReason,
+  getServerRuntimeState,
+} from "@/lib/server/runtime-mode";
 import { escalationUpdateSchema } from "@/lib/validators/escalations";
 
 export const runtime = "nodejs";
@@ -32,8 +35,8 @@ export async function GET(
   }
 
   const runtimeState = getServerRuntimeState();
-  if (!runtimeState.databaseConfigured) {
-    return databaseUnavailable(runtimeState.dataMode);
+  if (getLiveOperatorDataBlockReason(runtimeState)) {
+    return liveOperatorDataUnavailable(runtimeState);
   }
 
   const { id } = await params;
@@ -65,8 +68,8 @@ export async function PATCH(
   }
 
   const runtimeState = getServerRuntimeState();
-  if (!runtimeState.databaseConfigured) {
-    return databaseUnavailable(runtimeState.dataMode);
+  if (getLiveOperatorDataBlockReason(runtimeState)) {
+    return liveOperatorDataUnavailable(runtimeState);
   }
 
   const { id } = await params;

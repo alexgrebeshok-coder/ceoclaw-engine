@@ -1,4 +1,11 @@
 export type ServerDataMode = "auto" | "demo" | "live";
+export type LiveOperatorDataBlockReason = "database_unavailable" | "demo_mode";
+export interface ServerRuntimeState {
+  dataMode: ServerDataMode;
+  databaseConfigured: boolean;
+  usingMockData: boolean;
+  healthStatus: "degraded" | "ok";
+}
 
 type RuntimeEnv = NodeJS.ProcessEnv;
 
@@ -28,7 +35,7 @@ export function shouldServeMockData(env: RuntimeEnv = process.env): boolean {
   return !isDatabaseConfigured(env);
 }
 
-export function getServerRuntimeState(env: RuntimeEnv = process.env) {
+export function getServerRuntimeState(env: RuntimeEnv = process.env): ServerRuntimeState {
   const dataMode = getServerDataMode(env);
   const databaseConfigured = isDatabaseConfigured(env);
   const usingMockData = shouldServeMockData(env);
@@ -41,4 +48,22 @@ export function getServerRuntimeState(env: RuntimeEnv = process.env) {
     usingMockData,
     healthStatus,
   };
+}
+
+export function getLiveOperatorDataBlockReason(
+  runtime: ServerRuntimeState
+): LiveOperatorDataBlockReason | null {
+  if (runtime.usingMockData) {
+    return runtime.dataMode === "demo" ? "demo_mode" : "database_unavailable";
+  }
+
+  if (!runtime.databaseConfigured) {
+    return "database_unavailable";
+  }
+
+  return null;
+}
+
+export function canReadLiveOperatorData(runtime: ServerRuntimeState): boolean {
+  return getLiveOperatorDataBlockReason(runtime) === null;
 }

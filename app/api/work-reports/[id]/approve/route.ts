@@ -4,12 +4,15 @@ import { authorizeRequest } from "@/app/api/middleware/auth";
 import { approveWorkReport } from "@/lib/work-reports/service";
 import {
   badRequest,
-  databaseUnavailable,
+  liveOperatorDataUnavailable,
   notFound,
   serverError,
   validationError,
 } from "@/lib/server/api-utils";
-import { getServerRuntimeState } from "@/lib/server/runtime-mode";
+import {
+  getLiveOperatorDataBlockReason,
+  getServerRuntimeState,
+} from "@/lib/server/runtime-mode";
 import { reviewWorkReportSchema } from "@/lib/validators/work-report";
 
 export const runtime = "nodejs";
@@ -32,8 +35,8 @@ export async function POST(
 
     const runtimeState = getServerRuntimeState();
 
-    if (!runtimeState.databaseConfigured) {
-      return databaseUnavailable(runtimeState.dataMode);
+    if (getLiveOperatorDataBlockReason(runtimeState)) {
+      return liveOperatorDataUnavailable(runtimeState);
     }
 
     const body = await request.json();

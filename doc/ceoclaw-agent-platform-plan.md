@@ -169,6 +169,7 @@
 - `/api/connectors/telegram/briefs` и `/briefs` уже дают outbound delivery flow для executive digests;
 - `/api/connectors/telegram/briefs/policies` и cron-safe `run-due` route уже дают scheduled Telegram digest flow;
 - `/api/escalations` и `/work-reports` уже дают operator escalation queue с owner, urgency и SLA;
+- `/integrations`, `/work-reports` и `/briefs` уже показывают единый runtime truth layer: live, demo, mixed или degraded;
 - task / risk / status packets проходят через existing proposal/apply engine.
 
 Фактически этот modernization chain уже закрыт на lead branch:
@@ -177,10 +178,11 @@
 - `AI trace/evals`
 - `1C live read`
 - `operator escalation queue`
+- `live/demo truth layer`
 
 Следующий рекомендованный ход:
-- `demo/live truth in operator UX`
 - `email outbound channel`
+- `next non-Telegram outbound proof`
 
 ## Definition of Done по релизу Alpha
 
@@ -241,3 +243,4 @@
 - `doc/session-prompts/session-17-ai-trace-evals.md`
 - `doc/session-prompts/session-18-1c-live-read-connector.md`
 - `doc/session-prompts/session-19-operator-escalation-queue.md`
+- `doc/session-prompts/session-20-live-vs-demo-truth.md`

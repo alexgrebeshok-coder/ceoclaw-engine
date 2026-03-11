@@ -9,11 +9,14 @@ import {
 } from "@/lib/work-reports/service";
 import {
   badRequest,
-  databaseUnavailable,
+  liveOperatorDataUnavailable,
   serverError,
   validationError,
 } from "@/lib/server/api-utils";
-import { getServerRuntimeState } from "@/lib/server/runtime-mode";
+import {
+  getLiveOperatorDataBlockReason,
+  getServerRuntimeState,
+} from "@/lib/server/runtime-mode";
 import {
   createWorkReportSchema,
   legacyAIPMOBotWorkReportSchema,
@@ -34,8 +37,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const runtimeState = getServerRuntimeState();
 
-    if (!runtimeState.databaseConfigured) {
-      return databaseUnavailable(runtimeState.dataMode);
+    if (getLiveOperatorDataBlockReason(runtimeState)) {
+      return liveOperatorDataUnavailable(runtimeState);
     }
 
     const { searchParams } = new URL(request.url);
@@ -72,8 +75,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const runtimeState = getServerRuntimeState();
 
-    if (!runtimeState.databaseConfigured) {
-      return databaseUnavailable(runtimeState.dataMode);
+    if (getLiveOperatorDataBlockReason(runtimeState)) {
+      return liveOperatorDataUnavailable(runtimeState);
     }
 
     const body = (await request.json()) as Record<string, unknown>;

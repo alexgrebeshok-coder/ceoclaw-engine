@@ -72,6 +72,7 @@ The first modernization foundation is already landed on the lead branch:
 3. Session 17: AI trace, provenance, and eval harness.
 4. Session 18: 1C live read connector.
 5. Session 19: operator escalation queue and SLA layer.
+6. Session 20: live-vs-demo truth in operator UX.
 
 That changes the active next 30-day plan to the next truth-expansion wave.
 
@@ -107,6 +108,9 @@ Exit criteria:
 - non-technical operators can tell live from simulated states without guessing;
 - demo-safe screens and live-truth screens stop contradicting each other;
 - the product is safer to pilot in mixed environments.
+
+Status:
+- complete on 2026-03-11 in the lead branch.
 
 ## 6. 60-Day Plan
 

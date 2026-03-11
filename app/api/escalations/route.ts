@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { authorizeRequest } from "@/app/api/middleware/auth";
 import { getEscalationQueueOverview } from "@/lib/escalations";
-import { databaseUnavailable, serverError } from "@/lib/server/api-utils";
-import { getServerRuntimeState } from "@/lib/server/runtime-mode";
+import { liveOperatorDataUnavailable, serverError } from "@/lib/server/api-utils";
+import {
+  getLiveOperatorDataBlockReason,
+  getServerRuntimeState,
+} from "@/lib/server/runtime-mode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,8 +20,8 @@ export async function GET(request: NextRequest) {
   }
 
   const runtimeState = getServerRuntimeState();
-  if (!runtimeState.databaseConfigured) {
-    return databaseUnavailable(runtimeState.dataMode);
+  if (getLiveOperatorDataBlockReason(runtimeState)) {
+    return liveOperatorDataUnavailable(runtimeState);
   }
 
   const limitParam = request.nextUrl.searchParams.get("limit");

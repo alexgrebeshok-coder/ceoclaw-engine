@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { DomainApiCard } from "@/components/layout/domain-api-card";
 import { DomainPageHeader } from "@/components/layout/domain-page-header";
+import { OperatorRuntimeCard } from "@/components/layout/operator-runtime-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { EscalationQueueCard } from "@/components/work-reports/escalation-queue-card";
 import { ReportBuilderForm } from "@/components/work-reports/report-builder-form";
@@ -9,6 +11,10 @@ import { ReportRunsTable } from "@/components/work-reports/report-runs-table";
 import { WorkReportActionPilot } from "@/components/work-reports/work-report-action-pilot";
 import { WorkReportsOverviewCard } from "@/components/work-reports/work-reports-overview-card";
 import type { EscalationListResult } from "@/lib/escalations";
+import {
+  getOperatorTruthBadge,
+  type OperatorRuntimeTruth,
+} from "@/lib/server/runtime-truth";
 import type {
   WorkReportMemberOption,
   WorkReportProjectOption,
@@ -59,21 +65,24 @@ const expectedEndpoints = [
 ];
 
 export function WorkReportsPage({
-  databaseReady,
   escalationQueue,
+  liveWorkflowReady,
   members,
   projects,
   reports,
+  runtimeTruth,
 }: {
-  databaseReady: boolean;
   escalationQueue: EscalationListResult | null;
+  liveWorkflowReady: boolean;
   members: WorkReportMemberOption[];
   projects: WorkReportProjectOption[];
   reports: WorkReportView[];
+  runtimeTruth: OperatorRuntimeTruth;
 }) {
   const pendingReports = reports.filter((report) => report.status === "submitted").length;
   const approvedReports = reports.filter((report) => report.status === "approved").length;
   const telegramBotReports = reports.filter((report) => report.source === "telegram_bot").length;
+  const runtimeBadge = getOperatorTruthBadge(runtimeTruth);
 
   return (
     <div className="grid min-w-0 gap-6">
@@ -84,7 +93,8 @@ export function WorkReportsPage({
           </Link>
         }
         chips={[
-          { label: databaseReady ? "Live DB" : "DB required", variant: databaseReady ? "success" : "warning" },
+          { label: runtimeBadge.label, variant: runtimeBadge.variant },
+          { label: liveWorkflowReady ? "Live workflow" : "Safe preview", variant: liveWorkflowReady ? "success" : "warning" },
           { label: "Submit/review flow", variant: "info" },
           { label: "Telegram-ready", variant: "success" },
           { label: escalationQueue && escalationQueue.summary.total > 0 ? `${escalationQueue.summary.total} escalation items` : "Escalation queue idle", variant: escalationQueue && escalationQueue.summary.total > 0 ? "warning" : "success" },
@@ -94,6 +104,8 @@ export function WorkReportsPage({
         title="Work Reports"
       />
 
+      <OperatorRuntimeCard truth={runtimeTruth} />
+
       <WorkReportsOverviewCard
         approvedReports={approvedReports}
         pendingReports={pendingReports}
@@ -101,15 +113,30 @@ export function WorkReportsPage({
         totalReports={reports.length}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
-        <ReportRunsTable reports={reports} />
-        <ReportBuilderForm members={members} projects={projects} />
-      </div>
+      {liveWorkflowReady ? (
+        <>
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+            <ReportRunsTable reports={reports} />
+            <ReportBuilderForm members={members} projects={projects} />
+          </div>
 
-      <WorkReportActionPilot reports={reports} />
+          <WorkReportActionPilot reports={reports} />
 
-      {escalationQueue ? (
-        <EscalationQueueCard initialQueue={escalationQueue} members={members} />
+          {escalationQueue ? (
+            <EscalationQueueCard initialQueue={escalationQueue} members={members} />
+          ) : null}
+        </>
+      ) : null}
+
+      {!liveWorkflowReady ? (
+        <Card className="min-w-0">
+          <CardHeader>
+            <CardTitle>Live delivery workflow is paused</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm leading-6 text-[var(--ink-soft)]">
+            Demo mode or missing live database configuration keeps this page in a safe preview state. To create reports, review field intake, build signal packets, or manage escalation owners, switch the server back to live data.
+          </CardContent>
+        </Card>
       ) : null}
 
       <DomainApiCard

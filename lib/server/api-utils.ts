@@ -2,6 +2,8 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import type { ServerRuntimeState } from "@/lib/server/runtime-mode";
+
 const projectStatusMap: Record<string, string> = {
   active: "active",
   planning: "planning",
@@ -77,6 +79,20 @@ export function databaseUnavailable(dataMode?: string): NextResponse<APIErrorPay
     "DATABASE_UNAVAILABLE",
     dataMode ? { dataMode } : undefined
   );
+}
+
+export function liveOperatorDataUnavailable(
+  runtime: Pick<ServerRuntimeState, "dataMode" | "usingMockData">
+): NextResponse<APIErrorPayload> {
+  if (runtime.usingMockData && runtime.dataMode === "demo") {
+    return serviceUnavailable(
+      "This workflow is disabled while APP_DATA_MODE=demo. Switch to live or auto with DATABASE_URL configured.",
+      "DEMO_MODE_ACTIVE",
+      { dataMode: runtime.dataMode }
+    );
+  }
+
+  return databaseUnavailable(runtime.dataMode);
 }
 
 export function notFound(
