@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AIRunTracePanel } from "@/components/work-reports/ai-run-trace-panel";
 import { fieldStyles } from "@/components/ui/field";
 import type { AIRunTrace } from "@/lib/ai/trace";
-import { getProposalItemCount } from "@/lib/ai/action-engine";
+import { getProposalItemCount, getProposalSafetyProfile } from "@/lib/ai/action-engine";
 import type { AIRunRecord } from "@/lib/ai/types";
 import type { WorkReportSignalPacket, WorkReportView } from "@/lib/work-reports/types";
 
@@ -43,6 +43,29 @@ function statusVariant(status: WorkReportView["status"]) {
     case "submitted":
     default:
       return "warning";
+  }
+}
+
+function safetyVariant(level: "low" | "medium" | "high") {
+  switch (level) {
+    case "high":
+      return "danger";
+    case "medium":
+      return "warning";
+    case "low":
+    default:
+      return "info";
+  }
+}
+
+function executionModeLabel(mode: "preview_only" | "guarded_patch" | "guarded_communication") {
+  switch (mode) {
+    case "preview_only":
+      return "preview only";
+    case "guarded_patch":
+      return "guarded patch";
+    case "guarded_communication":
+      return "guarded communication";
   }
 }
 
@@ -366,6 +389,7 @@ export function WorkReportActionPilot({ reports }: { reports: WorkReportView[] }
                   const proposal = entry.run.result?.proposal ?? null;
                   const isApplying = applyingRunIds.includes(entry.run.id);
                   const canApply = proposal?.state === "pending";
+                  const safety = proposal ? getProposalSafetyProfile(proposal) : null;
 
                   return (
                     <div
@@ -379,11 +403,23 @@ export function WorkReportActionPilot({ reports }: { reports: WorkReportView[] }
                             {entry.purpose} · {entry.run.status}
                           </div>
                         </div>
-                        {proposal ? (
-                          <Badge variant={proposal.state === "applied" ? "success" : "warning"}>
-                            {proposal.type}
-                          </Badge>
-                        ) : null}
+                        <div className="flex flex-wrap gap-2">
+                          {proposal ? (
+                            <Badge variant={proposal.state === "applied" ? "success" : "warning"}>
+                              {proposal.type}
+                            </Badge>
+                          ) : null}
+                          {safety ? (
+                            <>
+                              <Badge variant={safetyVariant(safety.level)}>
+                                {safety.level} safety
+                              </Badge>
+                              <Badge variant="neutral">
+                                {executionModeLabel(safety.executionMode)}
+                              </Badge>
+                            </>
+                          ) : null}
+                        </div>
                       </div>
 
                       <div className="mt-3 text-sm text-[var(--ink-soft)]">
@@ -416,6 +452,12 @@ export function WorkReportActionPilot({ reports }: { reports: WorkReportView[] }
                           <div className="text-xs text-[var(--ink-muted)]">
                             Item count: {getProposalItemCount(proposal)}
                           </div>
+                          {safety ? (
+                            <div className="grid gap-2 text-xs text-[var(--ink-soft)]">
+                              <div>Surface: {safety.mutationSurface}</div>
+                              <div>Compensation: {safety.compensationSummary}</div>
+                            </div>
+                          ) : null}
                         </div>
                       ) : null}
 

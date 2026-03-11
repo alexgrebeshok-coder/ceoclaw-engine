@@ -6,6 +6,7 @@ import type {
   AIRunResult,
 } from "@/lib/ai/types";
 import type { Priority } from "@/lib/types";
+import { buildApplySafetySummary, getProposalSafetyProfile } from "@/lib/ai/safety";
 
 export interface AIProposalPreviewItem {
   key: string;
@@ -138,6 +139,8 @@ export function getProposalPreviewItems(proposal: AIActionProposal): AIProposalP
   }
 }
 
+export { getProposalSafetyProfile };
+
 function buildApplySummary(proposal: AIActionProposal, itemCount: number) {
   switch (proposal.type) {
     case "create_tasks":
@@ -172,6 +175,7 @@ function buildApplyResult(proposal: AIActionProposal, appliedAt: string): AIAppl
     draftedStatusReport:
       proposal.type === "draft_status_report" ? proposal.statusReport : null,
     notificationsSent: proposal.type === "notify_team" ? [...proposal.notifications] : [],
+    safety: buildApplySafetySummary(proposal),
   };
 }
 

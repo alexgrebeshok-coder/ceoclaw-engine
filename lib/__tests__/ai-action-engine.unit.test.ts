@@ -59,6 +59,9 @@ async function testApplyStatusReportProposal() {
   assert.equal(applied.result?.actionResult?.type, "draft_status_report");
   assert.equal(applied.result?.actionResult?.itemCount, 1);
   assert.equal(applied.result?.actionResult?.draftedStatusReport?.title, "Weekly report");
+  assert.equal(applied.result?.actionResult?.safety.executionMode, "preview_only");
+  assert.equal(applied.result?.actionResult?.safety.compensationMode, "replace_draft");
+  assert.equal(applied.result?.actionResult?.safety.postApplyState, "draft_only");
 }
 
 async function testPreviewItemsForRescheduleProposal() {

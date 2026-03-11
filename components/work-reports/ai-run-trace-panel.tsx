@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AIRunTrace, AIRunTraceStepStatus } from "@/lib/ai/trace";
+import type { AIApplySafetyLevel, AIApplyExecutionMode } from "@/lib/ai/types";
 
 function stepVariant(status: AIRunTraceStepStatus) {
   switch (status) {
@@ -29,6 +30,29 @@ function formatDateTime(value?: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function safetyVariant(level: AIApplySafetyLevel) {
+  switch (level) {
+    case "high":
+      return "danger";
+    case "medium":
+      return "warning";
+    case "low":
+    default:
+      return "info";
+  }
+}
+
+function executionModeLabel(mode: AIApplyExecutionMode) {
+  switch (mode) {
+    case "preview_only":
+      return "preview only";
+    case "guarded_patch":
+      return "guarded patch";
+    case "guarded_communication":
+      return "guarded communication";
+  }
 }
 
 export function AIRunTracePanel({
@@ -126,6 +150,16 @@ export function AIRunTracePanel({
           <div className="flex flex-wrap gap-2">
             <Badge variant="warning">{trace.proposal.type}</Badge>
             {trace.proposal.state ? <Badge variant="neutral">{trace.proposal.state}</Badge> : null}
+            {trace.proposal.safety ? (
+              <>
+                <Badge variant={safetyVariant(trace.proposal.safety.level)}>
+                  {trace.proposal.safety.level} safety
+                </Badge>
+                <Badge variant="neutral">
+                  {executionModeLabel(trace.proposal.safety.executionMode)}
+                </Badge>
+              </>
+            ) : null}
           </div>
           <div className="mt-2 text-sm font-medium text-[var(--ink)]">{trace.proposal.title}</div>
           <div className="mt-1 text-sm text-[var(--ink-soft)]">{trace.proposal.summary}</div>
@@ -135,15 +169,35 @@ export function AIRunTracePanel({
               ? ` · ${trace.proposal.previewItems.join(" · ")}`
               : ""}
           </div>
+          {trace.proposal.safety ? (
+            <div className="mt-3 grid gap-2 text-xs text-[var(--ink-soft)]">
+              <div>Surface: {trace.proposal.safety.mutationSurface}</div>
+              <div>Compensation: {trace.proposal.safety.compensationSummary}</div>
+              <div>Checks: {trace.proposal.safety.checks.join(" · ")}</div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       {trace.apply ? (
         <div className="rounded-[14px] border border-emerald-300/40 bg-emerald-500/10 p-3">
           <div className="text-xs uppercase tracking-[0.18em] text-emerald-200/90">Apply result</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Badge variant={safetyVariant(trace.apply.safety.level)}>
+              {trace.apply.safety.level} safety
+            </Badge>
+            <Badge variant="neutral">
+              {executionModeLabel(trace.apply.safety.executionMode)}
+            </Badge>
+            <Badge variant="neutral">{trace.apply.safety.postApplyState}</Badge>
+          </div>
           <div className="mt-2 text-sm text-[var(--ink)]">{trace.apply.summary}</div>
           <div className="mt-1 text-xs text-[var(--ink-muted)]">
             Applied: {formatDateTime(trace.apply.appliedAt)} · Items: {trace.apply.itemCount}
+          </div>
+          <div className="mt-3 grid gap-2 text-xs text-[var(--ink-soft)]">
+            <div>Compensation: {trace.apply.safety.compensationSummary}</div>
+            <div>Steps: {trace.apply.safety.compensationSteps.join(" · ")}</div>
           </div>
         </div>
       ) : null}

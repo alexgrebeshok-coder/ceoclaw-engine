@@ -5,7 +5,6 @@ import { applyAIProposal, hasPendingProposal } from "@/lib/ai/action-engine";
 import type { AIApplyProposalInput, AIRunInput, AIRunRecord } from "@/lib/ai/types";
 import { invokeOpenClawGateway } from "@/lib/ai/openclaw-gateway";
 import {
-  applyMockProposal,
   buildMockFinalRun,
   createMockAIAdapter,
 } from "@/lib/ai/mock-adapter";
@@ -220,21 +219,10 @@ export async function applyServerAIProposal(input: AIApplyProposalInput) {
     throw new Error(`AI run ${input.runId} not found`);
   }
 
-  const sourceRun =
-    entry.origin === "mock" && !entry.run.result?.proposal
-      ? buildMockFinalRun(entry.input, {
-          id: entry.run.id,
-          createdAt: entry.run.createdAt,
-          updatedAt: new Date().toISOString(),
-          quickActionId: entry.run.quickActionId,
-        })
-      : entry.origin === "mock"
-        ? await mockAdapter.getRun(input.runId)
-        : entry.run;
   const nextRun =
     entry.origin === "mock"
-      ? applyMockProposal(sourceRun, input.proposalId)
-      : applyAIProposal(sourceRun, input.proposalId);
+      ? await mockAdapter.applyProposal(input)
+      : applyAIProposal(entry.run, input.proposalId);
   await persistEntry({
     ...entry,
     run: nextRun,

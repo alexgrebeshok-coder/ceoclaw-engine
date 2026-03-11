@@ -180,10 +180,11 @@
 - `operator escalation queue`
 - `live/demo truth layer`
 - `cross-source confidence fusion`
+- `action safety and compensation layer`
 
 Следующий рекомендованный ход:
-- `action safety and compensation layer`
 - `knowledge and benchmark loop`
+- `enterprise truth expansion`
 
 ## Definition of Done по релизу Alpha
 

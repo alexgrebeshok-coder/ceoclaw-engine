@@ -1,10 +1,19 @@
-import { getProposalItemCount, getProposalPreviewItems } from "@/lib/ai/action-engine";
+import {
+  getProposalItemCount,
+  getProposalPreviewItems,
+  getProposalSafetyProfile,
+} from "@/lib/ai/action-engine";
 import {
   getServerAIRunEntry,
   type ServerAIRunEntry,
   type ServerAIRunOrigin,
 } from "@/lib/ai/server-runs";
-import type { AIRunStatus, AIRunSourceRef } from "@/lib/ai/types";
+import type {
+  AIApplySafetySummary,
+  AIProposalSafetyProfile,
+  AIRunStatus,
+  AIRunSourceRef,
+} from "@/lib/ai/types";
 
 export type AIRunTraceStepStatus =
   | "pending"
@@ -42,12 +51,14 @@ export interface AIRunTraceProposalSummary {
   summary: string | null;
   itemCount: number;
   previewItems: string[];
+  safety: AIProposalSafetyProfile | null;
 }
 
 export interface AIRunTraceApplySummary {
   appliedAt: string;
   itemCount: number;
   summary: string;
+  safety: AIApplySafetySummary;
 }
 
 export interface AIRunTrace {
@@ -225,6 +236,7 @@ function buildProposalSummary(entry: ServerAIRunEntry): AIRunTraceProposalSummar
       summary: null,
       itemCount: 0,
       previewItems: [],
+      safety: null,
     };
   }
 
@@ -237,11 +249,13 @@ function buildProposalSummary(entry: ServerAIRunEntry): AIRunTraceProposalSummar
     previewItems: getProposalPreviewItems(proposal)
       .slice(0, 3)
       .map((item) => item.title),
+    safety: getProposalSafetyProfile(proposal),
   };
 }
 
 function buildApplySummary(entry: ServerAIRunEntry): AIRunTraceApplySummary | null {
   const actionResult = entry.run.result?.actionResult;
+  const proposal = entry.run.result?.proposal;
   if (!actionResult) {
     return null;
   }
@@ -250,6 +264,33 @@ function buildApplySummary(entry: ServerAIRunEntry): AIRunTraceApplySummary | nu
     appliedAt: actionResult.appliedAt,
     itemCount: actionResult.itemCount,
     summary: actionResult.summary,
+    safety:
+      actionResult.safety ??
+      (proposal
+        ? {
+            ...getProposalSafetyProfile(proposal),
+            operatorDecision: "manual_apply",
+            postApplyState:
+              getProposalSafetyProfile(proposal).executionMode === "preview_only"
+                ? "draft_only"
+                : "guarded_execution",
+          }
+        : {
+            level: "medium",
+            executionMode: "guarded_patch",
+            liveMutation: false,
+            mutationSurface: "Unknown legacy action result",
+            checks: ["Review the legacy action result manually before downstream publication."],
+            compensationMode: "follow_up_patch",
+            compensationSummary:
+              "Legacy applied result has no safety metadata. Treat it as a guarded patch and prepare a follow-up correction if needed.",
+            compensationSteps: [
+              "Inspect the proposal payload and resulting draft artifacts.",
+              "Issue a superseding patch if the legacy apply result is unsafe.",
+            ],
+            operatorDecision: "manual_apply",
+            postApplyState: "guarded_execution",
+          }),
   };
 }
 
@@ -302,7 +343,7 @@ function buildSteps(entry: ServerAIRunEntry, source: AIRunTraceSourceSummary, fa
       label: "Proposal artifact",
       status: proposalStatus,
       summary: proposal
-        ? `${proposal.type} with ${proposalItemCount} item(s) is ${proposal.state}.`
+        ? `${proposal.type} with ${proposalItemCount} item(s) is ${proposal.state}. Safety posture: ${getProposalSafetyProfile(proposal).executionMode}.`
         : proposalStatus === "not_applicable"
           ? "No approval proposal was generated for this run."
           : proposalStatus === "failed"
@@ -317,7 +358,7 @@ function buildSteps(entry: ServerAIRunEntry, source: AIRunTraceSourceSummary, fa
       label: "Operator apply",
       status: applyStatus,
       summary: entry.run.result?.actionResult
-        ? entry.run.result.actionResult.summary
+        ? `${entry.run.result.actionResult.summary} Compensation: ${entry.run.result.actionResult.safety.compensationSummary}`
         : proposal?.state === "pending"
           ? "Waiting for operator approval."
           : proposal?.state === "dismissed"

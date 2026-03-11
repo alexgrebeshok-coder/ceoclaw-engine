@@ -39,6 +39,16 @@ export type AIAgentCategory =
   | "special";
 
 export type AIContextType = "portfolio" | "project" | "tasks";
+export type AIApplySafetyLevel = "low" | "medium" | "high";
+export type AIApplyExecutionMode =
+  | "preview_only"
+  | "guarded_patch"
+  | "guarded_communication";
+export type AICompensationMode =
+  | "replace_draft"
+  | "follow_up_patch"
+  | "close_or_correct"
+  | "send_correction_notice";
 
 export type AIQuickActionKind =
   | "summarize_portfolio"
@@ -218,6 +228,23 @@ export interface AIApplyResult {
   risksRaised: AIRiskDraft[];
   draftedStatusReport: AIStatusReportDraft | null;
   notificationsSent: AINotificationDraft[];
+  safety: AIApplySafetySummary;
+}
+
+export interface AIProposalSafetyProfile {
+  level: AIApplySafetyLevel;
+  executionMode: AIApplyExecutionMode;
+  liveMutation: boolean;
+  mutationSurface: string;
+  checks: string[];
+  compensationMode: AICompensationMode;
+  compensationSummary: string;
+  compensationSteps: string[];
+}
+
+export interface AIApplySafetySummary extends AIProposalSafetyProfile {
+  operatorDecision: "manual_apply";
+  postApplyState: "draft_only" | "guarded_execution";
 }
 
 export interface AIRunResult {

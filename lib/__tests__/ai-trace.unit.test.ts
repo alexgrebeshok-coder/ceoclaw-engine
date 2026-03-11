@@ -3,6 +3,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { GET as getTraceRoute } from "../../app/api/ai/runs/[id]/trace/route";
+import { applyAIProposal } from "@/lib/ai/action-engine";
 import { runAIRunEvalSuite } from "@/lib/ai/evals";
 import { buildMockFinalRun } from "@/lib/ai/mock-adapter";
 import { buildAIRunTrace } from "@/lib/ai/trace";
@@ -37,6 +38,36 @@ async function testTraceSummarizesWorkReportRun() {
   assert.equal(trace.steps[2]?.status, "done");
   assert.equal(trace.steps[3]?.status, "done");
   assert.equal(trace.steps[4]?.status, "pending");
+  assert.equal(trace.proposal.safety?.executionMode, "guarded_patch");
+}
+
+async function testTraceCapturesApplySafetyAndCompensation() {
+  const { blueprints } = createWorkReportSignalFixtureBundle();
+  const input = blueprints.find((blueprint) => blueprint.purpose === "tasks")?.input;
+
+  assert.ok(input);
+
+  const pendingRun = buildMockFinalRun(input, {
+    id: "ai-run-trace-applied",
+    createdAt: "2026-03-11T09:20:00.000Z",
+    updatedAt: "2026-03-11T09:20:05.000Z",
+    quickActionId: input?.quickAction?.id,
+  });
+  const proposalId = pendingRun.result?.proposal?.id;
+
+  assert.ok(proposalId);
+
+  const appliedRun = applyAIProposal(pendingRun, proposalId);
+  const trace = buildAIRunTrace({
+    origin: "mock",
+    input,
+    run: appliedRun,
+  });
+
+  assert.equal(trace.apply?.safety.level, "high");
+  assert.equal(trace.apply?.safety.compensationMode, "follow_up_patch");
+  assert.equal(trace.apply?.safety.postApplyState, "guarded_execution");
+  assert.ok(trace.steps[4]?.summary.includes("Compensation:"));
 }
 
 async function testEvalSuitePassesStableFixturesAndCatchesMissingContext() {
@@ -136,6 +167,7 @@ async function testTraceRouteReturnsPersistedRunTrace() {
 
 async function main() {
   await testTraceSummarizesWorkReportRun();
+  await testTraceCapturesApplySafetyAndCompensation();
   await testEvalSuitePassesStableFixturesAndCatchesMissingContext();
   await testTraceRouteReturnsPersistedRunTrace();
   console.log("PASS ai-trace.unit");
