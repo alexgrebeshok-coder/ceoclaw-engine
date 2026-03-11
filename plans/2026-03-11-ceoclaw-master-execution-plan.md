@@ -34,7 +34,7 @@ As of 2026-03-11:
 - Session 24 action safety and compensation layer is complete in the lead branch.
 - Wave 1 foundation services are complete. Wave 2 fact capture and connector shell is complete. Wave 3 platform access model is complete through Session 08. Wave 4 vertical pilot now has Session 09, Session 10, Session 11, Session 12, Session 13, and Session 14 complete.
 - Wave 5 evidence and runtime modernization is complete on the lead branch.
-- Wave 6 integration truth expansion is complete on the lead branch through Session 24, with Session 25 next.
+- Wave 6 integration truth expansion is complete on the lead branch through Session 25, with Session 26 next.
 
 ## 1. Product Direction
 
@@ -450,8 +450,8 @@ A worker session should:
 ### Best option right now
 
 1. Keep this session on the lead integration track for Wave 6.
-2. Land Session 25 next to turn repeated operating patterns into reusable benchmark-guided knowledge.
-3. Reassess Session 26 only after the knowledge loop is coherent.
+2. Session 25 is now complete and turns repeated operating patterns into reusable benchmark-guided knowledge.
+3. Reassess Session 26 next, now that the knowledge loop is coherent.
 
 ### Why this is best
 
@@ -467,11 +467,11 @@ That is more valuable now than broadening the UI or adding another shallow conne
 ## 11. Immediate Next Actions
 
 1. Keep Wave 0 closed and stable; it is no longer the active bottleneck.
-2. Land Session 25:
-   - reusable playbooks and lessons from repeated operator patterns;
-   - benchmark-guided recommendations instead of one-off advice only;
-   - one visible knowledge loop that feeds the operator surface.
-3. Reassess Session 26 after the post-Wave-6 baseline is stable.
+2. Session 25 is complete:
+   - reusable playbooks and lessons are derived from repeated operator patterns;
+   - benchmark-guided recommendations now complement one-off advice;
+   - one visible knowledge loop now feeds the operator surface.
+3. Land Session 26 after the post-Wave-6 baseline remains stable.
 
 ## 12. Definition of Alpha
 

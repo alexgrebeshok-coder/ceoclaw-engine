@@ -168,6 +168,9 @@ Status:
 Goal:
 - turn repeated operating patterns into reusable playbooks, lessons, and benchmark-guided recommendations.
 
+Status:
+- complete on 2026-03-11 in the lead branch.
+
 ### Session 26: Enterprise Truth Expansion
 
 Goal:
@@ -219,9 +222,8 @@ For planning clarity, the following remain explicitly out of scope or unfinished
 
 1. full GPS sync engine;
 2. 1C write-back;
-3. real outbound email;
+3. enterprise-wide knowledge or benchmark loop is no longer unfinished;
 4. Video Fact production module;
 5. cross-source confidence fusion;
-6. enterprise-wide knowledge or benchmark loop;
-7. compensation or rollback model for applied changes;
-8. full enterprise-scale multi-source verification beyond the current narrow evidence slice.
+6. compensation or rollback model for applied changes beyond the current bounded safety layer;
+7. full enterprise-scale multi-source verification beyond the current narrow evidence slice.

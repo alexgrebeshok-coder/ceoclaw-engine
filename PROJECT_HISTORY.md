@@ -17,7 +17,7 @@
 
 1. продукт движется из `AI-powered PM dashboard` в `AI operating layer`;
 2. уже есть proposal/apply, work reports, executive briefs, plan-vs-fact, policy/workspace model, Telegram delivery, SMTP email delivery, GPS telemetry sample, 1C finance sample, evidence ledger, visual facts, AI trace/evals, operator escalation queue и live/demo truth layer;
-3. следующий этап не про новые страницы, а про knowledge loop, safer execution и enterprise truth expansion.
+3. knowledge loop уже landed; следующий этап теперь про enterprise truth expansion, stronger execution safety и deeper operational truth.
 
 Единственный канонический источник текущего execution-state:
 
@@ -164,9 +164,10 @@
 - [x] Telegram live probe
 - [x] GPS/GLONASS live readiness probe
 - [x] 1C live read connector
+- [x] Email outbound channel
 - [x] Operator escalation queue and SLA layer
 - [x] Demo/live operator truth layer
-- [ ] Email outbound channel
+- [x] Knowledge and benchmark loop
 
 ### Phase 5: AI Documents (Июнь 2026)
 

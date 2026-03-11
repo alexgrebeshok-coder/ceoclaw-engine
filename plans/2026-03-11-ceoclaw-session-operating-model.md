@@ -189,10 +189,10 @@ That means:
 Right now:
 
 1. Wave 0 no longer blocks parallel execution.
-2. Sessions 01 through 24 are complete on the lead branch.
+2. Sessions 01 through 25 are complete on the lead branch.
 3. Keep exact active session selection in the master execution plan, not here.
-4. Current likely next batch is Session 25 and Session 26.
-5. Avoid broad new feature waves until the knowledge loop is landed.
+4. Current likely next batch starts with Session 26.
+5. Avoid broad new feature waves until the enterprise truth expansion is coherent.
 
 ## 11. Success Condition for This Operating Model
 

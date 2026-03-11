@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BriefQueueTable } from "@/components/briefs/brief-queue-table";
+import { KnowledgeLoopCard } from "@/components/briefs/knowledge-loop-card";
 import { BriefRequestForm } from "@/components/briefs/brief-request-form";
 import { BriefsOverviewCard } from "@/components/briefs/briefs-overview-card";
 import { DomainApiCard } from "@/components/layout/domain-api-card";
@@ -8,6 +9,7 @@ import { DomainPageHeader } from "@/components/layout/domain-page-header";
 import { OperatorRuntimeCard } from "@/components/layout/operator-runtime-card";
 import { buttonVariants } from "@/components/ui/button";
 import type { PortfolioBrief, ProjectBrief } from "@/lib/briefs/types";
+import type { KnowledgeLoopOverview } from "@/lib/knowledge";
 import {
   getOperatorTruthBadge,
   type OperatorRuntimeTruth,
@@ -49,17 +51,26 @@ const expectedEndpoints = [
     note: "Запустить due scheduled digests через cron-safe endpoint.",
     path: "/api/connectors/telegram/briefs/policies/run-due",
   },
+  {
+    method: "GET" as const,
+    note: "Получить reusable playbooks и benchmark-guided guidance, выведенные из escalation history.",
+    path: "/api/briefs/knowledge?limit=4",
+  },
 ];
 
 export function BriefsPage({
   portfolioBrief,
   projectBriefs,
   projectOptions,
+  knowledgeLoop,
+  knowledgeLoopAvailabilityNote,
   runtimeTruth,
 }: {
   portfolioBrief: PortfolioBrief;
   projectBriefs: ProjectBrief[];
   projectOptions: Array<{ id: string; name: string }>;
+  knowledgeLoop: KnowledgeLoopOverview;
+  knowledgeLoopAvailabilityNote?: string;
   runtimeTruth: OperatorRuntimeTruth;
 }) {
   const leadProjectBrief = projectBriefs[0] ?? null;
@@ -80,8 +91,9 @@ export function BriefsPage({
           { label: "Telegram delivery", variant: "info" },
           { label: "Email delivery", variant: "info" },
           { label: "Scheduled digests", variant: "info" },
+          { label: "Knowledge loop", variant: "info" },
         ]}
-        description="Страница executive briefs уже опирается на реальный brief engine: портфельный summary, project-level briefs и delivery formats для Telegram и email без внешнего AI."
+        description="Страница executive briefs уже опирается на реальный brief engine: портфельный summary, project-level briefs, delivery formats и reusable operator knowledge поверх escalation history."
         eyebrow="Executive comms"
         title="Executive Briefs"
       />
@@ -89,6 +101,11 @@ export function BriefsPage({
       <OperatorRuntimeCard truth={runtimeTruth} />
 
       <BriefsOverviewCard portfolioBrief={portfolioBrief} />
+
+      <KnowledgeLoopCard
+        availabilityNote={knowledgeLoopAvailabilityNote}
+        overview={knowledgeLoop}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
         <BriefQueueTable portfolioBrief={portfolioBrief} projectBriefs={projectBriefs} />
