@@ -42,12 +42,12 @@ Reason:
 
 Prefer lead-first sequencing for the active sessions defined in the master execution plan.
 
-As of 2026-03-12 after Session 41 landed, Wave 11 remains active and Session 42 is the next lead-first step.
+As of 2026-03-12 after Session 42 landed, Wave 11 is complete and the next lead-first step is to define Wave 12 before opening new implementation prompts.
 
 Recommended concurrency:
-- 1 lead session for Session 42 because it will cross onboarding state, rollout handoff packaging, and export boundaries;
-- 1 worker session maximum only for isolated rollout-packet or export-only sub-slices after Session 42 lands;
-- 2 worker sessions maximum only after Wave 11 has clearly isolated domains;
+- 1 lead session to define Wave 12 because the next canonical bottleneck should now be chosen from evidence rather than guessed;
+- keep worker sessions paused until a Wave 12 prompt exists or a clearly isolated follow-up slice is identified;
+- 2 worker sessions maximum only after the next wave has clearly isolated domains;
 - 3 sessions maximum per wave for now.
 
 ## 3. Session Roles
@@ -184,7 +184,7 @@ Status: Sessions 09 through 26 are complete on 2026-03-11. Meeting-to-action, wo
 ### Stage 8
 
 Start the next sequence only after the previous one is canonically fixed in the master plan.
-Status: Sessions 27 through 41 are complete, Wave 9 and Wave 10 are complete, and Wave 11 is now active with Session 42 next.
+Status: Sessions 27 through 42 are complete, Wave 9 and Wave 10 are complete, and Wave 11 is now complete on the lead branch.
 
 ## 8. When Not to Parallelize
 
@@ -213,10 +213,10 @@ That means:
 Right now:
 
 1. Wave 0 no longer blocks parallel execution.
-2. Sessions 01 through 40 are complete on the lead branch.
+2. Sessions 01 through 42 are complete on the lead branch.
 3. Keep exact active session selection in the master execution plan, not here.
 4. Wave 7, Wave 8, Wave 9, and Wave 10 are complete on the lead branch.
-5. The active sequence is now Wave 11 governance automation and controlled widening, with Session 42 next.
+5. Wave 11 governance automation and controlled widening is complete on the lead branch, and the next canonical step is to define Wave 12.
 
 ## 11. Success Condition for This Operating Model
 

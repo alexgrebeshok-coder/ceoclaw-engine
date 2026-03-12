@@ -10,7 +10,7 @@ This roadmap explains the modernization direction and 30/60/90-day shape. It is 
 
 ## 1. Why This Roadmap Exists
 
-CEOClaw has already crossed the alpha threshold for an AI operating layer. Sessions 01 through 41 are complete on the lead branch, and Wave 11 is now the active follow-up on top of that baseline. The product already spans:
+CEOClaw has already crossed the alpha threshold for an AI operating layer. Sessions 01 through 42 are complete on the lead branch, and Wave 11 is now complete on top of that baseline. The product already spans:
 - enterprise fact intake;
 - evidence and verification;
 - proposal and apply;
@@ -30,10 +30,10 @@ CEOClaw should evolve from a strong alpha into a pilot-grade, evidence-backed op
 
 The highest-leverage gaps are now:
 
-1. pilot review exists, but it still needs a recurring scheduled delivery path instead of manual export;
-2. cutover approvals and accepted warnings still need one durable decision register;
-3. tenant widening still needs a repeatable onboarding/runbook boundary instead of ad-hoc operator memory;
-4. the next wave should stay narrow and governance-backed rather than reopening broad platform expansion.
+1. the governance loop now exists end to end, so the next wave should be chosen from observed operator friction rather than assumed upfront;
+2. tenant widening now has a bounded rollout packet and handoff export, so the next gap should be validated from real usage rather than solved with a speculative workflow engine;
+3. GPS, 1C, reconciliation, and operator depth should be prioritized only after Wave 11 artifacts show where the next trustworthy bottleneck actually sits;
+4. the next wave should stay narrow and evidence-backed rather than reopening broad platform expansion.
 
 ## 3. Current Baseline
 
@@ -224,7 +224,7 @@ Deliver across the 90-day horizon:
 Wave 9 status:
 - complete on 2026-03-12 in the lead branch through Session 35.
 - Wave 10 followed and completed on 2026-03-12 through Session 38.
-- Wave 11 is now the active canonical continuation, with Session 42 next.
+- Wave 11 is now complete on the lead branch through Session 42.
 
 ## 8. Next Canonical Execution Wave
 
@@ -326,14 +326,15 @@ Deliver:
 - no broad rollout workflow engine.
 
 Status:
-- planned.
+- complete on 2026-03-12 in the lead branch.
 
 Wave 11 status:
-- active on 2026-03-12 in the lead branch.
+- complete on 2026-03-12 in the lead branch through Session 42.
 - Session 39 is complete on 2026-03-12 in the lead branch.
 - Session 40 is complete on 2026-03-12 in the lead branch.
 - Session 41 is complete on 2026-03-12 in the lead branch.
-- the next canonical session is Session 42.
+- Session 42 is complete on 2026-03-12 in the lead branch.
+- the next canonical step is to define Wave 12 based on observed post-Wave 11 bottlenecks rather than assuming a Session 43 upfront.
 
 ## 10. Research Principles Behind This Roadmap
 

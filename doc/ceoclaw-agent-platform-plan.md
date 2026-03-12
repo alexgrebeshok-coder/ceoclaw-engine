@@ -200,9 +200,9 @@
 - `persisted tenant onboarding runbook surface with target-tenant scope, handoff notes, and rollback posture`
 
 Следующий рекомендованный ход:
-- keep Sessions 01 through 41 as the locked baseline;
-- start Session 42 to turn onboarding, readiness, review, and decisions into one deterministic rollout packet or handoff export;
-- keep worker help constrained to isolated Wave 11 handoff-export zones while the new onboarding surface settles.
+- keep Sessions 01 through 42 as the locked baseline;
+- treat Wave 11 as complete now that the bounded rollout handoff/export layer is in place;
+- define Wave 12 from observed post-Wave 11 operator friction instead of assuming a Session 43 upfront.
 
 ## Definition of Done по релизу Alpha
 
