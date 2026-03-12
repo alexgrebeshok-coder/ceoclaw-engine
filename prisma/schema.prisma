@@ -460,6 +460,37 @@ model DeliveryLedger {
   @@index([scheduledPolicyId, updatedAt])
 }
 
+model PilotFeedback {
+  id             String   @id @default(cuid())
+  targetType     String
+  targetId       String
+  targetLabel    String
+  sourceLabel    String
+  sourceHref     String?
+  projectId      String?
+  projectName    String?
+  severity       String
+  status         String   @default("open")
+  summary        String
+  details        String?
+  ownerId        String?
+  ownerName      String?
+  ownerRole      String?
+  reporterName   String?
+  resolutionNote String?
+  metadataJson   String?
+  openedAt       DateTime @default(now())
+  resolvedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status, updatedAt])
+  @@index([severity, status, updatedAt])
+  @@index([targetType, targetId, updatedAt])
+  @@index([projectId, updatedAt])
+  @@index([ownerId, updatedAt])
+}
+
 // ============================================
 // WORK REPORT MODEL
 // ============================================

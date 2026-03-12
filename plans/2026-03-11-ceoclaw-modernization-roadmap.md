@@ -10,7 +10,7 @@ This roadmap explains the modernization direction and 30/60/90-day shape. It is 
 
 ## 1. Why This Roadmap Exists
 
-CEOClaw has already crossed the alpha threshold for an AI operating layer. Sessions 01 through 35 are complete on the lead branch, and Wave 10 is now the active follow-up on top of that baseline. The product already spans:
+CEOClaw has already crossed the alpha threshold for an AI operating layer. Sessions 01 through 36 are complete on the lead branch, and Wave 10 is now the active follow-up on top of that baseline. The product already spans:
 - enterprise fact intake;
 - evidence and verification;
 - proposal and apply;
@@ -30,9 +30,9 @@ CEOClaw should evolve from a strong alpha into a pilot-grade, evidence-backed op
 
 The highest-leverage gaps are now:
 
-1. pilot feedback is still too easy to lose in chat or ad hoc notes instead of being linked to evidence and workflows;
-2. tenant onboarding and cutover readiness are still not explicit enough for repeatable live rollout;
-3. pilot operations still lack one recurring scorecard/export that quantifies backlog, freshness, blocked actions, and delivery health;
+1. tenant onboarding and cutover readiness are still not explicit enough for repeatable live rollout;
+2. pilot operations still lack one recurring scorecard/export that quantifies backlog, freshness, blocked actions, delivery health, and open feedback;
+3. pilot feedback is now durable, but it still needs to feed explicit readiness and recurring review posture;
 4. the next wave should stay narrow and evidence-backed rather than reopening broad platform expansion.
 
 ## 3. Current Baseline
@@ -51,15 +51,15 @@ As of 2026-03-11 the lead branch already has:
 10. evidence ledger with `reported / observed / verified` states;
 11. Video Fact MVP and cross-source confidence fusion;
 12. AI trace, provenance, eval coverage, and action safety/compensation;
-13. escalation queue, knowledge loop, enterprise truth rollup, normalized GPS telemetry truth, normalized 1C financial truth with deterministic project deltas, persisted reconciliation casefiles for inspectable mismatch reasons, an executive command center with a shared exception inbox across escalations and reconciliation gaps, deterministic audit packs for workflow evidence, trace, and decision handoff, and explicit pilot controls with tenant/workspace rollout posture.
+13. escalation queue, knowledge loop, enterprise truth rollup, normalized GPS telemetry truth, normalized 1C financial truth with deterministic project deltas, persisted reconciliation casefiles for inspectable mismatch reasons, an executive command center with a shared exception inbox across escalations and reconciliation gaps, deterministic audit packs for workflow evidence, trace, and decision handoff, explicit pilot controls with tenant/workspace rollout posture, and a persisted pilot feedback ledger linked to real workflow artifacts.
 
 ## 4. Gaps Still Open
 
 The following high-value gaps remain open:
 
-1. Pilot feedback still needs a durable in-product loop tied to workflows and audit artifacts.
-2. Tenant readiness and cutover posture still need a narrow operator-facing checklist.
-3. Pilot review still needs one recurring scorecard/export instead of page-by-page inspection.
+1. Tenant readiness and cutover posture still need a narrow operator-facing checklist.
+2. Pilot review still needs one recurring scorecard/export instead of page-by-page inspection.
+3. The new pilot feedback loop should be used to drive readiness and review prioritization, not become another isolated surface.
 4. GPS, 1C, and reconciliation depth should be prioritized only after this pilot loop produces evidence about the next bottleneck.
 
 ## 5. 30-Day Plan
@@ -239,6 +239,9 @@ Deliver:
 - linkage to at least one existing command/audit workflow;
 - explicit open/resolved state with owner and next action.
 
+Status:
+- complete on 2026-03-12 in the lead branch.
+
 #### Session 37: Tenant Readiness and Cutover Checklist
 
 Goal:
@@ -260,8 +263,8 @@ Deliver:
 - no generic BI subsystem.
 
 Wave 10 status:
-- active on 2026-03-12 in the lead branch planning baseline.
-- the next canonical session is Session 36.
+- active on 2026-03-12 in the lead branch through Session 36.
+- the next canonical session is Session 37.
 
 ## 9. Research Principles Behind This Roadmap
 

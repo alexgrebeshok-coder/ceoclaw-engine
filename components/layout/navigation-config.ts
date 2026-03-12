@@ -49,6 +49,7 @@ export const operationsNavigation: NavigationItem[] = [
   { href: "/command-center", label: "Command Center", icon: AlertTriangle },
   { href: "/audit-packs", label: "Audit Packs", icon: FileText },
   { href: "/pilot-controls", label: "Pilot Controls", icon: ShieldCheck },
+  { href: "/pilot-feedback", label: "Pilot Feedback", icon: MessageSquareText },
   { href: "/work-reports", label: "Work Reports", icon: RefreshCcw },
   { href: "/integrations", label: "Connector Health", icon: Wrench },
 ];
@@ -84,6 +85,7 @@ const localizedPageTitles: Record<string, ResolvedTitle> = {
   "/command-center": { eyebrow: "Exception control", title: "Executive Command Center" },
   "/audit-packs": { eyebrow: "Audit readiness", title: "Audit Packs" },
   "/pilot-controls": { eyebrow: "Rollout posture", title: "Pilot Controls" },
+  "/pilot-feedback": { eyebrow: "Pilot loop", title: "Pilot Feedback" },
   "/work-reports": { eyebrow: "Delivery cadence", title: "Work Reports" },
   "/integrations": { eyebrow: "Platform trust", title: "Connector Health" },
 };
@@ -120,6 +122,10 @@ export function resolveTitle(pathname: string | null): ResolvedTitle {
 
   if (safePathname.startsWith("/pilot-controls/")) {
     return localizedPageTitles["/pilot-controls"];
+  }
+
+  if (safePathname.startsWith("/pilot-feedback/")) {
+    return localizedPageTitles["/pilot-feedback"];
   }
 
   if (safePathname.startsWith("/work-reports/")) {

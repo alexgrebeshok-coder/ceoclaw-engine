@@ -10,6 +10,7 @@ import type {
   WorkflowAuditPack,
   WorkflowAuditPackCandidate,
 } from "@/lib/audit-packs";
+import { buildPilotFeedbackPrefillHref } from "@/lib/pilot-feedback";
 import {
   getOperatorTruthBadge,
   type OperatorRuntimeTruth,
@@ -85,6 +86,9 @@ export function AuditPacksPage({
             </Link>
             <Link className={buttonVariants({ variant: "outline" })} href="/work-reports">
               Open work reports
+            </Link>
+            <Link className={buttonVariants({ variant: "outline" })} href="/pilot-feedback">
+              Open pilot feedback
             </Link>
           </>
         }
@@ -177,12 +181,28 @@ export function AuditPacksPage({
                 </CardDescription>
               </div>
               {pack ? (
-                <Link
-                  className={buttonVariants({ variant: "outline" })}
-                  href={`/api/audit-packs/workflows/${pack.scope.runId}?format=markdown&download=1`}
-                >
-                  Download markdown
-                </Link>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    className={buttonVariants({ variant: "outline" })}
+                    href={buildPilotFeedbackPrefillHref({
+                      projectId: pack.scope.projectId,
+                      projectName: pack.scope.projectName,
+                      sourceHref: `/audit-packs?runId=${pack.scope.runId}`,
+                      sourceLabel: "Audit pack workflow",
+                      targetId: pack.scope.runId,
+                      targetLabel: pack.scope.packetLabel ?? pack.scope.sourceEntityLabel,
+                      targetType: "workflow_run",
+                    })}
+                  >
+                    Log feedback
+                  </Link>
+                  <Link
+                    className={buttonVariants({ variant: "outline" })}
+                    href={`/api/audit-packs/workflows/${pack.scope.runId}?format=markdown&download=1`}
+                  >
+                    Download markdown
+                  </Link>
+                </div>
               ) : null}
             </div>
           </CardHeader>

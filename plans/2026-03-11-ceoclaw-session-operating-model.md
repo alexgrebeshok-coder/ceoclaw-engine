@@ -42,11 +42,11 @@ Reason:
 
 Prefer lead-first sequencing for the active sessions defined in the master execution plan.
 
-As of 2026-03-12 after Session 35 landed, Wave 10 is now the active lead-first sequence and it starts with Session 36.
+As of 2026-03-12 after Session 36 landed, Wave 10 is still the active lead-first sequence and it now moves into Session 37.
 
 Recommended concurrency:
-- 1 lead session for Session 36 because it sets the pilot-feedback boundary across command, audit, and operator surfaces;
-- 1 worker session maximum only for isolated readiness UI or read-model work after Session 36 lands;
+- 1 lead session for Session 37 because it sets the tenant-readiness boundary across runtime, connector, and rollout surfaces;
+- 1 worker session maximum only for isolated scorecard or read-model work after Session 37 lands;
 - 2 worker sessions maximum only after Wave 10 has clearly separated file zones;
 - 3 sessions maximum per wave for now.
 
@@ -184,7 +184,7 @@ Status: Sessions 09 through 26 are complete on 2026-03-11. Meeting-to-action, wo
 ### Stage 8
 
 Start the next sequence only after the previous one is canonically fixed in the master plan.
-Status: Sessions 27 through 35 are complete, Wave 9 is complete, and Wave 10 is now active with Session 36 first.
+Status: Sessions 27 through 36 are complete, Wave 9 is complete, and Wave 10 is now active with Session 37 next.
 
 ## 8. When Not to Parallelize
 
@@ -213,10 +213,10 @@ That means:
 Right now:
 
 1. Wave 0 no longer blocks parallel execution.
-2. Sessions 01 through 35 are complete on the lead branch.
+2. Sessions 01 through 36 are complete on the lead branch.
 3. Keep exact active session selection in the master execution plan, not here.
 4. Wave 7, Wave 8, and Wave 9 are complete on the lead branch, and Wave 10 is now the active continuation.
-5. The active sequence is Wave 10 pilot feedback and go-live readiness, with Session 36 first.
+5. The active sequence is Wave 10 pilot feedback and go-live readiness, with Session 37 next.
 
 ## 11. Success Condition for This Operating Model
 

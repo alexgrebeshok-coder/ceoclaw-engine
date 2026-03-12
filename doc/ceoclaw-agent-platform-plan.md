@@ -192,11 +192,11 @@
 - `executive command center with a shared exception inbox across escalations and reconciliation casefiles`
 - `deterministic audit packs for workflow evidence, trace, and applied decision context`
 - `explicit pilot controls with tenant/workspace rollout posture and guarded high-risk live workflows`
+- `persisted pilot feedback ledger with create/resolve flow linked from command center and audit packs`
 
 Следующий рекомендованный ход:
-- keep Sessions 01 through 35 as the locked baseline;
-- start Wave 10 with Session 36 so pilot feedback becomes durable product truth;
-- use Session 37 to expose tenant readiness and cutover blockers without building a broad tenant admin plane;
+- keep Sessions 01 through 36 as the locked baseline;
+- start Session 37 to expose tenant readiness and cutover blockers without building a broad tenant admin plane;
 - use Session 38 to produce recurring pilot review scorecards before choosing the next expansion wave.
 
 ## Definition of Done по релизу Alpha

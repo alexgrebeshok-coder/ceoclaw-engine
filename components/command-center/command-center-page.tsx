@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fieldStyles } from "@/components/ui/field";
+import { buildPilotFeedbackPrefillHref } from "@/lib/pilot-feedback";
 import type {
   ExceptionInboxItem,
   ExceptionInboxResult,
@@ -208,6 +209,9 @@ export function CommandCenterPage({
             <Link className={buttonVariants({ variant: "outline" })} href="/audit-packs">
               Open audit packs
             </Link>
+            <Link className={buttonVariants({ variant: "outline" })} href="/pilot-feedback">
+              Open pilot feedback
+            </Link>
             <Link className={buttonVariants({ variant: "outline" })} href="/integrations">
               Open connector health
             </Link>
@@ -358,6 +362,23 @@ export function CommandCenterPage({
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-2">
+                        <Link
+                          className={buttonVariants({ size: "sm", variant: "outline" })}
+                          href={buildPilotFeedbackPrefillHref({
+                            projectId: item.projectId,
+                            projectName: item.projectName,
+                            sourceHref: "/command-center",
+                            sourceLabel: item.sourceLabel,
+                            targetId: item.id,
+                            targetLabel: item.title,
+                            targetType:
+                              item.layer === "reconciliation"
+                                ? "reconciliation_casefile"
+                                : "exception_item",
+                          })}
+                        >
+                          Log feedback
+                        </Link>
                         {item.links.map((link) => (
                           <Link
                             className={buttonVariants({ size: "sm", variant: "outline" })}

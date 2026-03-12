@@ -4,6 +4,7 @@ import type { ExceptionInboxResult } from "@/lib/command-center";
 import type { GpsTelemetrySampleSnapshot } from "@/lib/connectors/gps-client";
 import type { OneCFinanceSampleSnapshot } from "@/lib/connectors/one-c-client";
 import type { EscalationListResult } from "@/lib/escalations";
+import type { PilotFeedbackListResult } from "@/lib/pilot-feedback";
 import { getPilotControlState, getPilotStageLabel, type PilotControlState } from "@/lib/server/pilot-controls";
 import type { DerivedSyncStatus } from "@/lib/sync-state";
 
@@ -403,6 +404,50 @@ export function buildPilotControlsRuntimeTruth(input: {
             ? pilot.allowedWriteWorkspaces.join(", ")
             : "None",
       },
+    ],
+  };
+}
+
+export function buildPilotFeedbackRuntimeTruth(input: {
+  feedback: PilotFeedbackListResult;
+  runtime: ServerRuntimeState;
+}): OperatorRuntimeTruth {
+  const { feedback, runtime } = input;
+  const pilot = getPilotControlState(runtime);
+  const status: OperatorTruthStatus =
+    runtime.healthStatus === "degraded"
+      ? "degraded"
+      : runtime.usingMockData
+        ? "demo"
+        : "live";
+
+  return {
+    status,
+    description:
+      status === "live"
+        ? "Pilot feedback is stored as durable product truth linked to real workflow artifacts."
+        : status === "degraded"
+          ? "Live pilot feedback was requested, but DATABASE_URL is unavailable. The feedback ledger cannot persist real operator follow-through."
+          : "Demo mode keeps pilot feedback in preview only. Real feedback logging and closure are intentionally disabled.",
+    facts: [
+      { label: "Runtime mode", value: describeMode(runtime.dataMode) },
+      {
+        label: "Feedback items",
+        value: `${feedback.summary.total} persisted item${feedback.summary.total === 1 ? "" : "s"}`,
+      },
+      {
+        label: "Still active",
+        value: String(feedback.summary.open + feedback.summary.inReview),
+      },
+      {
+        label: "Critical/high",
+        value: String(feedback.summary.critical + feedback.summary.high),
+      },
+      {
+        label: "Workflow-linked",
+        value: String(feedback.summary.workflowRuns + feedback.summary.exceptionItems + feedback.summary.reconciliationTargets),
+      },
+      { label: "Pilot rollout", value: formatPilotFact(pilot) },
     ],
   };
 }
