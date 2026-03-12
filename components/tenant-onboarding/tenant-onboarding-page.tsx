@@ -43,6 +43,11 @@ const expectedEndpoints = [
     note: "Открыть governance artifact, который теперь служит attachable review baseline для onboarding runbook.",
     path: "/api/pilot-review",
   },
+  {
+    method: "GET" as const,
+    note: "Открыть latest rollout handoff packet как deterministic JSON surface поверх runbook, readiness, review и decision trail.",
+    path: "/api/tenant-rollout-packet",
+  },
 ];
 
 function outcomeVariant(outcome: TenantOnboardingOverview["currentReadiness"]["outcome"]) {
@@ -210,6 +215,9 @@ export function TenantOnboardingPage({
             <Link className={buttonVariants({ variant: "outline" })} href="/pilot-review">
               Open pilot review
             </Link>
+            <Link className={buttonVariants({ variant: "outline" })} href="/tenant-rollout-packet">
+              Open rollout packet
+            </Link>
             <Link className={buttonVariants({ variant: "outline" })} href="/pilot-controls">
               Open pilot controls
             </Link>
@@ -360,7 +368,7 @@ export function TenantOnboardingPage({
       />
 
       <DomainApiCard
-        description="Tenant onboarding stays bounded. It packages current cutover truth and operator notes into a repeatable runbook without turning into tenant provisioning, credential orchestration, or a broad tenant admin plane."
+        description="Tenant onboarding stays bounded. It packages current cutover truth and operator notes into a repeatable runbook that now feeds the latest rollout packet, without turning into tenant provisioning, credential orchestration, or a broad tenant admin plane."
         endpoints={expectedEndpoints}
         title="Backend Endpoints"
       />

@@ -8,6 +8,7 @@ import type { PilotReviewScorecard } from "@/lib/pilot-review";
 import type { PilotFeedbackListResult } from "@/lib/pilot-feedback";
 import { getPilotControlState, getPilotStageLabel, type PilotControlState } from "@/lib/server/pilot-controls";
 import type { TenantOnboardingOverview } from "@/lib/tenant-onboarding";
+import type { TenantRolloutPacket } from "@/lib/tenant-rollout-packet";
 import type { TenantReadinessReport } from "@/lib/tenant-readiness";
 import type { DerivedSyncStatus } from "@/lib/sync-state";
 
@@ -643,6 +644,73 @@ export function buildTenantOnboardingRuntimeTruth(input: {
         : !overview.persistenceAvailable
           ? "Enable DATABASE_URL to turn the rollout template into a durable onboarding handoff."
           : undefined,
+  };
+}
+
+export function buildTenantRolloutPacketRuntimeTruth(input: {
+  packet: TenantRolloutPacket;
+  runtime: ServerRuntimeState;
+}): OperatorRuntimeTruth {
+  const { packet, runtime } = input;
+  const activeWarnings =
+    packet.currentReadiness.summary.warnings + packet.currentReview.summary.warningSections;
+  const latestRunbook = packet.latestRunbook;
+  const status: OperatorTruthStatus =
+    runtime.healthStatus === "degraded"
+      ? "degraded"
+      : runtime.usingMockData
+        ? "demo"
+        : packet.handoff.state === "ready"
+          ? "live"
+          : "mixed";
+
+  return {
+    status,
+    description:
+      status === "degraded"
+        ? "The rollout packet is degraded because the server runtime cannot guarantee trustworthy readiness, governance, or persistence facts."
+        : status === "demo"
+          ? "The packet surface is visible, but demo or unavailable operator data keeps it in preview-only mode until persisted handoff state is available."
+          : packet.handoff.state === "blocked"
+            ? "The latest packet is deterministic, but blocked readiness, review, or rollback posture still prevents it from acting as a promotion-ready widening handoff."
+            : latestRunbook
+              ? "The latest rollout packet is live, deterministic, and backed by a persisted runbook that operators can open or export directly."
+              : "The packet surface is live, but it still lacks a persisted runbook-backed handoff for the next tenant conversation.",
+    facts: [
+      { label: "Runtime mode", value: describeMode(runtime.dataMode) },
+      { label: "Handoff state", value: packet.handoff.stateLabel },
+      {
+        label: "Target tenant",
+        value:
+          packet.handoff.targetTenantSlug ??
+          packet.handoff.targetTenantLabel ??
+          packet.currentReadiness.tenant.slug,
+      },
+      {
+        label: "Latest runbook",
+        value: latestRunbook ? latestRunbook.statusLabel : "Not started",
+      },
+      {
+        label: "Latest decision",
+        value: packet.latestDecision?.decisionLabel ?? "No decision recorded",
+      },
+      { label: "Artifact", value: packet.artifact.fileName },
+      {
+        label: "Active warnings",
+        value: formatAvailabilityCount({
+          runtime,
+          value: activeWarnings,
+        }),
+      },
+    ],
+    note:
+      !packet.persistenceAvailable && runtime.databaseConfigured
+        ? "Persistence is disabled for this packet response even though DATABASE_URL exists."
+        : !packet.persistenceAvailable
+          ? "Enable DATABASE_URL and save a runbook to turn this preview into the latest persisted handoff packet."
+          : !latestRunbook
+            ? "Create or prepare a tenant onboarding runbook to make this packet runbook-backed."
+            : undefined,
   };
 }
 

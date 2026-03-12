@@ -8,12 +8,14 @@ import {
   buildBriefsRuntimeTruth,
   buildIntegrationsRuntimeTruth,
   buildTenantOnboardingRuntimeTruth,
+  buildTenantRolloutPacketRuntimeTruth,
   buildPilotReviewRuntimeTruth,
   buildTenantReadinessRuntimeTruth,
   buildWorkReportsRuntimeTruth,
   getOperatorTruthBadge,
 } from "@/lib/server/runtime-truth";
 import type { TenantOnboardingOverview } from "@/lib/tenant-onboarding";
+import type { TenantRolloutPacket } from "@/lib/tenant-rollout-packet";
 import type { TenantReadinessReport } from "@/lib/tenant-readiness";
 
 const connectorSummary: ConnectorStatusSummary = {
@@ -435,6 +437,66 @@ assert.equal(tenantOnboardingDemoTruth.status, "demo");
 assert.equal(
   tenantOnboardingDemoTruth.facts.find((fact) => fact.label === "Saved runbooks")?.value,
   "Unavailable"
+);
+
+const tenantRolloutPacket: TenantRolloutPacket = {
+  accessProfile: tenantOnboardingOverview.accessProfile,
+  artifact: {
+    content: "# Tenant rollout packet",
+    fileName: "tenant-rollout-packet-tenant-north.md",
+    format: "markdown",
+    mediaType: "text/markdown",
+  },
+  currentReadiness: tenantOnboardingOverview.currentReadiness,
+  currentReview: tenantOnboardingOverview.currentReview,
+  generatedAt: "2026-03-12T08:11:00.000Z",
+  handoff: {
+    generatedAt: "2026-03-12T08:11:00.000Z",
+    isRunbookBacked: true,
+    state: "ready",
+    stateLabel: "Ready to share",
+    summary: "Deterministic rollout packet is ready for the next widening conversation.",
+    targetCutoverAt: "2026-03-15T09:00:00.000Z",
+    targetTenantLabel: "Northern tenant",
+    targetTenantSlug: "tenant-north",
+  },
+  latestDecision: tenantOnboardingOverview.latestDecision,
+  latestRunbook: tenantOnboardingOverview.latestRunbook,
+  persistenceAvailable: true,
+  sections: [],
+  sourceLinks: [{ href: "/tenant-onboarding", label: "Open tenant onboarding" }],
+  templateVersion: "tenant-rollout-v1",
+};
+
+const tenantRolloutPacketTruth = buildTenantRolloutPacketRuntimeTruth({
+  packet: tenantRolloutPacket,
+  runtime: liveRuntime,
+});
+assert.equal(tenantRolloutPacketTruth.status, "live");
+assert.equal(
+  tenantRolloutPacketTruth.facts.find((fact) => fact.label === "Artifact")?.value,
+  "tenant-rollout-packet-tenant-north.md"
+);
+
+const tenantRolloutPacketPreviewTruth = buildTenantRolloutPacketRuntimeTruth({
+  packet: {
+    ...tenantRolloutPacket,
+    handoff: {
+      ...tenantRolloutPacket.handoff,
+      isRunbookBacked: false,
+      state: "warning",
+      stateLabel: "Runbook missing",
+    },
+    latestDecision: null,
+    latestRunbook: null,
+    persistenceAvailable: false,
+  },
+  runtime: demoRuntime,
+});
+assert.equal(tenantRolloutPacketPreviewTruth.status, "demo");
+assert.equal(
+  tenantRolloutPacketPreviewTruth.facts.find((fact) => fact.label === "Latest runbook")?.value,
+  "Not started"
 );
 
 console.log("PASS runtime-truth.unit");
