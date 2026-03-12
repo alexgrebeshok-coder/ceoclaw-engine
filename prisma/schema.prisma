@@ -447,6 +447,31 @@ model PilotReviewDeliveryPolicy {
   @@index([deliveryWeekday, deliveryHour, active])
 }
 
+model CutoverDecision {
+  id                    String   @id @default(cuid())
+  workspaceId           String   @default("executive")
+  tenantSlug            String
+  decisionType          String
+  summary               String
+  details               String?
+  warningId             String?
+  warningLabel          String?
+  readinessOutcome      String
+  readinessOutcomeLabel String
+  readinessGeneratedAt  DateTime
+  reviewOutcome         String
+  reviewOutcomeLabel    String
+  reviewGeneratedAt     DateTime
+  createdByUserId       String?
+  createdByName         String?
+  createdByRole         String?
+  createdAt             DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([tenantSlug, createdAt])
+  @@index([decisionType, createdAt])
+}
+
 model DeliveryLedger {
   id                String   @id @default(cuid())
   channel           String

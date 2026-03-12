@@ -1,11 +1,13 @@
 import Link from "next/link";
 
+import { CutoverDecisionRegisterPanel } from "@/components/tenant-readiness/cutover-decision-register-panel";
 import { DomainApiCard } from "@/components/layout/domain-api-card";
 import { DomainPageHeader } from "@/components/layout/domain-page-header";
 import { OperatorRuntimeCard } from "@/components/layout/operator-runtime-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { CutoverDecisionRegister } from "@/lib/cutover-decisions";
 import {
   getOperatorTruthBadge,
   type OperatorRuntimeTruth,
@@ -44,6 +46,16 @@ const expectedEndpoints = [
     method: "GET" as const,
     note: "Проверить open/in-review pilot feedback items, которые всё ещё влияют на cutover.",
     path: "/api/pilot-feedback?includeResolved=true&limit=24",
+  },
+  {
+    method: "GET" as const,
+    note: "Прочитать durable cutover approvals, warning waivers и rollback entries.",
+    path: "/api/tenant-readiness/decisions",
+  },
+  {
+    method: "POST" as const,
+    note: "Записать cutover approval, warning waiver или rollback вместе с текущим readiness/review snapshot.",
+    path: "/api/tenant-readiness/decisions",
   },
 ];
 
@@ -222,9 +234,15 @@ function ChecklistCard({
 }
 
 export function TenantReadinessPage({
+  currentReviewOutcomeLabel,
+  decisionAvailabilityNote,
+  decisionRegister,
   readiness,
   runtimeTruth,
 }: {
+  currentReviewOutcomeLabel: string;
+  decisionAvailabilityNote?: string;
+  decisionRegister: CutoverDecisionRegister;
   readiness: TenantReadinessReport;
   runtimeTruth: OperatorRuntimeTruth;
 }) {
@@ -247,6 +265,9 @@ export function TenantReadinessPage({
             <Link className={buttonVariants({ variant: "outline" })} href="/pilot-feedback">
               Open pilot feedback
             </Link>
+            <Link className={buttonVariants({ variant: "outline" })} href="/pilot-review">
+              Open pilot review
+            </Link>
           </>
         }
         chips={[
@@ -268,8 +289,12 @@ export function TenantReadinessPage({
                 ? "warning"
                 : "success",
           },
+          {
+            label: `${decisionRegister.summary.total} governance decision${decisionRegister.summary.total === 1 ? "" : "s"}`,
+            variant: decisionRegister.summary.total > 0 ? "info" : "neutral",
+          },
         ]}
-        description="One operator-facing cutover checklist for a single tenant. This surface says whether the tenant is blocked, guarded, or ready to promote by tying runtime truth, connector health, pilot controls, and unresolved operator follow-through into one honest posture."
+        description="One operator-facing cutover checklist for a single tenant. This surface says whether the tenant is blocked, guarded, or ready to promote, and now records the explicit governance decisions that accept warnings, approve cutover, or trigger rollback."
         eyebrow="Go-live posture"
         title="Tenant Readiness"
       />
@@ -376,6 +401,18 @@ export function TenantReadinessPage({
         <ChecklistCard items={readiness.checklist} />
       </div>
 
+      <CutoverDecisionRegisterPanel
+        availabilityNote={decisionAvailabilityNote}
+        currentReadinessOutcomeLabel={readiness.outcomeLabel}
+        currentReviewOutcomeLabel={currentReviewOutcomeLabel}
+        initialRegister={decisionRegister}
+        tenantSlug={readiness.tenant.slug}
+        warningOptions={readiness.warnings.map((item) => ({
+          id: item.id,
+          title: item.title,
+        }))}
+      />
+
       <div className="grid gap-6 xl:grid-cols-3">
         <FindingsColumn
           emptyCopy="No tenant cutover blockers remain in the tracked surfaces."
@@ -395,7 +432,7 @@ export function TenantReadinessPage({
       </div>
 
       <DomainApiCard
-        description="Tenant readiness stays read-only. It aggregates existing runtime, connector, rollout, and follow-through surfaces instead of creating a broad tenant admin plane."
+        description="Tenant readiness stays narrow. It aggregates existing runtime, connector, rollout, and follow-through surfaces, then records explicit governance decisions without turning into a broad tenant admin plane."
         endpoints={expectedEndpoints}
         title="Backend Endpoints"
       />

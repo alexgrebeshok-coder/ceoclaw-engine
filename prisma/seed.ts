@@ -9,6 +9,7 @@ async function main() {
   console.log('🌱 Seeding database...');
 
   // Clear existing data
+  await prisma.cutoverDecision.deleteMany();
   await prisma.pilotReviewDeliveryPolicy.deleteMany();
   await prisma.telegramBriefDeliveryPolicy.deleteMany();
   await prisma.document.deleteMany();
