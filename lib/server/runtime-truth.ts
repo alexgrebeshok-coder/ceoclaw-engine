@@ -4,6 +4,7 @@ import type { ExceptionInboxResult } from "@/lib/command-center";
 import type { GpsTelemetrySampleSnapshot } from "@/lib/connectors/gps-client";
 import type { OneCFinanceSampleSnapshot } from "@/lib/connectors/one-c-client";
 import type { EscalationListResult } from "@/lib/escalations";
+import { getPilotControlState, getPilotStageLabel, type PilotControlState } from "@/lib/server/pilot-controls";
 import type { DerivedSyncStatus } from "@/lib/sync-state";
 
 import type { ServerRuntimeState } from "./runtime-mode";
@@ -152,6 +153,7 @@ export function buildWorkReportsRuntimeTruth(input: {
   runtime: ServerRuntimeState;
 }): OperatorRuntimeTruth {
   const { queue, reportCount, runtime } = input;
+  const pilot = getPilotControlState(runtime);
   const status: OperatorTruthStatus =
     runtime.healthStatus === "degraded"
       ? "degraded"
@@ -187,6 +189,7 @@ export function buildWorkReportsRuntimeTruth(input: {
         label: "Signal actions",
         value: status === "live" ? "Create, review, and escalate" : "Blocked outside live DB mode",
       },
+      { label: "Pilot rollout", value: formatPilotFact(pilot) },
     ],
   };
 }
@@ -205,6 +208,7 @@ export function buildBriefsRuntimeTruth(input: {
     telegramConnector,
     emailConnector,
   } = input;
+  const pilot = getPilotControlState(runtime);
   const hasLiveOutboundChannel = [telegramConnector, emailConnector].some(
     (connector) => connector !== null && !connector.stub && connector.status === "ok"
   );
@@ -257,6 +261,7 @@ export function buildBriefsRuntimeTruth(input: {
       },
       { label: "Top alerts", value: String(portfolioAlertCount) },
       { label: "Project briefs", value: String(projectBriefCount) },
+      { label: "Pilot rollout", value: formatPilotFact(pilot) },
     ],
   };
 }
@@ -267,6 +272,7 @@ export function buildAuditPacksRuntimeTruth(input: {
   runtime: ServerRuntimeState;
 }): OperatorRuntimeTruth {
   const { candidateCount, pack, runtime } = input;
+  const pilot = getPilotControlState(runtime);
   const status: OperatorTruthStatus =
     runtime.healthStatus === "degraded"
       ? "degraded"
@@ -306,6 +312,7 @@ export function buildAuditPacksRuntimeTruth(input: {
         label: "Decision context",
         value: pack ? pack.decision.status : "No decision loaded",
       },
+      { label: "Pilot rollout", value: formatPilotFact(pilot) },
     ],
   };
 }
@@ -315,6 +322,7 @@ export function buildCommandCenterRuntimeTruth(input: {
   runtime: ServerRuntimeState;
 }): OperatorRuntimeTruth {
   const { inbox, runtime } = input;
+  const pilot = getPilotControlState(runtime);
   const status: OperatorTruthStatus =
     runtime.healthStatus === "degraded"
       ? "degraded"
@@ -352,6 +360,54 @@ export function buildCommandCenterRuntimeTruth(input: {
         label: "Reconciliation sync",
         value: getSyncLabel(inbox.sync.reconciliation?.status ?? "idle"),
       },
+      { label: "Pilot rollout", value: formatPilotFact(pilot) },
     ],
   };
+}
+
+export function buildPilotControlsRuntimeTruth(input: {
+  pilot: PilotControlState;
+  runtime: ServerRuntimeState;
+}): OperatorRuntimeTruth {
+  const { pilot, runtime } = input;
+  const status: OperatorTruthStatus =
+    runtime.healthStatus === "degraded"
+      ? "degraded"
+      : runtime.usingMockData
+        ? "demo"
+        : "live";
+
+  return {
+    status,
+    description:
+      status === "live"
+        ? "Pilot controls are reading explicit rollout posture and tenant boundaries on top of the live runtime."
+        : status === "degraded"
+          ? "Pilot controls are configured, but the server runtime is degraded and cannot guarantee live rollout safety."
+          : "Pilot controls are visible in preview mode, but live enforcement only matters once live portfolio facts are enabled.",
+    facts: [
+      { label: "Runtime mode", value: describeMode(runtime.dataMode) },
+      { label: "Pilot stage", value: getPilotStageLabel(pilot.stage) },
+      {
+        label: "Tenant boundary",
+        value: pilot.tenantSlug ?? "Unrestricted",
+      },
+      {
+        label: "Live mutations",
+        value: pilot.liveMutationAllowed ? "Allowed within posture" : "Guarded",
+      },
+      {
+        label: "Write workspaces",
+        value:
+          pilot.allowedWriteWorkspaces.length > 0
+            ? pilot.allowedWriteWorkspaces.join(", ")
+            : "None",
+      },
+    ],
+  };
+}
+
+function formatPilotFact(pilot: PilotControlState) {
+  const stage = getPilotStageLabel(pilot.stage);
+  return pilot.tenantSlug ? `${stage} · ${pilot.tenantSlug}` : stage;
 }

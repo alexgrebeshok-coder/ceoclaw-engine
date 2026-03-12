@@ -42,12 +42,12 @@ Reason:
 
 Prefer lead-first sequencing for the active sessions defined in the master execution plan.
 
-As of 2026-03-12 after Session 34 landed, Wave 9 is still active and the next lead-first sequence moves into Session 35.
+As of 2026-03-12 after Session 35 landed, Wave 9 is complete and no further wave should start until the master execution plan defines the next canonical post-pilot sequence.
 
 Recommended concurrency:
-- 1 lead session for cross-surface pilot-control and workspace-boundary changes;
-- 1 worker session maximum for isolated tenant/workspace UI while Session 35 fixes the pilot-safety boundary;
-- 2 worker sessions maximum only after the Wave 9 pilot boundary is stable;
+- 1 lead session for post-pilot planning and any cross-surface follow-up that falls out of pilot feedback;
+- 1 worker session maximum only for isolated follow-up once the next wave is explicitly defined;
+- 2 worker sessions maximum only after the next wave has clearly separated file zones;
 - 3 sessions maximum per wave for now.
 
 ## 3. Session Roles
@@ -181,7 +181,7 @@ Status: Sessions 09 through 26 are complete on 2026-03-11. Meeting-to-action, wo
 ### Stage 8
 
 Start the next sequence only after the previous one is canonically fixed in the master plan.
-Status: Sessions 27 through 34 are complete, Wave 9 is active through Session 34, and Session 35 is the next lead-first step.
+Status: Sessions 27 through 35 are complete, Wave 9 is complete, and any next sequence should be defined in the master execution plan before new implementation starts.
 
 ## 8. When Not to Parallelize
 
@@ -210,10 +210,10 @@ That means:
 Right now:
 
 1. Wave 0 no longer blocks parallel execution.
-2. Sessions 01 through 34 are complete on the lead branch.
+2. Sessions 01 through 35 are complete on the lead branch.
 3. Keep exact active session selection in the master execution plan, not here.
-4. Wave 7 and Wave 8 are complete on the lead branch, and Wave 9 is now active through Session 34.
-5. The active sequence is Wave 9 pilot-grade operatorization, with Session 35 next.
+4. Wave 7, Wave 8, and Wave 9 are complete on the lead branch.
+5. No next wave should be inferred from this file; define it first in the master execution plan.
 
 ## 11. Success Condition for This Operating Model
 

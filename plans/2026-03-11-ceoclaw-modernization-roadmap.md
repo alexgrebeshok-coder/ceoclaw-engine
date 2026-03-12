@@ -10,7 +10,7 @@ This roadmap explains the modernization direction and 30/60/90-day shape. It is 
 
 ## 1. Why This Roadmap Exists
 
-CEOClaw has already crossed the alpha threshold for an AI operating layer. Sessions 01 through 34 are complete on the lead branch, and the product already spans:
+CEOClaw has already crossed the alpha threshold for an AI operating layer. Sessions 01 through 35 are complete on the lead branch, and the product already spans:
 - enterprise fact intake;
 - evidence and verification;
 - proposal and apply;
@@ -18,9 +18,9 @@ CEOClaw has already crossed the alpha threshold for an AI operating layer. Sessi
 - operator control;
 - knowledge and enterprise truth rollups.
 
-The next 90 days should not add more shallow surfaces. They should turn the current alpha into a pilot-grade operating layer.
+The current 90-day modernization run has delivered its core target on the lead branch.
 
-The new 90-day target is:
+That delivered target is:
 
 `durable execution -> deeper source truth -> pilot-grade operator control`
 
@@ -30,10 +30,10 @@ CEOClaw should evolve from a strong alpha into a pilot-grade, evidence-backed op
 
 The highest-leverage gaps are now:
 
-1. pilot controls are not yet strong enough for tenant-safe rollout;
-2. workspace/environment guardrails still need a clearer live-pilot posture;
-3. the new command and audit surfaces still need safer tenant/workspace boundaries;
-4. live-pilot onboarding and cutover posture are still not explicit enough.
+1. pilot-grade controls now exist, but they need real pilot feedback and operational refinement instead of more speculative surface area;
+2. GPS and 1C truth still need deeper operational depth beyond the current normalized read slices;
+3. reconciliation, command, and audit layers now need usage-driven prioritization rather than another abstract control pass;
+4. the post-pilot onboarding and next execution wave are not yet canonically defined.
 
 ## 3. Current Baseline
 
@@ -51,16 +51,16 @@ As of 2026-03-11 the lead branch already has:
 10. evidence ledger with `reported / observed / verified` states;
 11. Video Fact MVP and cross-source confidence fusion;
 12. AI trace, provenance, eval coverage, and action safety/compensation;
-13. escalation queue, knowledge loop, enterprise truth rollup, normalized GPS telemetry truth, normalized 1C financial truth with deterministic project deltas, persisted reconciliation casefiles for inspectable mismatch reasons, an executive command center with a shared exception inbox across escalations and reconciliation gaps, and deterministic audit packs for workflow evidence, trace, and decision handoff.
+13. escalation queue, knowledge loop, enterprise truth rollup, normalized GPS telemetry truth, normalized 1C financial truth with deterministic project deltas, persisted reconciliation casefiles for inspectable mismatch reasons, an executive command center with a shared exception inbox across escalations and reconciliation gaps, deterministic audit packs for workflow evidence, trace, and decision handoff, and explicit pilot controls with tenant/workspace rollout posture.
 
 ## 4. Gaps Still Open
 
 The following high-value gaps remain open:
 
-1. GPS and 1C are still narrow read domains, not deeper operational truth models.
-2. The shared command model and audit-pack export now exist, but pilot controls are not yet strong enough for enterprise rollout.
-3. Tenant-safe rollout guardrails still need to catch up with the richer command and truth layers.
-4. Live-pilot onboarding and environment cutover still need safer defaults and clearer controls.
+1. GPS and 1C still need deeper operational truth models beyond the current honest read-only slices.
+2. Pilot controls and rollout guardrails are now present, but they still need real-pilot validation and tuning.
+3. The shared command, reconciliation, and audit-pack layers need pilot-driven prioritization for the next depth pass.
+4. The next post-Wave-9 modernization wave still needs to be defined canonically.
 
 ## 5. 30-Day Plan
 
@@ -212,6 +212,9 @@ Deliver:
 - workspace/environment rollout guardrails;
 - clearer onboarding and cutover posture for live pilots.
 
+Status:
+- complete on 2026-03-12 in the lead branch.
+
 Deliver across the 90-day horizon:
 - durable runtime;
 - deeper source truth;
@@ -219,8 +222,8 @@ Deliver across the 90-day horizon:
 - auditability and safer pilot rollout.
 
 Wave 9 status:
-- in progress on 2026-03-12 in the lead branch through Session 34.
-- the next canonical session is Session 35.
+- complete on 2026-03-12 in the lead branch through Session 35.
+- the next canonical move is to define the post-Wave-9 execution plan from pilot feedback.
 
 ## 8. Research Principles Behind This Roadmap
 

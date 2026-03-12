@@ -191,11 +191,12 @@
 - `persisted reconciliation casefiles with deterministic mismatch reasons across finance, field evidence, and telemetry`
 - `executive command center with a shared exception inbox across escalations and reconciliation casefiles`
 - `deterministic audit packs for workflow evidence, trace, and applied decision context`
+- `explicit pilot controls with tenant/workspace rollout posture and guarded high-risk live workflows`
 
 Следующий рекомендованный ход:
-- execute the chosen post-Wave-6 sequence explicitly:
-  - Wave 9 is now in progress through Session 34: audit pack and operational exports;
-  - start Session 35: pilot controls and tenant readiness.
+- keep Sessions 01 through 35 as the locked baseline;
+- use the completed pilot-control and audit surfaces to collect real pilot feedback;
+- define the next canonical post-Wave-9 execution plan before starting another expansion wave.
 
 ## Definition of Done по релизу Alpha
 
