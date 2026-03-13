@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
+    "analyze": "ANALYZE=true npm run build",
     "check": "./scripts/check.sh",
     "check:safe": "./scripts/check-safe.sh",
     "smoke": "./scripts/smoke.sh",
@@ -58,6 +59,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.5.10",
     "@playwright/test": "^1.58.2",
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.11",

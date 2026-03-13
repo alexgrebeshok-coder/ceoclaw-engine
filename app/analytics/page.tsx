@@ -3,7 +3,7 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
-import { TeamPerformance } from "@/components/analytics/team-performance";
+import { TeamPerformanceLazy } from "@/components/analytics/team-performance-lazy";
 
 export default function AnalyticsPage() {
   return (
@@ -26,7 +26,7 @@ export default function AnalyticsPage() {
         </TabsContent>
 
         <TabsContent value="team">
-          <TeamPerformance />
+          <TeamPerformanceLazy />
         </TabsContent>
       </Tabs>
     </div>

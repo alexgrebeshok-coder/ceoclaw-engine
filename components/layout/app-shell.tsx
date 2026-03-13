@@ -8,7 +8,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { StatusBar } from "@/components/layout/status-bar";
 import { Topbar } from "@/components/layout/topbar";
 import { Button } from "@/components/ui/button";
-import { ChatWidget } from "@/components/chat/chat-widget";
+import { ChatWidgetLazy } from "@/components/chat/chat-widget-lazy";
 import { cn } from "@/lib/utils";
 
 // Auth pages that don't need the app shell
@@ -73,7 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <StatusBar />
       </div>
       
-      <ChatWidget />
+      <ChatWidgetLazy />
     </div>
   );
 }

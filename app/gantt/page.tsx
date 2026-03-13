@@ -1,10 +1,10 @@
 import { ErrorBoundary } from "@/components/error-boundary";
-import { GanttPage } from "@/components/gantt/gantt-page";
+import { GanttPageLazy } from "@/components/gantt/gantt-page-lazy";
 
 export default function GanttRoute() {
   return (
     <ErrorBoundary resetKey="gantt">
-      <GanttPage />
+      <GanttPageLazy />
     </ErrorBoundary>
   );
 }
