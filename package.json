@@ -14,6 +14,7 @@
     "test:http": "./scripts/smoke.sh",
     "test:legacy:http": "./scripts/run-legacy-http-tests.sh",
     "db:seed": "prisma db seed",
+    "seed:auth": "tsx prisma/seed-auth.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",

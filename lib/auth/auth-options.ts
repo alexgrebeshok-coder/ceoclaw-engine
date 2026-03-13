@@ -5,6 +5,7 @@ import GitHubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import type { Adapter } from "next-auth/adapters";
+import bcrypt from "bcryptjs";
 
 // Extend NextAuth types
 declare module "next-auth" {
@@ -49,13 +50,11 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // NOTE: Install bcrypt for password hashing
-        // Run: npm install bcrypt @types/bcrypt
-        // Then use: const passwordMatch = await compare(credentials.password, user.password);
-        
-        // For now, using plain text comparison (NOT RECOMMENDED for production)
-        // Replace this with bcrypt comparison after installing bcrypt
-        const passwordMatch = credentials.password === user.password;
+        // NOTE: Password hashing best practices:
+        // - bcryptjs is used for secure password hashing
+        // - Salt rounds: 10 (good balance of security and performance)
+        // - Never store plain text passwords in production
+        const passwordMatch = await bcrypt.compare(credentials.password, user.password);
 
         if (!passwordMatch) {
           return null;
