@@ -42,6 +42,8 @@ export function TasksPage() {
   } = useProjects();
   const [status, setStatus] = useState<"all" | TaskStatus>("all");
   const [priority, setPriority] = useState<"all" | Priority>("all");
+  const [projectFilter, setProjectFilter] = useState<"all" | string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
 
@@ -50,9 +52,13 @@ export function TasksPage() {
       tasks.filter((task) => {
         const statusMatch = status === "all" ? true : task.status === status;
         const priorityMatch = priority === "all" ? true : task.priority === priority;
-        return statusMatch && priorityMatch;
+        const projectMatch = projectFilter === "all" ? true : task.projectId === projectFilter;
+        const searchMatch = searchQuery === "" ? true : 
+          task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+        return statusMatch && priorityMatch && projectMatch && searchMatch;
       }),
-    [priority, status, tasks]
+    [priority, status, projectFilter, searchQuery, tasks]
   );
 
   const projectNameById = Object.fromEntries(projects.map((project) => [project.id, project.name]));
@@ -141,7 +147,7 @@ export function TasksPage() {
             <CardTitle>{t("tasks.title")}</CardTitle>
             <p className="text-sm text-[var(--ink-soft)]">{t("tasks.description")}</p>
           </div>
-          <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
             <select
               className={fieldStyles}
               onChange={(event) => setStatus(event.target.value as "all" | TaskStatus)}
@@ -164,6 +170,25 @@ export function TasksPage() {
               <option value="high">{enumLabel("priority", "high")}</option>
               <option value="critical">{enumLabel("priority", "critical")}</option>
             </select>
+            <select
+              className={fieldStyles}
+              onChange={(event) => setProjectFilter(event.target.value)}
+              value={projectFilter}
+            >
+              <option value="all">{t("filters.allProjects")}</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+            <input
+              className={fieldStyles}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder={t("filters.search") || "Search..."}
+              type="text"
+              value={searchQuery}
+            />
             <Button onClick={() => setTaskModalOpen(true)}>{t("action.addTask")}</Button>
           </div>
         </CardHeader>
