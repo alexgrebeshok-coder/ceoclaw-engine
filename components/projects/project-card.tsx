@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import Link from "next/link";
-import { Copy, Edit3, Flag, MapPin, MoveRight } from "lucide-react";
+import { Copy, Edit3, Flag, MoveRight } from "lucide-react";
 
 import { useLocale } from "@/contexts/locale-context";
 import { Badge } from "@/components/ui/badge";
@@ -60,46 +60,46 @@ function ProjectCardComponent({
           </div>
         </div>
 
-        <div className="space-y-3 rounded-[10px] border border-[var(--line)] bg-[var(--panel-soft)] p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-[var(--ink-muted)]">{t("project.progressLabel")}</span>
-            <span className="font-semibold text-[var(--ink)]">{project.progress}%</span>
+        <div className="space-y-4 rounded-[10px] border border-[var(--line)] bg-[var(--panel-soft)] p-4">
+          {/* Progress - Enhanced Visual Hierarchy */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[var(--ink-muted)]">{t("project.progressLabel")}</span>
+            <span className="text-2xl font-bold text-[var(--ink)]">{project.progress}%</span>
           </div>
-          <Progress value={project.progress} />
-          <div className="flex flex-wrap gap-4 text-sm text-[var(--ink-soft)]">
-            <div className="min-w-[150px] flex-1">
-              <div className="text-xs uppercase tracking-[0.12em] text-[var(--ink-muted)]">
-                {t("project.budgetBurn")}
-              </div>
-              <div className="mt-1 font-semibold text-[var(--ink)]">
+          <Progress value={project.progress} className="h-2" />
+
+          {/* Metrics Grid - Clear Visual Separation */}
+          <div className="grid grid-cols-1 gap-3 text-sm">
+            {/* Budget */}
+            <div className="flex items-center gap-2 text-[var(--ink-soft)]">
+              <span className="text-base">💰</span>
+              <span className="font-medium text-[var(--ink)]">
                 {formatCurrency(project.budget.actual, project.budget.currency)}
-              </div>
-              <div>
-                {t("analytics.planned")}:{" "}
-                {formatCurrency(project.budget.planned, project.budget.currency)}
-              </div>
+              </span>
+              <span className="text-[var(--ink-muted)]">
+                / {formatCurrency(project.budget.planned, project.budget.currency)}
+              </span>
             </div>
-            <div className="min-w-[170px] flex-[1.2]">
-              <div className="text-xs uppercase tracking-[0.12em] text-[var(--ink-muted)]">
-                {t("project.nextMilestone")}
-              </div>
-              <div className="mt-1 break-words font-semibold leading-5 text-[var(--ink)]">
+
+            {/* Next Milestone */}
+            <div className="flex items-center gap-2 text-[var(--ink-soft)]">
+              <span className="text-base">📅</span>
+              <span className="font-medium text-[var(--ink)]">
                 {project.nextMilestone?.name ?? t("project.none")}
-              </div>
-              <div>
-                {project.nextMilestone
-                  ? formatDateLocalized(project.nextMilestone.date, "d MMM yyyy")
-                  : "—"}
-              </div>
+              </span>
+              {project.nextMilestone && (
+                <span className="text-[var(--ink-muted)]">
+                  — {formatDateLocalized(project.nextMilestone.date, "d MMM yyyy")}
+                </span>
+              )}
             </div>
-            <div className="min-w-[150px] flex-1">
-              <div className="text-xs uppercase tracking-[0.12em] text-[var(--ink-muted)]">
-                {t("field.location")}
-              </div>
-              <div className="mt-1 flex items-start gap-2 font-semibold text-[var(--ink)]">
-                <MapPin className="h-4 w-4 text-[var(--ink-muted)]" />
-                <span className="break-words leading-5">{project.location}</span>
-              </div>
+
+            {/* Location */}
+            <div className="flex items-center gap-2 text-[var(--ink-soft)]">
+              <span className="text-base">📍</span>
+              <span className="font-medium text-[var(--ink)]">
+                {project.location || t("project.none")}
+              </span>
             </div>
           </div>
         </div>

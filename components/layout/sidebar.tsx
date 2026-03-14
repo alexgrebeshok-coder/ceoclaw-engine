@@ -63,7 +63,7 @@ export function Sidebar({
         return projects;
     }
   }, [activeWorkspace.id, projects]);
-  const featuredProjects = workspaceProjects.slice(0, 4);
+  const featuredProjects = workspaceProjects.slice(0, 3);
   const totalRiskCount =
     liveRisks.length > 0 || !risksLoading ? liveRisks.length : cachedRisks.length;
   const totalTaskCount =

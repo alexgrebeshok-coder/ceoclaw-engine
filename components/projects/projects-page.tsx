@@ -44,6 +44,8 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
   const [direction, setDirection] = useState<"all" | Project["direction"]>("all");
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [projectModalOpen, setProjectModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 6;
 
   const filteredProjects = useMemo(
     () =>
@@ -60,6 +62,18 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
       }),
     [direction, projects, query]
   );
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const paginatedProjects = filteredProjects.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
+
+  // Reset page when filters change
+  useMemo(() => {
+    setPage(1);
+  }, [query, direction]);
 
   const compareData = filteredProjects.map((project) => ({
     name: project.name.slice(0, 12),
@@ -171,7 +185,7 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
           </CardHeader>
           <CardContent className="grid min-w-0 gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,.9fr)]">
             <div className="grid min-w-0 gap-4 grid-cols-1 lg:grid-cols-2">
-              {filteredProjects.map((project) => (
+              {paginatedProjects.map((project) => (
                 <ProjectCard
                   key={project.id}
                   onDuplicate={duplicateProject}
@@ -181,6 +195,41 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
                 />
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <Button
+                  disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                  variant="secondary"
+                  size="sm"
+                >
+                  {t("action.previous")}
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <Button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      variant={page === p ? "default" : "ghost"}
+                      size="sm"
+                      className="w-9"
+                    >
+                      {p}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  disabled={page === totalPages}
+                  onClick={() => setPage(page + 1)}
+                  variant="secondary"
+                  size="sm"
+                >
+                  {t("action.next")}
+                </Button>
+              </div>
+            )}
             <Card className="min-w-0 bg-[color:var(--surface-panel)]">
               <CardHeader>
                 <CardTitle>{t("projects.comparison")}</CardTitle>
@@ -189,11 +238,11 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
                 <ClientChart className="h-[320px]">
                   <ProjectsComparisonChart data={compareData} />
                 </ClientChart>
-                <div className="grid gap-3">
-                  {filteredProjects.map((project) => (
+                <div className="grid gap-4">
+                  {filteredProjects.slice(0, 5).map((project) => (
                     <div
                       key={project.id}
-                      className="flex items-center justify-between rounded-[10px] border border-[var(--line)] bg-[var(--panel-soft)] px-4 py-3"
+                      className="flex items-center justify-between rounded-[10px] border border-[var(--line)] bg-[var(--panel-soft)] px-4 py-4"
                     >
                       <div>
                         <p className="font-medium text-[var(--ink)]">{project.name}</p>

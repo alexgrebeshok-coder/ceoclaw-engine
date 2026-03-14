@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8">
           {/* Logo & Header */}
           <div className="text-center space-y-2">
-            <a href="/" className="inline-block">
+            <Link href="/" className="inline-block">
               <div className="flex items-center justify-center gap-2 mb-6">
                 <div className="w-10 h-10 bg-[#3b82f6] rounded-xl flex items-center justify-center">
                   <span className="text-white font-bold text-xl">C</span>
@@ -23,7 +24,7 @@ export default function LoginPage() {
                   CEO Claw
                 </span>
               </div>
-            </a>
+            </Link>
             <h1 className="text-2xl font-bold text-[var(--ink)]">
               С возвращением!
             </h1>
