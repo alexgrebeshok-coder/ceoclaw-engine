@@ -322,7 +322,7 @@ export function TenantOnboardingRunbookPanel({
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Target tenant slug</span>
+              <span>Slug целевого тенанта</span>
               <Input
                 onChange={(event) =>
                   setEditor((current) => ({ ...current, targetTenantSlug: event.target.value }))
@@ -333,12 +333,12 @@ export function TenantOnboardingRunbookPanel({
             </label>
 
             <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Target tenant label</span>
+              <span>Название целевого тенанта</span>
               <Input
                 onChange={(event) =>
                   setEditor((current) => ({ ...current, targetTenantLabel: event.target.value }))
                 }
-                placeholder="Northern rollout pilot"
+                placeholder="Пилотный запуск на севере"
                 value={editor.targetTenantLabel}
               />
             </label>
@@ -363,7 +363,7 @@ export function TenantOnboardingRunbookPanel({
             </label>
 
             <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Target cutover</span>
+              <span>Целевое время переключения</span>
               <Input
                 onChange={(event) =>
                   setEditor((current) => ({ ...current, targetCutoverAt: event.target.value }))
@@ -375,23 +375,23 @@ export function TenantOnboardingRunbookPanel({
           </div>
 
           <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-            <span>Runbook summary</span>
+            <span>Краткое описание runbook</span>
             <Input
               onChange={(event) =>
                 setEditor((current) => ({ ...current, summary: event.target.value }))
               }
-              placeholder="Short operator-facing summary for this rollout cycle"
+              placeholder="Краткое описание цикла развёртывания для оператора"
               value={editor.summary}
             />
           </label>
 
           <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-            <span>Rollout scope</span>
+            <span>Объём развёртывания</span>
             <Textarea
               onChange={(event) =>
                 setEditor((current) => ({ ...current, rolloutScope: event.target.value }))
               }
-              placeholder="What is being widened, for whom, and under which guardrails?"
+              placeholder="Что расширяется, для кого и с какими ограничениями?"
               rows={4}
               value={editor.rolloutScope}
             />
@@ -399,24 +399,24 @@ export function TenantOnboardingRunbookPanel({
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Operator notes</span>
+              <span>Заметки оператора</span>
               <Textarea
                 onChange={(event) =>
                   setEditor((current) => ({ ...current, operatorNotes: event.target.value }))
                 }
-                placeholder="Operational context, dependencies, and caveats"
+                placeholder="Операционный контекст, зависимости и предостережения"
                 rows={5}
                 value={editor.operatorNotes}
               />
             </label>
 
             <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Handoff notes</span>
+              <span>Заметки для передачи</span>
               <Textarea
                 onChange={(event) =>
                   setEditor((current) => ({ ...current, handoffNotes: event.target.value }))
                 }
-                placeholder="What the next operator or reviewer must know"
+                placeholder="Что должен знать следующий оператор или рецензент"
                 rows={5}
                 value={editor.handoffNotes}
               />
@@ -424,12 +424,12 @@ export function TenantOnboardingRunbookPanel({
           </div>
 
           <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-            <span>Rollback posture</span>
+            <span>План отката</span>
             <Textarea
               onChange={(event) =>
                 setEditor((current) => ({ ...current, rollbackPlan: event.target.value }))
               }
-              placeholder="How to unwind or pause the rollout if the next tenant is not ready"
+              placeholder="Как откатить или приостановить развёртывание, если следующий тенант не готов"
               rows={4}
               value={editor.rollbackPlan}
             />

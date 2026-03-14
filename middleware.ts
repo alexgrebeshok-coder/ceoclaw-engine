@@ -17,6 +17,10 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ req, token }) => {
+        // DEV MODE: Bypass auth for localhost
+        if (process.env.NODE_ENV === 'development' || req.headers.get('host')?.includes('localhost')) {
+          return true;
+        }
         // Check if user has a valid token (session exists)
         // Return true if authenticated, false to redirect to login
         return !!token;

@@ -228,7 +228,7 @@ export function CutoverDecisionRegisterPanel({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-          <span>Decision type</span>
+          <span>Тип решения</span>
           <select
             className={fieldStyles}
             onChange={(event) => setDecisionType(event.target.value as CutoverDecisionType)}
@@ -241,10 +241,10 @@ export function CutoverDecisionRegisterPanel({
         </label>
 
         <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-          <span>Summary</span>
+          <span>Краткое описание</span>
           <Input
             onChange={(event) => setSummary(event.target.value)}
-            placeholder="Short operator-facing decision summary"
+            placeholder="Краткое описание решения для оператора"
             value={summary}
           />
         </label>
@@ -253,10 +253,10 @@ export function CutoverDecisionRegisterPanel({
       {decisionType === "warning_waiver" ? (
         <div className="grid gap-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel-soft)] p-4">
           <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-            <span>Waived warning label</span>
+            <span>Метка отменённого предупреждения</span>
             <Input
               onChange={(event) => setWarningLabel(event.target.value)}
-              placeholder="Required for warning waivers"
+              placeholder="Обязательно для отмены предупреждений"
               value={warningLabel}
             />
           </label>
@@ -282,10 +282,10 @@ export function CutoverDecisionRegisterPanel({
       ) : null}
 
       <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-        <span>Details</span>
+        <span>Детали</span>
         <Textarea
           onChange={(event) => setDetails(event.target.value)}
-          placeholder="Optional operator context, rationale, or rollback note"
+          placeholder="Опциональный контекст оператора, обоснование или заметка об откате"
           value={details}
         />
       </label>

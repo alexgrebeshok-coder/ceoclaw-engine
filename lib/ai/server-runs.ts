@@ -181,10 +181,7 @@ async function executeGatewayRun(runId: string) {
       ...entry.run,
       status: "failed",
       updatedAt: new Date().toISOString(),
-      result: {
-        success: false,
-        message: error instanceof Error ? error.message : "AI Gateway error",
-      },
+      errorMessage: error instanceof Error ? error.message : "AI Gateway error",
     };
 
     await persistEntry({

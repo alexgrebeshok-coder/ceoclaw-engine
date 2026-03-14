@@ -1,0 +1,64 @@
+[
+  {
+    "id": "mem_1773495632775_upp0p6xn4wf",
+    "type": "episodic",
+    "category": "chat",
+    "key": "chat-1773495632775",
+    "value": {
+      "user": "Привет! Кто ты?",
+      "assistant": "Привет! Я CEOClaw AI, ваш ассистент по управлению проектами. Готов помочь с задачами. Что нужно сделать?"
+    },
+    "validFrom": "2026-03-14T13:40:32.775Z",
+    "confidence": 1,
+    "source": "user",
+    "createdAt": "2026-03-14T13:40:32.775Z",
+    "updatedAt": "2026-03-14T13:40:32.775Z"
+  },
+  {
+    "id": "mem_1773496150974_cj1doizo0qw",
+    "type": "episodic",
+    "category": "agent",
+    "key": "agent-1773496150974",
+    "value": {
+      "agentId": "quick-research",
+      "task": "Найди информацию о OpenAI GPT-5.2 модели",
+      "success": false
+    },
+    "validFrom": "2026-03-14T13:49:10.974Z",
+    "confidence": 1,
+    "source": "user",
+    "createdAt": "2026-03-14T13:49:10.974Z",
+    "updatedAt": "2026-03-14T13:49:10.974Z"
+  },
+  {
+    "id": "mem_1773496152252_30iqaoq9bnt",
+    "type": "episodic",
+    "category": "agent",
+    "key": "agent-1773496152252",
+    "value": {
+      "agentId": "main",
+      "task": "Напиши функцию для расчёта NPV на TypeScript",
+      "success": false
+    },
+    "validFrom": "2026-03-14T13:49:12.252Z",
+    "confidence": 1,
+    "source": "user",
+    "createdAt": "2026-03-14T13:49:12.252Z",
+    "updatedAt": "2026-03-14T13:49:12.252Z"
+  },
+  {
+    "id": "mem_1773496152594_g6e7glgbvug",
+    "type": "episodic",
+    "category": "agent",
+    "key": "agent-1773496152594",
+    "value": {
+      "agentId": "parallel",
+      "task": "parallel"
+    },
+    "validFrom": "2026-03-14T13:49:12.594Z",
+    "confidence": 1,
+    "source": "user",
+    "createdAt": "2026-03-14T13:49:12.594Z",
+    "updatedAt": "2026-03-14T13:49:12.594Z"
+  }
+]

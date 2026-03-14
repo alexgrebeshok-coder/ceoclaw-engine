@@ -325,7 +325,7 @@ export function PilotFeedbackPage({
             ) : null}
 
             <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Target type</span>
+              <span>Тип цели</span>
               <select
                 className={fieldStyles}
                 disabled={!liveFeedbackReady || isCreating}
@@ -344,7 +344,7 @@ export function PilotFeedbackPage({
             </label>
 
             <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Target id</span>
+              <span>ID цели</span>
               <Input
                 disabled={!liveFeedbackReady || isCreating}
                 onChange={(event) =>
@@ -353,13 +353,13 @@ export function PilotFeedbackPage({
                     targetId: event.target.value,
                   }))
                 }
-                placeholder="run-123 or exception:esc-1"
+                placeholder="run-123 или exception:esc-1"
                 value={formState.targetId}
               />
             </label>
 
             <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Target label</span>
+              <span>Название цели</span>
               <Input
                 disabled={!liveFeedbackReady || isCreating}
                 onChange={(event) =>
@@ -368,13 +368,13 @@ export function PilotFeedbackPage({
                     targetLabel: event.target.value,
                   }))
                 }
-                placeholder="Human-readable workflow label"
+                placeholder="Понятное название workflow"
                 value={formState.targetLabel}
               />
             </label>
 
             <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Feedback summary</span>
+              <span>Краткое описание проблемы</span>
               <Input
                 disabled={!liveFeedbackReady || isCreating}
                 onChange={(event) =>
@@ -383,13 +383,13 @@ export function PilotFeedbackPage({
                     summary: event.target.value,
                   }))
                 }
-                placeholder="What is wrong or needs follow-through?"
+                placeholder="Что не так или требует доработки?"
                 value={formState.summary}
               />
             </label>
 
             <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-              <span>Details</span>
+              <span>Детали</span>
               <Textarea
                 disabled={!liveFeedbackReady || isCreating}
                 onChange={(event) =>
@@ -398,7 +398,7 @@ export function PilotFeedbackPage({
                     details: event.target.value,
                   }))
                 }
-                placeholder="Optional pilot note, reproduction context, or stakeholder expectation."
+                placeholder="Опциональная заметка пилота, контекст воспроизведения или ожидания стейкхолдеров."
                 value={formState.details}
               />
             </label>
@@ -449,7 +449,7 @@ export function PilotFeedbackPage({
 
             <div className="grid gap-3 md:grid-cols-2">
               <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-                <span>Project id</span>
+                <span>ID проекта</span>
                 <Input
                   disabled={!liveFeedbackReady || isCreating}
                   onChange={(event) =>
@@ -458,13 +458,13 @@ export function PilotFeedbackPage({
                       projectId: event.target.value,
                     }))
                   }
-                  placeholder="Optional project id"
+                  placeholder="Опциональный ID проекта"
                   value={formState.projectId}
                 />
               </label>
 
               <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-                <span>Project name</span>
+                <span>Название проекта</span>
                 <Input
                   disabled={!liveFeedbackReady || isCreating}
                   onChange={(event) =>
@@ -473,7 +473,7 @@ export function PilotFeedbackPage({
                       projectName: event.target.value,
                     }))
                   }
-                  placeholder="Optional project name"
+                  placeholder="Опциональное название проекта"
                   value={formState.projectName}
                 />
               </label>
@@ -481,7 +481,7 @@ export function PilotFeedbackPage({
 
             <div className="grid gap-3 md:grid-cols-2">
               <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-                <span>Source label</span>
+                <span>Название источника</span>
                 <Input
                   disabled={!liveFeedbackReady || isCreating}
                   onChange={(event) =>
@@ -490,7 +490,7 @@ export function PilotFeedbackPage({
                       sourceLabel: event.target.value,
                     }))
                   }
-                  placeholder="Command center exception"
+                  placeholder="Исключение из командного центра"
                   value={formState.sourceLabel}
                 />
               </label>

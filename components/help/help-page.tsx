@@ -20,14 +20,14 @@ const shortcuts = [
 ];
 
 const faqItems = [
-  { id: "projects", category: "Getting Started", title: "How to create a project?", href: "/projects" },
-  { id: "tasks", category: "Getting Started", title: "How to manage tasks?", href: "/tasks" },
-  { id: "kanban", category: "Workflow", title: "How to use Kanban board?", href: "/kanban" },
-  { id: "gantt", category: "Workflow", title: "How to view Gantt chart?", href: "/gantt" },
-  { id: "risks", category: "Risk Management", title: "How to add risks?", href: "/risks" },
-  { id: "analytics", category: "Analytics", title: "How to view analytics?", href: "/analytics" },
-  { id: "export", category: "Export", title: "How to export data?", href: "/" },
-  { id: "chat", category: "AI Features", title: "How to use AI chat?", href: "/chat" },
+  { id: "projects", category: "Начало работы", title: "Как создать проект?", href: "/projects" },
+  { id: "tasks", category: "Начало работы", title: "Как управлять задачами?", href: "/tasks" },
+  { id: "kanban", category: "Рабочий процесс", title: "Как использовать канбан-доску?", href: "/kanban" },
+  { id: "gantt", category: "Рабочий процесс", title: "Как посмотреть диаграмму Ганта?", href: "/gantt" },
+  { id: "risks", category: "Управление рисками", title: "Как добавить риски?", href: "/risks" },
+  { id: "analytics", category: "Аналитика", title: "Как посмотреть аналитику?", href: "/analytics" },
+  { id: "export", category: "Экспорт", title: "Как экспортировать данные?", href: "/" },
+  { id: "chat", category: "AI функции", title: "Как использовать AI-чат?", href: "/chat" },
 ];
 
 export function HelpPage() {
@@ -61,7 +61,7 @@ export function HelpPage() {
           </div>
           {searchQuery && (
             <p className="mt-2 text-sm text-[var(--ink-muted)]">
-              {filteredFaq.length} result{filteredFaq.length !== 1 ? "s" : ""} found
+              {filteredFaq.length} результат{filteredFaq.length === 1 ? "" : filteredFaq.length > 1 && filteredFaq.length < 5 ? "а" : "ов"}
             </p>
           )}
         </CardContent>
@@ -71,7 +71,7 @@ export function HelpPage() {
       {searchQuery && filteredFaq.length > 0 && (
         <Card>
           <CardContent className="p-6">
-            <h3 className="mb-4 font-semibold text-[var(--ink)]">Quick Links</h3>
+            <h3 className="mb-4 font-semibold text-[var(--ink)]">Быстрые ссылки</h3>
             <div className="grid gap-2">
               {filteredFaq.map((item) => (
                 <Link

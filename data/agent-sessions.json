@@ -1,0 +1,94 @@
+[
+  {
+    "id": "sess_1773495281278_zl6j32m2qkk",
+    "agentId": "main",
+    "status": "completed",
+    "task": "Test task",
+    "tokens": 100,
+    "cost": 0.01,
+    "createdAt": "2026-03-14T13:34:41.278Z",
+    "startedAt": "2026-03-14T13:34:41.278Z",
+    "result": {
+      "result": "OK"
+    },
+    "endedAt": "2026-03-14T13:34:41.279Z"
+  },
+  {
+    "id": "sess_1773495632784_jhqlp41vplf",
+    "agentId": "main",
+    "status": "completed",
+    "task": "Test task",
+    "tokens": 100,
+    "cost": 0.01,
+    "createdAt": "2026-03-14T13:40:32.784Z",
+    "startedAt": "2026-03-14T13:40:32.785Z",
+    "result": {
+      "result": "OK"
+    },
+    "endedAt": "2026-03-14T13:40:32.785Z"
+  },
+  {
+    "id": "sess_1773496149784_ov6svp7t81i",
+    "agentId": "quick-research",
+    "status": "completed",
+    "task": "Найди информацию о OpenAI GPT-5.2 модели",
+    "model": "gemini-3.1-flash-lite-preview",
+    "provider": "openrouter",
+    "tokens": 10,
+    "cost": 0.0000025,
+    "createdAt": "2026-03-14T13:49:09.784Z",
+    "startedAt": "2026-03-14T13:49:09.784Z",
+    "result": {
+      "content": ""
+    },
+    "endedAt": "2026-03-14T13:49:10.974Z"
+  },
+  {
+    "id": "sess_1773496150991_303pex51213",
+    "agentId": "main",
+    "status": "completed",
+    "task": "Напиши функцию для расчёта NPV на TypeScript",
+    "model": "glm-5",
+    "provider": "zai",
+    "tokens": 11,
+    "cost": 0.000011,
+    "createdAt": "2026-03-14T13:49:10.991Z",
+    "startedAt": "2026-03-14T13:49:10.991Z",
+    "result": {
+      "content": ""
+    },
+    "endedAt": "2026-03-14T13:49:12.252Z"
+  },
+  {
+    "id": "sess_1773496152275_jra8m4hahn",
+    "agentId": "quick-research",
+    "status": "completed",
+    "task": "Что такое EVM методология?",
+    "model": "gemini-3.1-flash-lite-preview",
+    "provider": "openrouter",
+    "tokens": 7,
+    "cost": 0.00000175,
+    "createdAt": "2026-03-14T13:49:12.275Z",
+    "startedAt": "2026-03-14T13:49:12.275Z",
+    "result": {
+      "content": ""
+    },
+    "endedAt": "2026-03-14T13:49:12.519Z"
+  },
+  {
+    "id": "sess_1773496152275_7gjc2a3y6pb",
+    "agentId": "writer",
+    "status": "completed",
+    "task": "Напиши краткое введение в управление проектами",
+    "model": "glm-5",
+    "provider": "zai",
+    "tokens": 12,
+    "cost": 0.000012,
+    "createdAt": "2026-03-14T13:49:12.275Z",
+    "startedAt": "2026-03-14T13:49:12.275Z",
+    "result": {
+      "content": ""
+    },
+    "endedAt": "2026-03-14T13:49:12.593Z"
+  }
+]

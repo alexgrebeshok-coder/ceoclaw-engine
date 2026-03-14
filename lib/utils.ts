@@ -103,6 +103,10 @@ export const riskStatusMeta: Record<
   { label: string; className: string }
 > = {
   open: { label: "Открыт", className: "bg-[#ef4444] text-white ring-[#ef4444]/20" },
+  mitigating: {
+    label: "В митигации",
+    className: "bg-[#f59e0b] text-white ring-[#f59e0b]/20",
+  },
   mitigated: {
     label: "Под контролем",
     className: "bg-[#f59e0b] text-white ring-[#f59e0b]/20",

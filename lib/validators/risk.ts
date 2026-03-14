@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const riskLevelSchema = z.enum(["low", "medium", "high"]);
-export const riskStatusSchema = z.enum(["open", "mitigated", "closed"]);
+export const riskStatusSchema = z.enum(["open", "mitigating", "mitigated", "closed"]);
 
 export const createRiskSchema = z.object({
   title: z.string().trim().min(1).max(200),

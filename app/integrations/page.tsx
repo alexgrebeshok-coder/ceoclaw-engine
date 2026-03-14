@@ -39,20 +39,13 @@ export default async function IntegrationsRoute() {
     getConnectorRegistry().getStatuses(),
     getGpsTelemetryTruthSnapshot(),
     getOneCFinanceTruthSnapshot(),
-    runtimeState.databaseConfigured
-      ? getReconciliationCasefiles({ limit: 24 })
-      : Promise.resolve(emptyCasefiles),
+    runtimeState.usingMockData
+      ? Promise.resolve(emptyCasefiles)
+      : getReconciliationCasefiles({ limit: 24 }).catch(() => emptyCasefiles),
   ]);
   const summary = summarizeConnectorStatuses(connectors);
-  const evidence = runtimeState.databaseConfigured
-    ? await getEvidenceLedgerOverview(
-        { limit: 24 },
-        {
-          gpsSnapshot: gpsTelemetry,
-          listReports: runtimeState.usingMockData ? async () => [] : undefined,
-        }
-      )
-    : {
+  const evidence = runtimeState.usingMockData
+    ? {
         syncedAt: null,
         summary: {
           total: 0,
@@ -64,15 +57,28 @@ export default async function IntegrationsRoute() {
         },
         records: [],
         sync: null,
-      };
-  const fusion = runtimeState.databaseConfigured
-    ? await getEvidenceFusionOverview(
-        { limit: 4 },
+      }
+    : await getEvidenceLedgerOverview(
+        { limit: 24 },
         {
-          evidence,
+          gpsSnapshot: gpsTelemetry,
+          listReports: async () => [],
         }
-      )
-    : {
+      ).catch(() => ({
+        syncedAt: null,
+        summary: {
+          total: 0,
+          reported: 0,
+          observed: 0,
+          verified: 0,
+          averageConfidence: null,
+          lastObservedAt: null,
+        },
+        records: [],
+        sync: null,
+      }));
+  const fusion = runtimeState.usingMockData
+    ? {
         syncedAt: new Date().toISOString(),
         summary: {
           total: 0,
@@ -83,16 +89,59 @@ export default async function IntegrationsRoute() {
           strongestFactTitle: null,
         },
         facts: [],
-      };
-  const enterpriseTruth = await getEnterpriseTruthOverview(
-    { limit: 4, telemetryLimit: 3 },
-    {
-      evidence,
-      fusion,
-      gpsSample: gpsTelemetry,
-      oneCSample: oneCFinance,
-    }
-  );
+      }
+    : await getEvidenceFusionOverview(
+        { limit: 4 },
+        {
+          evidence,
+        }
+      ).catch(() => ({
+        syncedAt: new Date().toISOString(),
+        summary: {
+          total: 0,
+          reported: 0,
+          observed: 0,
+          verified: 0,
+          averageConfidence: null,
+          strongestFactTitle: null,
+        },
+        facts: [],
+      }));
+  const enterpriseTruth = runtimeState.usingMockData
+    ? {
+        syncedAt: new Date().toISOString(),
+        summary: {
+          totalProjects: 0,
+          corroborated: 0,
+          fieldOnly: 0,
+          financeOnly: 0,
+          telemetryGaps: 0,
+          largestVarianceProject: null,
+        },
+        projects: [],
+        telemetryGaps: [],
+      }
+    : await getEnterpriseTruthOverview(
+        { limit: 4, telemetryLimit: 3 },
+        {
+          evidence,
+          fusion,
+          gpsSample: gpsTelemetry,
+          oneCSample: oneCFinance,
+        }
+      ).catch(() => ({
+        syncedAt: new Date().toISOString(),
+        summary: {
+          totalProjects: 0,
+          corroborated: 0,
+          fieldOnly: 0,
+          financeOnly: 0,
+          telemetryGaps: 0,
+          largestVarianceProject: null,
+        },
+        projects: [],
+        telemetryGaps: [],
+      }));
   const runtimeTruth = buildIntegrationsRuntimeTruth({
     connectorSummary: summary,
     evidenceCount: evidence.summary.total,

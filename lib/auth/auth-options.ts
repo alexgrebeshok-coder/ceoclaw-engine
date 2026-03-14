@@ -128,7 +128,12 @@ export const authOptions: NextAuthOptions = {
         // Fetch user role and workspace from Membership
         const membership = await prisma.membership.findFirst({
           where: { userId: user.id },
-          include: { organization: true },
+          include: {
+            organization: true,
+            workspaceMemberships: {
+              select: { workspaceId: true },
+            },
+          },
         });
 
         if (membership) {

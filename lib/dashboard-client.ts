@@ -11,27 +11,15 @@ import { getCachedProject, setCachedProject } from "./cache/project-cache";
 // API base URL (dashboard server)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-// P1-2: Remove hardcoded dev-key fallback
-const API_KEY = (() => {
-  const key = process.env.DASHBOARD_API_KEY;
-  const isDevelopment = process.env.NODE_ENV !== "production";
-
-  if (!key && isDevelopment) {
+function getDefaultApiKey(env: NodeJS.ProcessEnv = process.env) {
+  const key = env.DASHBOARD_API_KEY?.trim() || null;
+  if (!key && env.NODE_ENV !== "production") {
     console.warn(
       "⚠️ DASHBOARD_API_KEY is not set. Dashboard client will not work in production."
     );
-    return null;
   }
-
-  if (!key) {
-    throw new Error(
-      "DASHBOARD_API_KEY environment variable is required. " +
-      "Please set it in your environment or .env file."
-    );
-  }
-
   return key;
-})();
+}
 
 /**
  * Input types for API operations
@@ -121,15 +109,7 @@ export class DashboardClient {
 
   constructor(baseUrl?: string, apiKey?: string | null) {
     this.baseUrl = baseUrl || API_BASE_URL;
-    this.apiKey = apiKey !== undefined ? apiKey : API_KEY;
-
-    // P1-2: Validate API key in production
-    if (!this.apiKey && process.env.NODE_ENV === "production") {
-      throw new Error(
-        "DashboardClient requires an API key in production. " +
-          "Set DASHBOARD_API_KEY environment variable or pass apiKey parameter."
-      );
-    }
+    this.apiKey = apiKey !== undefined ? apiKey : getDefaultApiKey();
   }
 
   /**

@@ -287,10 +287,10 @@ export function PilotReviewDeliveryPanel({
 
       <div className="grid gap-4 md:grid-cols-3">
         <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-          <span>Recipient</span>
+          <span>Получатель</span>
           <Input
             onChange={(event) => setRecipient(event.target.value)}
-            placeholder="Optional if EMAIL_DEFAULT_TO is configured"
+            placeholder="Опционально, если настроен EMAIL_DEFAULT_TO"
             value={recipient}
           />
         </label>
@@ -301,7 +301,7 @@ export function PilotReviewDeliveryPanel({
         </label>
 
         <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-          <span>Weekday</span>
+          <span>День недели</span>
           <select
             className={fieldStyles}
             onChange={(event) => setDeliveryWeekday(event.target.value)}
@@ -318,7 +318,7 @@ export function PilotReviewDeliveryPanel({
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,180px)_minmax(0,1fr)]">
         <label className="grid gap-2 text-sm text-[var(--ink-soft)]">
-          <span>Delivery hour</span>
+          <span>Час доставки</span>
           <Input
             max={23}
             min={0}

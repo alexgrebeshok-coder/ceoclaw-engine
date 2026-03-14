@@ -32,7 +32,7 @@ export type Priority = "low" | "medium" | "high" | "critical";
 
 export type TaskStatus = "todo" | "in-progress" | "done" | "blocked";
 
-export type RiskStatus = "open" | "mitigated" | "closed";
+export type RiskStatus = "open" | "mitigating" | "mitigated" | "closed";
 
 export type Severity = "info" | "warning" | "critical";
 
@@ -110,6 +110,8 @@ export interface Risk {
   id: string;
   projectId: string;
   title: string;
+  description?: string | null;
+  ownerId?: string | null;
   owner: string;
   probability: number;
   impact: number;

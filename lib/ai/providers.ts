@@ -1,0 +1,246 @@
+/**
+ * AI Providers - Multi-provider support
+ * OpenRouter + ZAI + OpenAI
+ */
+
+// ============================================
+// Types
+// ============================================
+
+export interface Message {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatOptions {
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface AIProvider {
+  name: string;
+  models: string[];
+  chat(messages: Message[], options?: ChatOptions): Promise<string>;
+}
+
+// ============================================
+// OpenRouter Provider
+// ============================================
+
+export class OpenRouterProvider implements AIProvider {
+  name = 'openrouter';
+  models = [
+    'google/gemini-3.1-flash-lite-preview',
+    'deepseek/deepseek-r1:free',
+    'qwen/qwen3-coder:free',
+  ];
+
+  private apiKey: string;
+  private baseUrl = 'https://openrouter.ai/api/v1';
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.OPENROUTER_API_KEY || '';
+  }
+
+  async chat(messages: Message[], options?: ChatOptions): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('OPENROUTER_API_KEY not set');
+    }
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://ceoclaw.com',
+        'X-Title': 'CEOClaw',
+      },
+      body: JSON.stringify({
+        model: options?.model || this.models[0],
+        messages,
+        temperature: options?.temperature || 0.7,
+        max_tokens: options?.maxTokens || 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OpenRouter API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ============================================
+// ZAI Provider
+// ============================================
+
+export class ZAIProvider implements AIProvider {
+  name = 'zai';
+  models = ['glm-5', 'glm-4.7', 'glm-4.7-flash'];
+
+  private apiKey: string;
+  private baseUrl = 'https://api.zukijourney.com/v1';
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.ZAI_API_KEY || '';
+  }
+
+  async chat(messages: Message[], options?: ChatOptions): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('ZAI_API_KEY not set');
+    }
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: options?.model || 'glm-5',
+        messages,
+        temperature: options?.temperature || 0.7,
+        max_tokens: options?.maxTokens || 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`ZAI API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ============================================
+// OpenAI Provider
+// ============================================
+
+export class OpenAIProvider implements AIProvider {
+  name = 'openai';
+  models = ['gpt-5.2', 'gpt-5.1', 'gpt-4o'];
+
+  private apiKey: string;
+  private baseUrl = 'https://api.openai.com/v1';
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.OPENAI_API_KEY || '';
+  }
+
+  async chat(messages: Message[], options?: ChatOptions): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('OPENAI_API_KEY not set');
+    }
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: options?.model || 'gpt-5.2',
+        messages,
+        temperature: options?.temperature || 0.7,
+        max_tokens: options?.maxTokens || 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ============================================
+// AI Router
+// ============================================
+
+export class AIRouter {
+  private providers: Map<string, AIProvider> = new Map();
+  private defaultProvider = 'openrouter';
+
+  constructor() {
+    // Initialize providers from env
+    if (process.env.OPENROUTER_API_KEY) {
+      this.providers.set('openrouter', new OpenRouterProvider());
+    }
+
+    if (process.env.ZAI_API_KEY) {
+      this.providers.set('zai', new ZAIProvider());
+    }
+
+    if (process.env.OPENAI_API_KEY) {
+      this.providers.set('openai', new OpenAIProvider());
+    }
+
+    // Set default provider
+    if (process.env.DEFAULT_AI_PROVIDER) {
+      this.defaultProvider = process.env.DEFAULT_AI_PROVIDER;
+    } else if (this.providers.has('openrouter')) {
+      this.defaultProvider = 'openrouter';
+    } else if (this.providers.has('zai')) {
+      this.defaultProvider = 'zai';
+    } else if (this.providers.has('openai')) {
+      this.defaultProvider = 'openai';
+    }
+  }
+
+  /**
+   * Chat with AI
+   */
+  async chat(
+    messages: Message[],
+    options: { provider?: string; model?: string } = {}
+  ): Promise<string> {
+    const providerName = options.provider || this.defaultProvider;
+    const provider = this.providers.get(providerName);
+
+    if (!provider) {
+      throw new Error(
+        `Provider ${providerName} not available. Check API keys in .env`
+      );
+    }
+
+    return provider.chat(messages, options);
+  }
+
+  /**
+   * Get available providers
+   */
+  getAvailableProviders(): string[] {
+    return Array.from(this.providers.keys());
+  }
+
+  /**
+   * Get available models
+   */
+  getAvailableModels(): { provider: string; model: string }[] {
+    const models: { provider: string; model: string }[] = [];
+
+    for (const [name, provider] of this.providers) {
+      for (const model of provider.models) {
+        models.push({ provider: name, model });
+      }
+    }
+
+    return models;
+  }
+
+  /**
+   * Check if provider is available
+   */
+  hasProvider(name: string): boolean {
+    return this.providers.has(name);
+  }
+}

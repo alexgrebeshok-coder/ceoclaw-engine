@@ -809,6 +809,104 @@ model ReconciliationCasefile {
 }
 
 // ============================================
+// AI BACKEND SYSTEMS (OpenClaw-style)
+// ============================================
+
+// Memory System
+model Memory {
+  id          String   @id @default(cuid())
+  type        String   // "long_term" | "episodic" | "procedural"
+  category    String   // "project" | "contact" | "skill" | "fact" | "chat"
+  key         String   // "ЧЭМК" | "Саша" | "weather"
+  value       Json     // { content: "...", metadata: {...} }
+  validFrom   DateTime @default(now())
+  validUntil  DateTime?
+  confidence  Float    @default(1.0)
+  source      String   @default("user") // "user" | "research" | "analysis"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type, category])
+  @@index([key])
+}
+
+// Agent System
+model AgentSession {
+  id          String   @id @default(cuid())
+  agentId     String   // "main" | "main-worker" | "quick-research" | ...
+  status      String   @default("idle") // "idle" | "running" | "completed" | "failed"
+  task        String?  @db.Text
+  result      Json?
+  model       String?  // "glm-5" | "gemini-3.1-lite"
+  provider    String?  // "zai" | "openrouter" | "openai"
+  tokens      Int      @default(0)
+  cost        Float    @default(0)
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([agentId, status])
+  @@index([createdAt])
+}
+
+// Skills System
+model Skill {
+  id          String   @id @default(cuid())
+  name        String   @unique // "weather" | "deep-research" | "decision-council"
+  category    String   // "analysis" | "automation" | "research" | "creative"
+  description String   @db.Text
+  prompt      String   @db.Text // System prompt for skill
+  enabled     Boolean  @default(true)
+  triggers    Json?    // ["погода", "weather", "температура"]
+  config      Json?    // Additional config
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, enabled])
+}
+
+// Communication Logs
+model Communication {
+  id          String   @id @default(cuid())
+  channel     String   // "telegram" | "voice" | "chat" | "email"
+  direction   String   // "inbound" | "outbound"
+  message     String   @db.Text
+  response    String?  @db.Text
+  metadata    Json?    // { from: "...", chatId: "...", ... }
+  createdAt   DateTime @default(now())
+
+  @@index([channel, createdAt])
+}
+
+// AI Provider Config
+model AIProvider {
+  id           String   @id @default(cuid())
+  name         String   @unique // "openrouter" | "zai" | "openai"
+  apiKey       String   // Encrypted
+  baseUrl     String?
+  enabled      Boolean @default(true)
+  models       Json     // ["glm-5", "glm-4.7-flash"]
+  defaultModel String?
+  priority     Int      @default(0) // For fallback
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([enabled, priority])
+}
+
+// Context Snapshot
+model ContextSnapshot {
+  id          String   @id @default(cuid())
+  type        String   // "project" | "full" | "daily"
+  projectId   String?
+  data        Json     // Full context snapshot
+  tokens      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([type, createdAt])
+}
+
+// ============================================
 // TASK MODEL (updated)
 // ============================================
 

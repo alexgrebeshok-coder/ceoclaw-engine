@@ -120,7 +120,7 @@ export function VideoFactIntakeForm({
           </label>
 
           <label className="grid gap-2 text-sm">
-            <span className="font-medium text-[var(--ink)]">Observation type</span>
+            <span className="font-medium text-[var(--ink)]">Тип наблюдения</span>
             <select className={fieldStyles} defaultValue="progress_visible" name="observationType">
               {observationOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -131,7 +131,7 @@ export function VideoFactIntakeForm({
           </label>
 
           <label className="grid gap-2 text-sm">
-            <span className="font-medium text-[var(--ink)]">Video URL</span>
+            <span className="font-medium text-[var(--ink)]">Ссылка на видео</span>
             <Input
               defaultValue="https://example.com/evidence/site-shift-clip.mp4"
               name="url"
@@ -142,7 +142,7 @@ export function VideoFactIntakeForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm">
-              <span className="font-medium text-[var(--ink)]">Captured at</span>
+              <span className="font-medium text-[var(--ink)]">Время съёмки</span>
               <Input
                 defaultValue={
                   latestReport ? toDatetimeLocal(latestReport.reportDate) : toDatetimeLocal(new Date().toISOString())
@@ -152,8 +152,8 @@ export function VideoFactIntakeForm({
               />
             </label>
             <label className="grid gap-2 text-sm">
-              <span className="font-medium text-[var(--ink)]">Title</span>
-              <Input defaultValue="" name="title" placeholder="Optional operator title" />
+              <span className="font-medium text-[var(--ink)]">Название</span>
+              <Input defaultValue="" name="title" placeholder="Опциональное название для оператора" />
             </label>
           </div>
 

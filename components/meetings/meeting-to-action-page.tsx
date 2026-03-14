@@ -229,7 +229,7 @@ export function MeetingToActionPage() {
               <span>Название встречи</span>
               <Input
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Weekly delivery sync"
+                placeholder="Еженедельная синхронизация по поставкам"
                 value={title}
               />
             </label>
@@ -247,7 +247,7 @@ export function MeetingToActionPage() {
               <span>Заметки встречи</span>
               <Textarea
                 onChange={(event) => setNotes(event.target.value)}
-                placeholder="Вставьте протокол, summary call или краткие hand-written notes."
+                placeholder="Вставьте протокол, краткое содержание звонка или рукописные заметки."
                 value={notes}
               />
             </label>

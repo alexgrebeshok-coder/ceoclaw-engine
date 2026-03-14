@@ -147,6 +147,7 @@ const PROJECT_STATUS_UI_TO_DB: Record<ProjectStatus, string> = {
 
 const RISK_STATUS_MAP: Record<string, RiskStatus> = {
   open: "open",
+  mitigating: "mitigating",
   mitigated: "mitigated",
   closed: "closed",
 };
@@ -305,6 +306,8 @@ export function normalizeRisk(risk: ApiRisk): Risk {
     id: risk.id,
     projectId: risk.projectId,
     title: risk.title,
+    description: risk.description ?? null,
+    ownerId: risk.ownerId ?? null,
     owner: risk.owner?.name ?? "Not assigned",
     probability: RISK_SCALE[risk.probability] ?? 3,
     impact: RISK_SCALE[risk.impact] ?? 3,
