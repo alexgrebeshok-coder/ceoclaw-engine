@@ -69,6 +69,7 @@ export function BriefsPage({
   deliveryLedgerEntries,
   deliveryLedgerAvailabilityNote,
   runtimeTruth,
+  fallbackNote,
 }: {
   portfolioBrief: PortfolioBrief;
   projectBriefs: ProjectBrief[];
@@ -78,6 +79,7 @@ export function BriefsPage({
   deliveryLedgerEntries: BriefDeliveryLedgerRecord[];
   deliveryLedgerAvailabilityNote?: string;
   runtimeTruth: OperatorRuntimeTruth;
+  fallbackNote?: string;
 }) {
   const leadProjectBrief = projectBriefs[0] ?? null;
   const runtimeBadge = getOperatorTruthBadge(runtimeTruth);
@@ -91,6 +93,7 @@ export function BriefsPage({
           </Link>
         }
         chips={[
+          ...(fallbackNote ? [{ label: fallbackNote, variant: "warning" as const }] : []),
           { label: runtimeBadge.label, variant: runtimeBadge.variant },
           { label: `${portfolioBrief.topAlerts.length} top alerts`, variant: portfolioBrief.topAlerts.length > 0 ? "warning" : "success" },
           { label: "ru/en formats", variant: "info" },

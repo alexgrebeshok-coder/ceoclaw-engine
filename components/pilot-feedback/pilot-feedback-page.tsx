@@ -130,12 +130,14 @@ export function PilotFeedbackPage({
   liveFeedbackReady,
   members,
   runtimeTruth,
+  fallbackNote,
 }: {
   initialFeedback: PilotFeedbackListResult;
   initialTarget: Omit<FeedbackFormState, "details" | "ownerId" | "severity" | "summary">;
   liveFeedbackReady: boolean;
   members: WorkReportMemberOption[];
   runtimeTruth: OperatorRuntimeTruth;
+  fallbackNote?: string;
 }) {
   const runtimeBadge = getOperatorTruthBadge(runtimeTruth);
   const [feedback, setFeedback] = useState(initialFeedback);
@@ -265,6 +267,7 @@ export function PilotFeedbackPage({
           </>
         }
         chips={[
+          ...(fallbackNote ? [{ label: fallbackNote, variant: "warning" as const }] : []),
           { label: runtimeBadge.label, variant: runtimeBadge.variant },
           {
             label:

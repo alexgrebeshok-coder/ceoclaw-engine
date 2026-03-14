@@ -33,29 +33,43 @@ export default async function CommandCenterRoute() {
   const runtimeState = getServerRuntimeState();
   const liveCommandCenterReady = canReadLiveOperatorData(runtimeState);
 
-  const [inbox, members] = liveCommandCenterReady
-    ? await Promise.all([
+  let inbox: ExceptionInboxResult = emptyInbox;
+  let members: Array<{ id: string; initials: string | null; name: string; role: string | null }> = [];
+  let usingFallback = false;
+
+  if (liveCommandCenterReady) {
+    try {
+      [inbox, members] = await Promise.all([
         getExecutiveExceptionInbox({ limit: 24 }),
         prisma.teamMember.findMany({
           select: { id: true, initials: true, name: true, role: true },
           orderBy: { name: "asc" },
           take: 50,
         }),
-      ])
-    : [emptyInbox, []];
+      ]);
+    } catch (error) {
+      console.error("[CommandCenter] Failed to load live data, using fallback:", error);
+      usingFallback = true;
+    }
+  }
 
   const runtimeTruth = buildCommandCenterRuntimeTruth({
     inbox,
     runtime: runtimeState,
   });
 
+  const fallbackNote = usingFallback
+    ? "Demo mode: Using mock data. Configure DATABASE_URL for live data."
+    : undefined;
+
   return (
     <ErrorBoundary resetKey="command-center">
       <CommandCenterPage
         initialInbox={inbox}
-        liveCommandCenterReady={liveCommandCenterReady}
+        liveCommandCenterReady={liveCommandCenterReady && !usingFallback}
         members={members}
         runtimeTruth={runtimeTruth}
+        fallbackNote={fallbackNote}
       />
     </ErrorBoundary>
   );

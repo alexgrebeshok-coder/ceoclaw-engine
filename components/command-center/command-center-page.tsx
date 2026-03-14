@@ -110,11 +110,13 @@ export function CommandCenterPage({
   liveCommandCenterReady,
   members,
   runtimeTruth,
+  fallbackNote,
 }: {
   initialInbox: ExceptionInboxResult;
   liveCommandCenterReady: boolean;
   members: WorkReportMemberOption[];
   runtimeTruth: OperatorRuntimeTruth;
+  fallbackNote?: string;
 }) {
   const [inbox, setInbox] = useState(initialInbox);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -218,6 +220,7 @@ export function CommandCenterPage({
           </>
         }
         chips={[
+          ...(fallbackNote ? [{ label: fallbackNote, variant: "warning" as const }] : []),
           { label: runtimeBadge.label, variant: runtimeBadge.variant },
           {
             label: inbox.summary.total > 0 ? `${inbox.summary.total} inbox item${inbox.summary.total === 1 ? "" : "s"}` : "Inbox idle",

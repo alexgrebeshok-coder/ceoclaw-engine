@@ -25,39 +25,51 @@ export default async function PilotFeedbackRoute({
   const liveFeedbackReady = canReadLiveOperatorData(runtimeState);
   const params = (await searchParams) ?? {};
 
-  const [feedback, members] = liveFeedbackReady
-    ? await Promise.all([
+  const emptyFeedback = {
+    items: [],
+    summary: {
+      total: 0,
+      open: 0,
+      inReview: 0,
+      resolved: 0,
+      critical: 0,
+      high: 0,
+      assigned: 0,
+      unassigned: 0,
+      workflowRuns: 0,
+      exceptionItems: 0,
+      reconciliationTargets: 0,
+    },
+  };
+
+  let feedback = emptyFeedback;
+  let members: Array<{ id: string; initials: string | null; name: string; role: string | null }> = [];
+  let usingFallback = false;
+
+  if (liveFeedbackReady) {
+    try {
+      [feedback, members] = await Promise.all([
         listPilotFeedback({ includeResolved: true, limit: 24 }),
         prisma.teamMember.findMany({
           orderBy: { name: "asc" },
           select: { id: true, initials: true, name: true, role: true },
           take: 50,
         }),
-      ])
-    : [
-        {
-          items: [],
-          summary: {
-            total: 0,
-            open: 0,
-            inReview: 0,
-            resolved: 0,
-            critical: 0,
-            high: 0,
-            assigned: 0,
-            unassigned: 0,
-            workflowRuns: 0,
-            exceptionItems: 0,
-            reconciliationTargets: 0,
-          },
-        },
-        [],
-      ];
+      ]);
+    } catch (error) {
+      console.error("[PilotFeedback] Failed to load live data, using fallback:", error);
+      usingFallback = true;
+    }
+  }
 
   const runtimeTruth = buildPilotFeedbackRuntimeTruth({
     feedback,
     runtime: runtimeState,
   });
+
+  const fallbackNote = usingFallback
+    ? "Demo mode: Using mock data. Configure DATABASE_URL for live data."
+    : undefined;
 
   return (
     <ErrorBoundary resetKey="pilot-feedback">
@@ -72,9 +84,10 @@ export default async function PilotFeedbackRoute({
           targetLabel: params.targetLabel ?? "",
           targetType: params.targetType ?? "exception_item",
         }}
-        liveFeedbackReady={liveFeedbackReady}
+        liveFeedbackReady={liveFeedbackReady && !usingFallback}
         members={members}
         runtimeTruth={runtimeTruth}
+        fallbackNote={fallbackNote}
       />
     </ErrorBoundary>
   );

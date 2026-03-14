@@ -6,7 +6,7 @@ import {
   generatePortfolioBriefFromSnapshot,
   generateProjectBriefFromSnapshot,
 } from "@/lib/briefs/generate";
-import { loadExecutiveSnapshot } from "@/lib/briefs/snapshot";
+import { loadExecutiveSnapshotSafe } from "@/lib/briefs/snapshot-safe";
 import type { KnowledgeLoopOverview } from "@/lib/knowledge";
 import { getKnowledgeLoopOverview } from "@/lib/knowledge";
 import {
@@ -35,24 +35,17 @@ function buildEmptyKnowledgeLoopOverview(): KnowledgeLoopOverview {
 export default async function BriefsRoute() {
   const runtimeState = getServerRuntimeState();
   const knowledgeLoopAvailable = canReadLiveOperatorData(runtimeState);
-  const [snapshot, telegramConnector, emailConnector, knowledgeLoop] = await Promise.all([
-    runtimeState.healthStatus === "degraded"
-      ? Promise.resolve({
-          generatedAt: new Date().toISOString(),
-          projects: [],
-          tasks: [],
-          risks: [],
-          milestones: [],
-          workReports: [],
-          teamMembers: [],
-        })
-      : loadExecutiveSnapshot(),
+  const [snapshotResult, telegramConnector, emailConnector, knowledgeLoop] = await Promise.all([
+    loadExecutiveSnapshotSafe(),
     getConnectorRegistry().getStatus("telegram"),
     getConnectorRegistry().getStatus("email"),
     knowledgeLoopAvailable
       ? getKnowledgeLoopOverview({ limit: 4 })
       : Promise.resolve(buildEmptyKnowledgeLoopOverview()),
   ]);
+  
+  const { snapshot, usingFallback, error: snapshotError } = snapshotResult;
+  
   const deliveryLedgerEntries = knowledgeLoopAvailable
     ? await listRecentBriefDeliveryLedger(6)
     : [];
@@ -93,6 +86,11 @@ export default async function BriefsRoute() {
     emailConnector,
   });
 
+  // Add fallback notification if using mock data
+  const fallbackNote = usingFallback
+    ? "Demo mode: Using mock data. Configure DATABASE_URL for live data."
+    : undefined;
+
   return (
     <ErrorBoundary resetKey="briefs">
       <BriefsPage
@@ -116,6 +114,7 @@ export default async function BriefsRoute() {
               : "Delivery ledger is unavailable until DATABASE_URL is configured for durable operator history."
         }
         runtimeTruth={runtimeTruth}
+        fallbackNote={fallbackNote}
       />
     </ErrorBoundary>
   );
