@@ -1,12 +1,14 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Command, Database, LifeBuoy, MessageSquareText, Sparkles } from "lucide-react";
+import { Command, Database, LifeBuoy, MessageSquareText, Search, Sparkles } from "lucide-react";
 
 import { HelpCard } from "@/components/help/help-card";
 import { HelpLink } from "@/components/help/help-link";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { fieldStyles } from "@/components/ui/field";
 import { useLocale } from "@/contexts/locale-context";
 import type { MessageKey } from "@/lib/translations";
 
@@ -17,11 +19,78 @@ const shortcuts = [
   { id: "sidebar", command: "⌘/", key: "help.shortcut.sidebar" as MessageKey },
 ];
 
+const faqItems = [
+  { id: "projects", category: "Getting Started", title: "How to create a project?", href: "/projects" },
+  { id: "tasks", category: "Getting Started", title: "How to manage tasks?", href: "/tasks" },
+  { id: "kanban", category: "Workflow", title: "How to use Kanban board?", href: "/kanban" },
+  { id: "gantt", category: "Workflow", title: "How to view Gantt chart?", href: "/gantt" },
+  { id: "risks", category: "Risk Management", title: "How to add risks?", href: "/risks" },
+  { id: "analytics", category: "Analytics", title: "How to view analytics?", href: "/analytics" },
+  { id: "export", category: "Export", title: "How to export data?", href: "/" },
+  { id: "chat", category: "AI Features", title: "How to use AI chat?", href: "/chat" },
+];
+
 export function HelpPage() {
   const { t } = useLocale();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredFaq = useMemo(() => {
+    if (!searchQuery.trim()) return faqItems;
+    const query = searchQuery.toLowerCase();
+    return faqItems.filter(
+      item =>
+        item.title.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
 
   return (
     <div className="grid gap-6">
+      {/* Search */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]" />
+            <input
+              className={`${fieldStyles} w-full pl-10`}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t("help.searchPlaceholder") || "Search help topics..."}
+              type="text"
+              value={searchQuery}
+            />
+          </div>
+          {searchQuery && (
+            <p className="mt-2 text-sm text-[var(--ink-muted)]">
+              {filteredFaq.length} result{filteredFaq.length !== 1 ? "s" : ""} found
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* FAQ Results */}
+      {searchQuery && filteredFaq.length > 0 && (
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="mb-4 font-semibold text-[var(--ink)]">Quick Links</h3>
+            <div className="grid gap-2">
+              {filteredFaq.map((item) => (
+                <Link
+                  className="flex items-center justify-between rounded-lg border border-[var(--line)] bg-[var(--panel-soft)] p-3 transition hover:bg-[var(--surface-panel)]"
+                  href={item.href}
+                  key={item.id}
+                >
+                  <div>
+                    <p className="text-sm font-medium text-[var(--ink)]">{item.title}</p>
+                    <p className="text-xs text-[var(--ink-muted)]">{item.category}</p>
+                  </div>
+                  <span className="text-xs text-[var(--ink-muted)]">→</span>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <section className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
         <Card className="overflow-hidden">
           <CardContent className="grid gap-6 p-8 lg:grid-cols-[1.15fr_.85fr]">
