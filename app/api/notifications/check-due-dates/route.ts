@@ -16,10 +16,25 @@ import { getServerRuntimeState } from "@/lib/server/runtime-mode";
  */
 export async function POST(request: NextRequest) {
   try {
+    // P1-1: Fail closed for cron endpoints in production
+    const cronSecret = process.env.CRON_SECRET;
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (isProduction && !cronSecret) {
+      console.error("[CRON] CRON_SECRET is required in production but not configured");
+      return NextResponse.json(
+        {
+          error: "AUTH_NOT_CONFIGURED",
+          message: "CRON_SECRET environment variable is required in production",
+        },
+        { status: 500 }
+      );
+    }
+
     const authResult = await authorizeRequest(request, {
-      apiKey: process.env.CRON_SECRET,
+      apiKey: cronSecret,
       permission: "RUN_DUE_DATE_SCAN",
-      requireApiKey: Boolean(process.env.CRON_SECRET),
+      requireApiKey: true, // Always require API key for cron endpoints
       workspaceId: "executive",
     });
     if (authResult instanceof NextResponse) {

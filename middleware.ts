@@ -66,6 +66,7 @@ export const config = {
     // Tenant management
     "/tenant-onboarding/:path*",
     "/tenant-readiness/:path*",
+    "/tenant-rollout-packet/:path*", // P1-4: Added missing route
     
     // Audit and compliance
     "/audit-packs/:path*",
@@ -76,5 +77,12 @@ export const config = {
     
     // Communication
     "/chat/:path*",
+    
+    // Documents
+    "/documents/:path*",
+    "/notifications/:path*",
+    "/milestones/:path*",
+    "/time-entries/:path*",
+    "/boards/:path*",
   ],
 };

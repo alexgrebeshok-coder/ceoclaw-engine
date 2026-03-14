@@ -12,6 +12,7 @@ import { getServerRuntimeState } from "@/lib/server/runtime-mode";
 /**
  * GET /api/notifications
  * Get notifications for current user
+ * P1-3: Fixed IDOR - userId derived from session, not query params
  */
 export async function GET(request: NextRequest) {
   // Require authentication
@@ -20,6 +21,8 @@ export async function GET(request: NextRequest) {
     return authResult;
   }
 
+  // P1-3: Derive userId from authenticated session, ignore client-supplied value
+  const userId = authResult.accessProfile.userId;
 
   try {
     const runtime = getServerRuntimeState();
@@ -37,12 +40,12 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId") || "default";
+    // P1-3: Removed userId from query params - now from session only
     const unreadOnly = searchParams.get("unreadOnly") === "true";
     const limit = parseInt(searchParams.get("limit") || "50");
 
     const where = {
-      userId,
+      userId, // From session
       ...(unreadOnly && { read: false }),
     };
 
@@ -73,6 +76,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/notifications
  * Create a new notification
+ * P1-3: Fixed IDOR - userId from session only
  */
 export async function POST(request: NextRequest) {
   // Require authentication
@@ -81,6 +85,8 @@ export async function POST(request: NextRequest) {
     return authResult;
   }
 
+  // P1-3: Derive userId from session
+  const sessionUserId = authResult.accessProfile.userId;
 
   try {
     const runtime = getServerRuntimeState();
@@ -94,15 +100,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { userId, type, title, message, entityType, entityId } = body;
+    const { type, title, message, entityType, entityId } = body;
 
-    if (!userId || !type || !title || !message) {
-      return badRequest("Missing required fields");
+    // P1-3: Ignore client-supplied userId, use session userId
+    if (!type || !title || !message) {
+      return badRequest("Missing required fields: type, title, message");
     }
 
     const notification = await prisma.notification.create({
       data: {
-        userId,
+        userId: sessionUserId,
         type,
         title,
         message,

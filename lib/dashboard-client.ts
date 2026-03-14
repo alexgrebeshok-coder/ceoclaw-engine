@@ -11,8 +11,27 @@ import { getCachedProject, setCachedProject } from "./cache/project-cache";
 // API base URL (dashboard server)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-// API key for authentication (set in .env)
-const API_KEY = process.env.DASHBOARD_API_KEY || "dev-key-12345";
+// P1-2: Remove hardcoded dev-key fallback
+const API_KEY = (() => {
+  const key = process.env.DASHBOARD_API_KEY;
+  const isDevelopment = process.env.NODE_ENV !== "production";
+
+  if (!key && isDevelopment) {
+    console.warn(
+      "⚠️ DASHBOARD_API_KEY is not set. Dashboard client will not work in production."
+    );
+    return null;
+  }
+
+  if (!key) {
+    throw new Error(
+      "DASHBOARD_API_KEY environment variable is required. " +
+      "Please set it in your environment or .env file."
+    );
+  }
+
+  return key;
+})();
 
 /**
  * Input types for API operations
@@ -98,11 +117,19 @@ export class DashboardAPIError extends Error {
  */
 export class DashboardClient {
   private baseUrl: string;
-  private apiKey: string;
+  private apiKey: string | null;
 
-  constructor(baseUrl?: string, apiKey?: string) {
+  constructor(baseUrl?: string, apiKey?: string | null) {
     this.baseUrl = baseUrl || API_BASE_URL;
-    this.apiKey = apiKey || API_KEY;
+    this.apiKey = apiKey !== undefined ? apiKey : API_KEY;
+
+    // P1-2: Validate API key in production
+    if (!this.apiKey && process.env.NODE_ENV === "production") {
+      throw new Error(
+        "DashboardClient requires an API key in production. " +
+          "Set DASHBOARD_API_KEY environment variable or pass apiKey parameter."
+      );
+    }
   }
 
   /**
@@ -112,6 +139,16 @@ export class DashboardClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    // P1-2: Validate API key before making request
+    if (!this.apiKey) {
+      throw new DashboardAPIError(
+        "API key is required. Set DASHBOARD_API_KEY environment variable.",
+        401,
+        endpoint,
+        { auth: "missing_api_key" }
+      );
+    }
+
     const url = `${this.baseUrl}${endpoint}`;
 
     const headers: HeadersInit = {
