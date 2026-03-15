@@ -35,6 +35,7 @@ export function useAIChat(options: UseAIChatOptions = {}): UseAIChatReturn {
 
     // Add user message
     const userMessage: Message = {
+      id: `user-${Date.now()}`,
       role: 'user',
       content,
       timestamp: new Date().toISOString(),
@@ -64,6 +65,7 @@ export function useAIChat(options: UseAIChatOptions = {}): UseAIChatReturn {
 
       // Add assistant message
       const assistantMessage: Message = {
+        id: data.id || `assistant-${Date.now()}`,
         role: 'assistant',
         content: data.response,
         timestamp: data.timestamp,
