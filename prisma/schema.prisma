@@ -7,9 +7,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
+  provider = "sqlite"
+  url       = env("DATABASE_URL")
 }
 
 // ============================================
@@ -36,12 +35,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String? 
+  access_token      String? 
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String? 
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -818,7 +817,7 @@ model Memory {
   type        String   // "long_term" | "episodic" | "procedural"
   category    String   // "project" | "contact" | "skill" | "fact" | "chat"
   key         String   // "ЧЭМК" | "Саша" | "weather"
-  value       Json     // { content: "...", metadata: {...} }
+  value       String     // { content: "...", metadata: {...} }
   validFrom   DateTime @default(now())
   validUntil  DateTime?
   confidence  Float    @default(1.0)
@@ -835,8 +834,8 @@ model AgentSession {
   id          String   @id @default(cuid())
   agentId     String   // "main" | "main-worker" | "quick-research" | ...
   status      String   @default("idle") // "idle" | "running" | "completed" | "failed"
-  task        String?  @db.Text
-  result      Json?
+  task        String?  
+  result      String?
   model       String?  // "glm-5" | "gemini-3.1-lite"
   provider    String?  // "zai" | "openrouter" | "openai"
   tokens      Int      @default(0)
@@ -854,11 +853,11 @@ model Skill {
   id          String   @id @default(cuid())
   name        String   @unique // "weather" | "deep-research" | "decision-council"
   category    String   // "analysis" | "automation" | "research" | "creative"
-  description String   @db.Text
-  prompt      String   @db.Text // System prompt for skill
+  description String   
+  prompt      String    // System prompt for skill
   enabled     Boolean  @default(true)
-  triggers    Json?    // ["погода", "weather", "температура"]
-  config      Json?    // Additional config
+  triggers    String?    // ["погода", "weather", "температура"]
+  config      String?    // Additional config
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -870,9 +869,9 @@ model Communication {
   id          String   @id @default(cuid())
   channel     String   // "telegram" | "voice" | "chat" | "email"
   direction   String   // "inbound" | "outbound"
-  message     String   @db.Text
-  response    String?  @db.Text
-  metadata    Json?    // { from: "...", chatId: "...", ... }
+  message     String   
+  response    String?  
+  metadata    String?    // { from: "...", chatId: "...", ... }
   createdAt   DateTime @default(now())
 
   @@index([channel, createdAt])
@@ -885,7 +884,7 @@ model AIProvider {
   apiKey       String   // Encrypted
   baseUrl     String?
   enabled      Boolean @default(true)
-  models       Json     // ["glm-5", "glm-4.7-flash"]
+  models       String     // ["glm-5", "glm-4.7-flash"]
   defaultModel String?
   priority     Int      @default(0) // For fallback
   createdAt   DateTime @default(now())
@@ -899,7 +898,7 @@ model ContextSnapshot {
   id          String   @id @default(cuid())
   type        String   // "project" | "full" | "daily"
   projectId   String?
-  data        Json     // Full context snapshot
+  data        String     // Full context snapshot
   tokens      Int      @default(0)
   createdAt   DateTime @default(now())
 
