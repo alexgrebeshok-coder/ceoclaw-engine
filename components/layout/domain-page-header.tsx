@@ -39,8 +39,8 @@ export function DomainPageHeader({
 
       {chips.length ? (
         <CardContent className="min-w-0 flex flex-wrap gap-2 pt-4">
-          {chips.map((chip) => (
-            <Badge key={chip.label} variant={chip.variant ?? "neutral"}>
+          {chips.map((chip, index) => (
+            <Badge key={`${index}-${chip.label}`} variant={chip.variant ?? "neutral"}>
               {chip.label}
             </Badge>
           ))}
