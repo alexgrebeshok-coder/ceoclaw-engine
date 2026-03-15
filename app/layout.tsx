@@ -12,6 +12,7 @@ import { LocaleProvider } from "@/contexts/locale-context";
 import { PreferencesProvider } from "@/contexts/preferences-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { MemoryProvider } from "@/contexts/memory-context";
+import { AIChatPanel } from "@/components/ai/chat-panel";
 
 import "./globals.css";
 
@@ -94,6 +95,9 @@ export default function RootLayout({
             </LocaleProvider>
             </MemoryProvider>
           </ThemeProvider>
+          
+          {/* AI Chat Panel - Available on all pages */}
+          <AIChatPanel />
         </SessionProvider>
       </body>
     </html>
