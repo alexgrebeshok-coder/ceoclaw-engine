@@ -124,7 +124,7 @@ export function SignupForm({ onSuccess, showOAuth = true }: SignupFormProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {error && (
         <Alert variant="error">
           <p>{error}</p>

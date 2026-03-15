@@ -11,6 +11,7 @@ import { AIProvider } from "@/contexts/ai-context";
 import { LocaleProvider } from "@/contexts/locale-context";
 import { PreferencesProvider } from "@/contexts/preferences-context";
 import { ThemeProvider } from "@/contexts/theme-context";
+import { MemoryProvider } from "@/contexts/memory-context";
 
 import "./globals.css";
 
@@ -78,7 +79,8 @@ export default function RootLayout({
             `}
           </Script>
           <ThemeProvider>
-            <LocaleProvider>
+            <MemoryProvider>
+              <LocaleProvider>
               <PreferencesProvider>
                 <DashboardProvider>
                   <AIProvider>
@@ -90,6 +92,7 @@ export default function RootLayout({
                 </DashboardProvider>
               </PreferencesProvider>
             </LocaleProvider>
+            </MemoryProvider>
           </ThemeProvider>
         </SessionProvider>
       </body>

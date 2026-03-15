@@ -85,7 +85,7 @@ export function BriefsPage({
   const runtimeBadge = getOperatorTruthBadge(runtimeTruth);
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <DomainPageHeader
         actions={
           <Link className={buttonVariants({ variant: "outline" })} href="/analytics">
@@ -121,7 +121,7 @@ export function BriefsPage({
         entries={deliveryLedgerEntries}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
         <BriefQueueTable portfolioBrief={portfolioBrief} projectBriefs={projectBriefs} />
         <BriefRequestForm
           portfolioBrief={portfolioBrief}

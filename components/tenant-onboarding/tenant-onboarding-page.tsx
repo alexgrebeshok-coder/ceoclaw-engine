@@ -205,7 +205,7 @@ export function TenantOnboardingPage({
   const latestDecisionLabel = overview.latestDecision?.decisionLabel ?? "No decision yet";
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <DomainPageHeader
         actions={
           <>
@@ -261,7 +261,7 @@ export function TenantOnboardingPage({
 
       <OperatorRuntimeCard truth={runtimeTruth} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Current rollout baseline</CardTitle>

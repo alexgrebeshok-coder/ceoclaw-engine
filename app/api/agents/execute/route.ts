@@ -1,54 +1,88 @@
 /**
- * Agent Execute API - Run agents
+ * Agent Execute API - Run agents with improvements
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { AgentOrchestrator } from '@/lib/agents/orchestrator';
-import { MemoryManager } from '@/lib/memory/memory-store';
+import { memoryManager, contextBuilder } from '@/lib/memory/memory-manager';
+import {
+  improvedExecutor,
+  smartSelector,
+  rateLimiter,
+  type AgentExecutionOptions,
+} from '@/lib/agents/agent-improvements';
 
 // ============================================
-// POST - Execute agent
+// POST - Execute agent (improved)
 // ============================================
 
 export async function POST(req: NextRequest) {
   try {
-    const { agentId, task, projectId, mode, tasks } = await req.json();
+    const body = await req.json();
+    const { agentId, task, projectId, mode, tasks, options } = body;
 
-    const orchestrator = new AgentOrchestrator();
-    const memory = new MemoryManager();
+    // Smart agent selection if not specified
+    const selectedAgent = agentId || smartSelector.selectAgent(task);
 
-    // Build context
-    const context = await buildContext(memory, projectId);
-
-    let result;
-
-    if (mode === 'parallel' && tasks) {
-      // Parallel execution
-      result = await orchestrator.executeParallel(tasks, context);
-    } else if (mode === 'smart') {
-      // Smart delegation
-      result = await orchestrator.smartExecute(task, context);
-    } else {
-      // Single agent
-      result = await orchestrator.execute(agentId || 'main', task, context);
+    // Rate limiting check
+    const provider = options?.provider || 'openrouter';
+    if (!rateLimiter.canRequest(provider)) {
+      const waitTime = rateLimiter.getWaitTime(provider);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Rate limit exceeded',
+          waitTime,
+          retryAfter: Math.ceil(waitTime / 1000),
+        },
+        { status: 429 }
+      );
     }
 
-    // Save to memory
-    await memory.remember({
-      type: 'episodic',
-      category: 'agent',
-      key: `agent-${Date.now()}`,
-      value: {
-        agentId: result.agentId || 'parallel',
-        task: task || 'parallel',
-        success: result.success || result.result?.success,
+    // Build context
+    const contextText = contextBuilder.build({ projectId });
+    const context: any = {
+      projectId,
+      memory: memoryManager.getAll().slice(0, 10),
+      metadata: {
+        timestamp: new Date().toISOString(),
       },
-    });
+    };
+
+    // Execute with improvements
+    const executionOptions: AgentExecutionOptions = {
+      retry: options?.retry || { maxRetries: 3 },
+      fallback: options?.fallback || { enabled: true },
+      timeout: options?.timeout || 60000,
+      saveToMemory: options?.saveToMemory !== false,
+      onProgress: options?.onProgress,
+    };
+
+    const result = await improvedExecutor.execute(
+      selectedAgent,
+      task,
+      context,
+      executionOptions
+    );
 
     return NextResponse.json({
-      success: true,
-      result,
+      success: result.success,
+      result: {
+        content: result.content,
+        data: result.data,
+        tokens: result.tokens,
+        cost: result.cost,
+        duration: result.duration,
+        attempts: result.attempts,
+        provider: result.provider,
+        model: result.model,
+      },
+      agent: {
+        id: selectedAgent,
+        capabilities: smartSelector.getAgentCapabilities(selectedAgent),
+      },
       timestamp: new Date().toISOString(),
+      error: result.error,
     });
   } catch (error) {
     console.error('Agent execute error:', error);
@@ -99,26 +133,4 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// ============================================
-// Helper: Build context
-// ============================================
-
-async function buildContext(memory: MemoryManager, projectId?: string) {
-  const [longTerm, episodic] = await Promise.all([
-    memory.getLongTerm(),
-    memory.getEpisodic(),
-  ]);
-
-  return {
-    memory: {
-      longTerm: longTerm.slice(0, 10),
-      recent: episodic.slice(0, 5),
-    },
-    projectId,
-    metadata: {
-      timestamp: new Date().toISOString(),
-    },
-  };
 }

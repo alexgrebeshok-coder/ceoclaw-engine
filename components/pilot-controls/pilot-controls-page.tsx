@@ -47,7 +47,7 @@ export function PilotControlsPage({
   const runtimeBadge = getOperatorTruthBadge(runtimeTruth);
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <DomainPageHeader
         actions={
           <>
@@ -78,7 +78,7 @@ export function PilotControlsPage({
 
       <OperatorRuntimeCard truth={runtimeTruth} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Configured posture</CardTitle>

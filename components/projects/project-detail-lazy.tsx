@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 // Loading fallback component
 function ProjectDetailLoading() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card className="p-6">
         <div className="h-32 animate-pulse rounded bg-[var(--surface-secondary)]" />
       </Card>

@@ -77,7 +77,7 @@ export function AuditPacksPage({
   const runtimeBadge = getOperatorTruthBadge(runtimeTruth);
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <DomainPageHeader
         actions={
           <>
@@ -117,7 +117,7 @@ export function AuditPacksPage({
 
       <OperatorRuntimeCard truth={runtimeTruth} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.2fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.2fr)]">
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Exportable workflows</CardTitle>

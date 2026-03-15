@@ -34,13 +34,13 @@ export function AIResultView() {
   if (!selectedRun) {
     return (
       <Card className="border-dashed border-[var(--line)] bg-[color:var(--surface-panel)]/88">
-        <CardContent className="grid gap-5 p-6">
+        <CardContent className="grid gap-5 p-4">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-[var(--panel-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand)]">
               <Sparkles className="h-3.5 w-3.5" />
               {t("ai.emptyBadge")}
             </div>
-            <h3 className="font-heading text-3xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
+            <h3 className="font-heading text-xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
               {t("ai.emptyTitle")}
             </h3>
             <p className="max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">
@@ -79,13 +79,13 @@ export function AIResultView() {
   return (
     <div className="grid gap-4">
       <Card>
-        <CardContent className="space-y-5 p-6">
+        <CardContent className="space-y-5 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.16em] text-[var(--ink-muted)]">
                 {selectedRun.context.subtitle}
               </p>
-              <h3 className="font-heading text-3xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
+              <h3 className="font-heading text-xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
                 {selectedRun.result?.title ?? selectedRun.title}
               </h3>
             </div>
@@ -136,7 +136,7 @@ export function AIResultView() {
 
       {selectedRun.status === "queued" || selectedRun.status === "running" ? (
         <Card className="overflow-hidden">
-          <CardContent className="space-y-4 p-6">
+          <CardContent className="space-y-4 p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--panel-soft)] text-[var(--brand)]">
                 <LoaderCircle className="h-5 w-5 animate-spin" />
@@ -155,7 +155,7 @@ export function AIResultView() {
 
       {selectedRun.status === "failed" ? (
         <Card className="border-rose-300/60 bg-rose-500/10 dark:border-rose-400/25 dark:bg-rose-500/12">
-          <CardContent className="space-y-3 p-6">
+          <CardContent className="space-y-3 p-4">
             <div className="inline-flex items-center gap-2 text-rose-700 dark:text-rose-300">
               <Bot className="h-4 w-4" />
               <span className="font-medium">{t("ai.failedTitle")}</span>
@@ -170,7 +170,7 @@ export function AIResultView() {
       {selectedRun.result ? (
         <>
           <Card>
-            <CardContent className="grid gap-5 p-6">
+            <CardContent className="grid gap-5 p-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] text-[var(--ink-muted)]">
                   {t("ai.summary")}
@@ -218,7 +218,7 @@ export function AIResultView() {
 
           {selectedRun.result.actionResult ? (
             <Card>
-              <CardContent className="space-y-3 p-6">
+              <CardContent className="space-y-3 p-4">
                 <p className="text-xs uppercase tracking-[0.16em] text-[var(--ink-muted)]">
                   Action result
                 </p>

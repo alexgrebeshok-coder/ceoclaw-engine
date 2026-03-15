@@ -91,7 +91,7 @@ export function AnalyticsPage() {
   }));
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <Card>
         <CardHeader className="min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -108,7 +108,7 @@ export function AnalyticsPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_.95fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.05fr_.95fr]">
         <Card>
           <CardHeader>
             <CardTitle>{t("analytics.trendline")}</CardTitle>
@@ -152,7 +152,7 @@ export function AnalyticsPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>{t("analytics.budgetVariance")}</CardTitle>

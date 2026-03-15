@@ -105,7 +105,7 @@ export function WorkReportsPage({
   const runtimeBadge = getOperatorTruthBadge(runtimeTruth);
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <DomainPageHeader
         actions={
           <Link className={buttonVariants({ variant: "outline" })} href="/projects">
@@ -136,9 +136,9 @@ export function WorkReportsPage({
 
       {liveWorkflowReady ? (
         <>
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
             <ReportRunsTable reports={reports} />
-            <div className="grid gap-6">
+            <div className="grid gap-4">
               <ReportBuilderForm members={members} projects={projects} />
               <VideoFactIntakeForm reports={reports} />
             </div>

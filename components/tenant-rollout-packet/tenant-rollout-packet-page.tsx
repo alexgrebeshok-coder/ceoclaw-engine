@@ -72,7 +72,7 @@ export function TenantRolloutPacketPage({
     packet.currentReadiness.tenant.slug;
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <DomainPageHeader
         actions={
           <>
@@ -116,7 +116,7 @@ export function TenantRolloutPacketPage({
 
       <OperatorRuntimeCard truth={runtimeTruth} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(300px,0.88fr)_minmax(0,1.12fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(300px,0.88fr)_minmax(0,1.12fr)]">
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Latest handoff state</CardTitle>

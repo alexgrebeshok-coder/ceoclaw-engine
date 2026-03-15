@@ -244,3 +244,56 @@ export class AIRouter {
     return this.providers.has(name);
   }
 }
+
+// ============================================
+// Helper Functions for Health Check
+// ============================================
+
+let _routerInstance: AIRouter | null = null;
+
+function getRouter(): AIRouter {
+  if (!_routerInstance) {
+    _routerInstance = new AIRouter();
+  }
+  return _routerInstance;
+}
+
+/**
+ * Check if any AI provider is available
+ */
+export async function hasAvailableProvider(): Promise<boolean> {
+  try {
+    const router = getRouter();
+    const providers = router.getAvailableProviders();
+    return providers.length > 0;
+  } catch (error) {
+    console.error("[AI] Error checking providers:", error);
+    return false;
+  }
+}
+
+/**
+ * Get the default provider name
+ */
+export function getProviderName(): string | null {
+  try {
+    const router = getRouter();
+    const providers = router.getAvailableProviders();
+    
+    if (providers.length === 0) return null;
+    
+    // Return default provider if set
+    if (process.env.DEFAULT_AI_PROVIDER && providers.includes(process.env.DEFAULT_AI_PROVIDER)) {
+      return process.env.DEFAULT_AI_PROVIDER;
+    }
+    
+    // Otherwise return first available
+    return providers[0];
+  } catch (error) {
+    console.error("[AI] Error getting provider name:", error);
+    return null;
+  }
+}
+
+// Export singleton instance
+export const aiRouter = getRouter();

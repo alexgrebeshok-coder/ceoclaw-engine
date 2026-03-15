@@ -70,7 +70,7 @@ export function ImportRunsTable({
           Левая панель показывает то, что реальный import engine распознал в загруженных файлах.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-6">
+      <CardContent className="grid gap-4">
         {!result ? (
           <div className="rounded-[14px] border border-dashed border-[var(--line-strong)] bg-[var(--panel-soft)] p-5 text-sm leading-6 text-[var(--ink-soft)]">
             Загрузите комплект файлов и выполните validation или preview, чтобы увидеть распознанные типы, issues и normalized slices.

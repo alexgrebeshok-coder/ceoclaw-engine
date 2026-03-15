@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { AIRouter } from '@/lib/ai/providers';
-import { MemoryManager } from '@/lib/memory/memory-store';
+import { memoryManager, contextBuilder } from '@/lib/memory/memory-manager';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,10 +12,9 @@ export async function POST(req: NextRequest) {
 
     // Initialize
     const router = new AIRouter();
-    const memory = new MemoryManager();
 
     // Build context
-    const context = await buildContext(memory, projectId);
+    const context = contextBuilder.build({ projectId });
 
     // System prompt
     const systemPrompt = `Ты CEOClaw AI — ассистент для управления проектами.
@@ -36,11 +35,16 @@ ${JSON.stringify(context, null, 2)}
     );
 
     // Save to memory
-    await memory.remember({
+    memoryManager.add({
       type: 'episodic',
       category: 'chat',
       key: `chat-${Date.now()}`,
       value: { user: message, assistant: response },
+      validFrom: new Date().toISOString(),
+      validUntil: null,
+      confidence: 100,
+      source: 'system',
+      tags: ['chat', projectId || 'main'],
     });
 
     return NextResponse.json({
@@ -59,25 +63,6 @@ ${JSON.stringify(context, null, 2)}
       { status: 500 }
     );
   }
-}
-
-/**
- * Build context for AI
- */
-async function buildContext(memory: MemoryManager, projectId?: string) {
-  const [longTerm, episodic] = await Promise.all([
-    memory.getLongTerm(),
-    memory.getEpisodic(),
-  ]);
-
-  return {
-    memory: {
-      longTerm: longTerm.slice(0, 10), // Top 10
-      recent: episodic.slice(0, 5), // Last 5
-    },
-    projectId,
-    timestamp: new Date().toISOString(),
-  };
 }
 
 /**

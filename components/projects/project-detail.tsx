@@ -141,7 +141,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     return (
       <Card>
         <CardContent className="flex min-h-[320px] flex-col items-center justify-center gap-4 p-10 text-center">
-          <h2 className="font-heading text-3xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
+          <h2 className="font-heading text-xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
             {t("project.notFound")}
           </h2>
           <p className="max-w-md text-sm text-[var(--ink-soft)]">
@@ -227,11 +227,11 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
   return (
     <>
-      <div className="grid gap-6">
-        <section className="grid gap-6 grid-cols-1 xl:grid-cols-[1.15fr_.85fr]">
+      <div className="grid gap-4">
+        <section className="grid gap-4 grid-cols-1 xl:grid-cols-[1.15fr_.85fr]">
           <Card className="overflow-hidden">
-            <CardContent className="grid gap-8 p-6 md:p-8 grid-cols-1 lg:grid-cols-[1.1fr_.9fr]">
-              <div className="space-y-6">
+            <CardContent className="grid gap-6 p-4 md:p-6 grid-cols-1 lg:grid-cols-[1.1fr_.9fr]">
+              <div className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className={cn("ring-1", projectStatusMeta[project.status].className)}>
@@ -241,7 +241,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                       {project.location}
                     </Badge>
                   </div>
-                  <h2 className="font-heading text-4xl font-semibold tracking-[-0.08em] text-[var(--ink)] sm:text-5xl">
+                  <h2 className="font-heading text-xl font-semibold tracking-[-0.06em] text-[var(--ink)] sm:text-4xl">
                     {project.name}
                   </h2>
                   <p className="max-w-2xl text-sm leading-7 text-[var(--ink-soft)] sm:text-base">
@@ -327,7 +327,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
               <CardContent className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-[8px] bg-[var(--panel-soft)] p-4">
                   <p className="text-sm text-[var(--ink-muted)]">{t("project.progress")}</p>
-                  <p className="mt-2 font-heading text-4xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
+                  <p className="mt-2 font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--ink)]">
                     {project.progress}%
                   </p>
                   <div className="mt-3">
@@ -336,7 +336,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                 </div>
                 <div className="rounded-[8px] bg-[var(--panel-soft)] p-4">
                   <p className="text-sm text-[var(--ink-muted)]">{t("project.health")}</p>
-                  <p className="mt-2 font-heading text-4xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
+                  <p className="mt-2 font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--ink)]">
                     {project.health}%
                   </p>
                   <Badge className="mt-3" variant={healthTone}>
@@ -349,7 +349,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                 </div>
                 <div className="rounded-[8px] bg-[var(--panel-soft)] p-4">
                   <p className="text-sm text-[var(--ink-muted)]">{t("project.safetyKpi")}</p>
-                  <p className="mt-2 font-heading text-3xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
+                  <p className="mt-2 font-heading text-xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
                     LTIFR {project.safety.ltifr}
                   </p>
                   <p className="text-sm text-[var(--ink-soft)]">TRIR {project.safety.trir}</p>
@@ -402,7 +402,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
           </TabsList>
 
           <TabsContent value="overview">
-            <div className="grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
+            <div className="grid gap-4 xl:grid-cols-[1.1fr_.9fr]">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("project.milestones")}</CardTitle>
@@ -542,7 +542,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
           </TabsContent>
 
           <TabsContent value="charts">
-            <div className="grid gap-6 xl:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("project.progressTimeline")}</CardTitle>
@@ -653,7 +653,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {projectTeam.map((member) => (
                 <Card key={member.id}>
-                  <CardContent className="space-y-4 p-6">
+                  <CardContent className="space-y-4 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="font-heading text-xl font-semibold tracking-[-0.04em] text-[var(--ink)]">
@@ -685,7 +685,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
           </TabsContent>
 
           <TabsContent value="risks">
-            <div className="grid gap-6 xl:grid-cols-[1fr_.9fr]">
+            <div className="grid gap-4 xl:grid-cols-[1fr_.9fr]">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("project.riskMatrix")}</CardTitle>

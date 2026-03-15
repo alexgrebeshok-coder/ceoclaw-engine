@@ -254,7 +254,7 @@ export function PilotFeedbackPage({
   };
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <DomainPageHeader
         actions={
           <>
@@ -300,7 +300,7 @@ export function PilotFeedbackPage({
 
       <OperatorRuntimeCard truth={runtimeTruth} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Create feedback item</CardTitle>

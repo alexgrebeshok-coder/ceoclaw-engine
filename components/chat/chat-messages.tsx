@@ -39,12 +39,12 @@ export function ChatMessages() {
     return (
       <div className="flex flex-1 items-center justify-center p-6">
         <Card className="max-w-2xl border-dashed">
-          <CardContent className="grid gap-4 p-8 text-center">
+          <CardContent className="grid gap-4 p-6 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[var(--panel-soft)] text-[var(--brand)]">
               <Sparkles className="h-6 w-6" />
             </div>
             <div className="space-y-2">
-              <h3 className="font-heading text-3xl font-semibold tracking-[-0.05em] text-[var(--ink)]">
+              <h3 className="font-heading text-xl font-semibold tracking-[-0.05em] text-[var(--ink)]">
                 {t("chat.emptyTitle")}
               </h3>
               <p className="text-sm leading-7 text-[var(--ink-soft)]">
@@ -59,7 +59,7 @@ export function ChatMessages() {
 
   return (
     <div className="flex-1 overflow-y-auto" ref={containerRef}>
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-6 sm:px-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-6 sm:px-8">
         {orderedRuns.map((run) => (
           <ChatMessage key={run.id} run={run} selected={selectedRunId === run.id} />
         ))}

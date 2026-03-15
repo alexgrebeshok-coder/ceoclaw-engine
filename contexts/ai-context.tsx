@@ -481,9 +481,16 @@ export function AIProvider({ children }: { children: ReactNode }) {
   };
 
   const startRun = async (prompt: string, quickAction?: AIQuickActionDefinition) => {
+    console.log("[AIContext] startRun called with:", prompt?.substring(0, 50));
     const trimmedPrompt = prompt.trim();
-    if (!trimmedPrompt) return;
-    if (submissionInFlightRef.current) return;
+    if (!trimmedPrompt) {
+      console.log("[AIContext] Empty prompt, returning");
+      return;
+    }
+    if (submissionInFlightRef.current) {
+      console.log("[AIContext] Submission in flight, returning");
+      return;
+    }
 
     const contextSnapshot = buildSnapshot();
     const requestedAgentId = quickAction?.agentId ?? selectedAgentId;
@@ -516,6 +523,7 @@ export function AIProvider({ children }: { children: ReactNode }) {
         prompt: trimmedPrompt,
         context: contextSnapshot,
         quickAction,
+        sessionId,
       });
 
       const nextRun = {

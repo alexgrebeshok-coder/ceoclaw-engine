@@ -77,7 +77,7 @@ export function TasksPage() {
 
   if (showHydrationSkeleton) {
     return (
-      <div className="grid min-w-0 gap-6">
+      <div className="grid min-w-0 gap-4">
         <AIContextActionsSkeleton />
 
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
@@ -103,12 +103,12 @@ export function TasksPage() {
   }
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <AIContextActions />
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <p className="text-sm text-[var(--ink-muted)]">{t("tasks.total")}</p>
             <p className="mt-2 font-heading text-5xl font-semibold tracking-[-0.08em] text-[var(--ink)]">
               {tasks.length}
@@ -116,7 +116,7 @@ export function TasksPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <p className="text-sm text-[var(--ink-muted)]">{t("tasks.inProgress")}</p>
             <p className="mt-2 font-heading text-5xl font-semibold tracking-[-0.08em] text-[var(--ink)]">
               {tasks.filter((task) => task.status === "in-progress").length}
@@ -124,7 +124,7 @@ export function TasksPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <p className="text-sm text-[var(--ink-muted)]">{t("tasks.blocked")}</p>
             <p className="mt-2 font-heading text-5xl font-semibold tracking-[-0.08em] text-[var(--ink)]">
               {tasks.filter((task) => task.status === "blocked").length}
@@ -132,7 +132,7 @@ export function TasksPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <p className="text-sm text-[var(--ink-muted)]">{t("tasks.selected")}</p>
             <p className="mt-2 font-heading text-5xl font-semibold tracking-[-0.08em] text-[var(--ink)]">
               {selectedIds.length}

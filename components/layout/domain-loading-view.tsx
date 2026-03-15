@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function DomainLoadingView() {
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <Card>
         <CardHeader className="gap-4">
           <Skeleton className="h-4 w-28" />
@@ -30,7 +30,7 @@ export function DomainLoadingView() {
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
         <Card>
           <CardHeader className="space-y-3">
             <Skeleton className="h-7 w-44" />

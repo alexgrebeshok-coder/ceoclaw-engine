@@ -277,6 +277,7 @@ export interface AIRunInput {
   context: AIContextSnapshot;
   quickAction?: AIQuickActionDefinition;
   source?: AIRunSourceRef;
+  sessionId?: string;
 }
 
 export interface AIApplyProposalInput {

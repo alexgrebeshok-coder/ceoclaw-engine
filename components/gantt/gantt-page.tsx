@@ -107,7 +107,7 @@ export function GanttPage() {
   const todayIndex = columnBoundaries.findIndex((boundary) => !isBefore(today, boundary.start) && !isAfter(today, boundary.end));
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <Card>
         <CardHeader className="flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>

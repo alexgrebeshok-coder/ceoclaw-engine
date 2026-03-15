@@ -136,7 +136,7 @@ export function IntegrationsPage({
         : "1C truth pending";
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <DomainPageHeader
         actions={
           <Link className={buttonVariants({ variant: "outline" })} href="/settings">
@@ -162,9 +162,9 @@ export function IntegrationsPage({
 
       <IntegrationsOverviewCard summary={summary} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
         <ConnectorHealthTable connectors={connectors} />
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           <GpsTelemetryTruthCard snapshot={gpsTelemetry} />
           <OneCFinanceTruthCard snapshot={oneCFinance} />
           <EvidenceFusionCard fusion={fusion} />

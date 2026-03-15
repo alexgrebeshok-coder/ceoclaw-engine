@@ -10,7 +10,7 @@ interface TeamPerformanceLazyProps {
 // Loading fallback component
 function TeamPerformanceLoading() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="p-4">

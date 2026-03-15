@@ -28,7 +28,7 @@ export function AIContextActions({
         className
       )}
     >
-      <CardContent className="grid gap-[var(--spacing-lg)] p-6">
+      <CardContent className="grid gap-[var(--spacing-lg)] p-4">
         <div className="flex flex-wrap items-start justify-between gap-[var(--spacing-md)]">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-[8px] bg-[var(--panel-soft)] px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand)]">

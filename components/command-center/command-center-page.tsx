@@ -201,7 +201,7 @@ export function CommandCenterPage({
   };
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <DomainPageHeader
         actions={
           <>

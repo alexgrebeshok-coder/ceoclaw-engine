@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 // Loading fallback component
 function GanttPageLoading() {
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <Card className="p-6">
         <div className="h-32 animate-pulse rounded bg-[var(--surface-secondary)]" />
       </Card>

@@ -135,7 +135,7 @@ export function PilotReviewPage({
   const activeConcerns = scorecard.summary.openExceptions + scorecard.summary.openFeedback;
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <DomainPageHeader
         actions={
           <>
@@ -186,7 +186,7 @@ export function PilotReviewPage({
 
       <OperatorRuntimeCard truth={runtimeTruth} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Review posture</CardTitle>
@@ -386,7 +386,7 @@ export function PilotReviewPage({
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-2">
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Freshness signals</CardTitle>

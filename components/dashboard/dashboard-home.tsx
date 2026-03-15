@@ -258,17 +258,17 @@ export function DashboardHome() {
 
   if (showHydrationSkeleton) {
     return (
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 6 }, (_, index) => (
             <KpiCardSkeleton key={index} />
           ))}
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.2fr_.8fr]">
+        <section className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
           <Card className="overflow-hidden">
-            <CardContent className="grid gap-5 p-6 xl:grid-cols-[minmax(0,1.12fr)_minmax(260px,.88fr)]">
-              <div className="space-y-6">
+            <CardContent className="grid gap-5 p-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(260px,.88fr)]">
+              <div className="space-y-4">
                 <div className="space-y-3">
                   <Skeleton className="h-7 w-56 rounded-full" />
                   <Skeleton className="h-12 w-4/5" />
@@ -336,8 +336,8 @@ export function DashboardHome() {
 
         <AIContextActionsSkeleton />
 
-        <section className="grid gap-6 2xl:grid-cols-[1.12fr_.88fr]">
-          <div className="grid gap-6">
+        <section className="grid gap-4 2xl:grid-cols-[1.12fr_.88fr]">
+          <div className="grid gap-4">
             <Card>
               <CardHeader className="flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div className="space-y-2">
@@ -356,7 +356,7 @@ export function DashboardHome() {
               </CardContent>
             </Card>
 
-            <div className="grid gap-6 xl:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-2">
               {Array.from({ length: 2 }, (_, index) => (
                 <Card key={index}>
                   <CardHeader>
@@ -371,10 +371,10 @@ export function DashboardHome() {
             </div>
           </div>
 
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             {Array.from({ length: 4 }, (_, index) => (
               <Card key={index}>
-                <CardContent className="space-y-4 p-6">
+                <CardContent className="space-y-4 p-4">
                   <Skeleton className="h-7 w-40" />
                   <Skeleton className="h-20 w-full" />
                   <Skeleton className="h-20 w-full" />
@@ -400,7 +400,7 @@ export function DashboardHome() {
 
   return (
     <>
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <AlertsBlock projects={projects} risks={risks} />
 
         <section className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
@@ -536,7 +536,7 @@ export function DashboardHome() {
 
         {/* EVM Metrics Section */}
         {evmProject && evmMetrics && (
-          <section className="grid gap-6 xl:grid-cols-[1fr]">
+          <section className="grid gap-4 xl:grid-cols-[1fr]">
             <EVMMetricsCard
               metrics={evmMetrics}
               budget={evmProject.budget}
@@ -547,14 +547,14 @@ export function DashboardHome() {
 
         {/* Auto-detected Risks Section */}
         {autoRisks.length > 0 && (
-          <section className="grid gap-6 xl:grid-cols-[1fr]">
+          <section className="grid gap-4 xl:grid-cols-[1fr]">
             <AutoRisksCard risks={autoRisks} maxDisplay={5} />
           </section>
         )}
 
         {/* Portfolio Health Section */}
         {portfolioHealth && (
-          <section className="grid gap-6 xl:grid-cols-[1fr]">
+          <section className="grid gap-4 xl:grid-cols-[1fr]">
             <PortfolioHealthCard
               healthScore={portfolioHealth}
               isLoading={isLoading}
@@ -564,22 +564,22 @@ export function DashboardHome() {
 
         {/* AI Insights Section */}
         {aiInsightsList.length > 0 && (
-          <section className="grid gap-6 xl:grid-cols-[1fr]">
+          <section className="grid gap-4 xl:grid-cols-[1fr]">
             <AIInsightsCard insights={aiInsightsList} maxDisplay={5} />
           </section>
         )}
 
         {/* AI Recommendations Section */}
         {recommendations.length > 0 && (
-          <section className="grid gap-6 xl:grid-cols-[1fr]">
+          <section className="grid gap-4 xl:grid-cols-[1fr]">
             <RecommendationsCard recommendations={recommendations} maxDisplay={5} />
           </section>
         )}
 
-        <section className="grid gap-6 xl:grid-cols-[1.2fr_.8fr]">
+        <section className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
           <Card className="overflow-hidden">
-            <CardContent className="grid gap-5 p-6 xl:grid-cols-[minmax(0,1.12fr)_minmax(260px,.88fr)]">
-              <div className="space-y-6">
+            <CardContent className="grid gap-5 p-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(260px,.88fr)]">
+              <div className="space-y-4">
                 <div className="space-y-3">
                   <div className="inline-flex items-center gap-2 rounded-[8px] bg-[var(--panel-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand)]">
                     {t("dashboard.heroBadge")}
@@ -691,8 +691,8 @@ export function DashboardHome() {
 
         <AIContextActions />
 
-        <section className="grid gap-6 2xl:grid-cols-[1.12fr_.88fr]">
-          <div className="grid gap-6">
+        <section className="grid gap-4 2xl:grid-cols-[1.12fr_.88fr]">
+          <div className="grid gap-4">
             <Card>
               <CardHeader className="flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -747,7 +747,7 @@ export function DashboardHome() {
               </CardContent>
             </Card>
 
-            <div className="grid gap-6 xl:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("dashboard.progressVsBudget")}</CardTitle>
@@ -774,7 +774,7 @@ export function DashboardHome() {
             </div>
           </div>
 
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             <Card>
               <CardHeader>
                 <CardTitle>{t("dashboard.criticalFeed")}</CardTitle>
@@ -839,7 +839,7 @@ export function DashboardHome() {
                 <CardTitle>{t("dashboard.riskMix")}</CardTitle>
                 <CardDescription>{t("dashboard.riskMixDescription")}</CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-6 sm:grid-cols-[.95fr_1.05fr]">
+              <CardContent className="grid gap-4 sm:grid-cols-[.95fr_1.05fr]">
                 <ClientChart className="h-[180px]">
                   <DashboardRiskChart data={riskData} />
                 </ClientChart>

@@ -85,7 +85,7 @@ export function LoginForm({ onSuccess, showOAuth = true }: LoginFormProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {error && (
         <Alert variant="error">
           <p>{error}</p>

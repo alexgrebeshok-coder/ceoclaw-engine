@@ -60,12 +60,12 @@ export function AgentSelector() {
   const hasMatches = groupedAgents.some((group) => group.items.length > 0);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]" />
         <Input
           aria-label={t("chat.sidebar.searchAgents")}
-          className="h-11 pl-11"
+          className="h-9 pl-10 text-sm"
           id="chat-agent-search"
           onChange={(event) => setSearchQuery(event.target.value)}
           placeholder={t("chat.sidebar.searchPlaceholder")}
@@ -77,73 +77,73 @@ export function AgentSelector() {
         {t("chat.sidebar.agentSelectorHelp")}
       </p>
 
-      <div className="max-h-[420px] overflow-y-auto rounded-[12px] border border-[var(--line)] bg-[color:var(--surface-panel)] p-2">
+      <div className="max-h-[380px] overflow-y-auto rounded-[10px] border border-[var(--line)] bg-[color:var(--surface-panel)] p-1.5">
         {hasMatches ? (
-          <div className="grid gap-4">
+          <div className="space-y-2">
             {groupedAgents.map(({ category, items }) => (
-              <div key={category.id} className="space-y-2">
-                <div className="sticky top-0 z-[1] rounded-[10px] bg-[color:var(--surface-panel)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)]">
+              <div key={category.id}>
+                <div className="sticky top-0 z-[1] rounded-[8px] bg-[color:var(--surface-panel)] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)]">
                   {t(category.labelKey)}
                 </div>
-                <div className="grid gap-2">
+                <div className="space-y-0.5">
                   {items.map((agent) => {
                     const description = t(agent.descriptionKey ?? kindDescriptionKey[agent.kind]);
                     const selected = selectedAgentId === agent.id;
 
                     return (
-                      <button
+                      <Tooltip
                         key={agent.id}
-                        aria-describedby="chat-agent-selector-help"
-                        aria-label={`${t("chat.sidebar.agent")}: ${t(agent.nameKey)}`}
-                        aria-pressed={selected}
-                        className={cn(
-                          "flex items-start gap-3 rounded-[10px] border px-3 py-3 text-left transition-all duration-200",
-                          agent.accentClass,
-                          selected
-                            ? "ring-2 ring-[var(--brand)]/25"
-                            : "hover:border-[var(--brand)]/25"
-                        )}
-                        onClick={() => {
-                          setSelectedAgentId(agent.id);
-                          setSearchQuery("");
-                        }}
-                      >
-                        <Tooltip
-                          content={
-                            <div className="space-y-1">
+                        content={
+                          <div className="max-w-[280px] space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">{agent.icon}</span>
                               <p className="text-sm font-semibold text-[var(--ink)]">
                                 {t(agent.nameKey)}
                               </p>
-                              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-                                {t(category.labelKey)}
-                              </p>
-                              <p className="text-xs leading-5 text-[var(--ink-soft)]">
-                                {description}
-                              </p>
                             </div>
-                          }
+                            <p className="text-xs leading-5 text-[var(--ink-soft)]">
+                              {description}
+                            </p>
+                          </div>
+                        }
+                      >
+                        <button
+                          aria-describedby="chat-agent-selector-help"
+                          aria-label={`${t("chat.sidebar.agent")}: ${t(agent.nameKey)}`}
+                          aria-pressed={selected}
+                          className={cn(
+                            "flex w-full items-center gap-2 rounded-[8px] px-2 py-1.5 text-left transition-all duration-150",
+                            selected
+                              ? "bg-[var(--brand)]/10 ring-1 ring-[var(--brand)]/20"
+                              : "hover:bg-[var(--surface-panel-strong)]"
+                          )}
+                          onClick={() => {
+                            setSelectedAgentId(agent.id);
+                            setSearchQuery("");
+                          }}
                         >
-                          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-white/70 text-xl dark:bg-white/10">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] bg-white/60 text-base dark:bg-white/10">
                             <span aria-hidden>{agent.icon}</span>
                           </span>
-                        </Tooltip>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-semibold text-[var(--ink)]">
-                              {t(agent.nameKey)}
-                            </p>
-                            {agent.recommended ? (
-                              <span className="rounded-full bg-[var(--panel-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand)]">
-                                {t("chat.sidebar.recommended")}
-                              </span>
-                            ) : null}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <p className="truncate text-[13px] font-medium text-[var(--ink)]">
+                                {t(agent.nameKey)}
+                              </p>
+                              {agent.recommended ? (
+                                <span className="shrink-0 rounded-full bg-[var(--brand)]/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-[var(--brand)]">
+                                  {t("chat.sidebar.recommended")}
+                                </span>
+                              ) : null}
+                            </div>
                           </div>
-                          <p className="mt-1 text-sm leading-5 text-[var(--ink-soft)]">
-                            {description}
-                          </p>
-                        </div>
-                      </button>
+
+                          {selected && (
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--brand)]" />
+                          )}
+                        </button>
+                      </Tooltip>
                     );
                   })}
                 </div>
@@ -151,7 +151,7 @@ export function AgentSelector() {
             ))}
           </div>
         ) : (
-          <div className="rounded-[10px] border border-dashed border-[var(--line)] bg-[color:var(--surface-panel-strong)] px-4 py-6 text-sm text-[var(--ink-muted)]">
+          <div className="rounded-[8px] border border-dashed border-[var(--line)] bg-[color:var(--surface-panel-strong)] px-3 py-4 text-xs text-[var(--ink-muted)]">
             {t("chat.sidebar.noAgents")}
           </div>
         )}

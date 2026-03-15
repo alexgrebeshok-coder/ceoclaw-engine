@@ -45,10 +45,10 @@ export function HelpPage() {
   }, [searchQuery]);
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       {/* Search */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]" />
             <input
@@ -70,7 +70,7 @@ export function HelpPage() {
       {/* FAQ Results */}
       {searchQuery && filteredFaq.length > 0 && (
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <h3 className="mb-4 font-semibold text-[var(--ink)]">Быстрые ссылки</h3>
             <div className="grid gap-2">
               {filteredFaq.map((item) => (
@@ -91,15 +91,15 @@ export function HelpPage() {
         </Card>
       )}
 
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
+      <section className="grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
         <Card className="overflow-hidden">
-          <CardContent className="grid gap-6 p-8 lg:grid-cols-[1.15fr_.85fr]">
+          <CardContent className="grid gap-4 p-6 lg:grid-cols-[1.15fr_.85fr]">
             <div className="space-y-4">
               <span className="inline-flex items-center rounded-[6px] bg-[var(--panel-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand)]">
                 {t("page.help.eyebrow")}
               </span>
               <div>
-                <h2 className="font-heading text-3xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
+                <h2 className="font-heading text-xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
                   {t("page.help.title")}
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm text-[var(--ink-soft)]">
@@ -148,7 +148,7 @@ export function HelpPage() {
         </HelpCard>
       </section>
 
-      <section className="grid gap-6 2xl:grid-cols-2">
+      <section className="grid gap-4 2xl:grid-cols-2">
         <HelpCard description={t("help.shortcutsDescription")} title={t("help.shortcutsTitle")}>
           <div className="grid gap-3">
             {shortcuts.map((shortcut) => (
@@ -229,7 +229,7 @@ export function HelpPage() {
 
       <section className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardContent className="space-y-4 p-6">
+          <CardContent className="space-y-4 p-4">
             <span className="flex h-12 w-12 items-center justify-center rounded-[8px] bg-[var(--panel-soft)] text-[var(--brand)]">
               <Command className="h-5 w-5" />
             </span>
@@ -241,7 +241,7 @@ export function HelpPage() {
         </Card>
 
         <Card>
-          <CardContent className="space-y-4 p-6">
+          <CardContent className="space-y-4 p-4">
             <span className="flex h-12 w-12 items-center justify-center rounded-[8px] bg-[var(--panel-soft)] text-[var(--brand)]">
               <MessageSquareText className="h-5 w-5" />
             </span>
@@ -256,7 +256,7 @@ export function HelpPage() {
         </Card>
 
         <Card>
-          <CardContent className="space-y-4 p-6">
+          <CardContent className="space-y-4 p-4">
             <span className="flex h-12 w-12 items-center justify-center rounded-[8px] bg-[var(--panel-soft)] text-[var(--brand)]">
               <LifeBuoy className="h-5 w-5" />
             </span>

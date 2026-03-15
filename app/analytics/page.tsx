@@ -9,13 +9,13 @@ export default function AnalyticsPage() {
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Analytics</h1>
+        <h1 className="text-xl font-bold">Analytics</h1>
         <p className="mt-2 text-[var(--ink-muted)]">
           Project performance and team metrics
         </p>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="team">Team Performance</TabsTrigger>

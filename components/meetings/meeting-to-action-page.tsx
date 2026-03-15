@@ -189,7 +189,7 @@ export function MeetingToActionPage() {
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <DomainPageHeader
         chips={[
           { label: "Pilot flow", variant: "success" },
@@ -201,7 +201,7 @@ export function MeetingToActionPage() {
         title="Meeting to Action"
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
         <Card className="border-[var(--line)] bg-[var(--surface-panel)]">
           <CardHeader>
             <CardTitle>Meeting Intake</CardTitle>

@@ -2,13 +2,14 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { applyAIProposal, hasPendingProposal } from "@/lib/ai/action-engine";
-import type { AIApplyProposalInput, AIRunInput, AIRunRecord } from "@/lib/ai/types";
+import type { AIApplyProposalInput, AIRunInput, AIRunRecord, AIRunResult } from "@/lib/ai/types";
 import { invokeOpenClawGateway } from "@/lib/ai/openclaw-gateway";
 import { buildMockFinalRun } from "@/lib/ai/mock-adapter";
+import { AIRouter } from "@/lib/ai/providers";
 import { prisma } from "@/lib/prisma";
 import { isDatabaseConfigured } from "@/lib/server/runtime-mode";
 
-export type ServerAIRunOrigin = "gateway" | "mock";
+export type ServerAIRunOrigin = "gateway" | "provider" | "mock";
 
 export type ServerAIRunEntry = {
   origin: ServerAIRunOrigin;
@@ -35,6 +36,7 @@ function createQueuedGatewayRun(input: AIRunInput, runId: string): AIRunRecord {
 
   return {
     id: runId,
+    sessionId: input.sessionId,
     agentId: input.agent.id,
     title: "AI Workspace Run",
     prompt: input.prompt,
@@ -42,8 +44,38 @@ function createQueuedGatewayRun(input: AIRunInput, runId: string): AIRunRecord {
     status: "queued",
     createdAt: now,
     updatedAt: now,
-    context: input.context.activeContext,
+    context: input.context?.activeContext || input.context || { projectId: "default" },
   };
+}
+
+function hasOpenClawGateway() {
+  const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL;
+  const gatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN;
+  return !!(gatewayUrl && gatewayToken);
+}
+
+function hasAvailableProvider() {
+  return !!(
+    process.env.OPENROUTER_API_KEY ||
+    process.env.ZAI_API_KEY ||
+    process.env.OPENAI_API_KEY
+  );
+}
+
+function getExecutionMode(): "gateway" | "provider" | "mock" {
+  const mode = process.env.SEOCLAW_AI_MODE;
+
+  // Explicit mode set
+  if (mode === "mock") return "mock";
+  if (mode === "gateway") {
+    if (hasOpenClawGateway()) return "gateway";
+    console.warn("[AI] SEOCLAW_AI_MODE=gateway but no gateway configured, falling back to provider/mock");
+  }
+
+  // Auto-detect
+  if (hasOpenClawGateway()) return "gateway";
+  if (hasAvailableProvider()) return "provider";
+  return "mock";
 }
 
 function shouldUseGateway() {
@@ -52,7 +84,7 @@ function shouldUseGateway() {
     return false;
   }
 
-  return true;
+  return hasOpenClawGateway();
 }
 
 function getRunFile(runId: string) {
@@ -146,6 +178,80 @@ async function createMockRun(input: AIRunInput) {
   return run;
 }
 
+async function createProviderRun(input: AIRunInput) {
+  const runId = createRunId();
+  const run = createQueuedGatewayRun(input, runId);
+  await persistEntry({
+    origin: "provider",
+    input,
+    run,
+  });
+  void executeProviderRun(runId);
+  return cloneRun(run);
+}
+
+async function executeProviderRun(runId: string) {
+  const entry = await readEntry(runId);
+  if (!entry) return;
+
+  const runningAt = new Date().toISOString();
+  await persistEntry({
+    ...entry,
+    run: {
+      ...entry.run,
+      status: "running",
+      updatedAt: runningAt,
+    },
+  });
+
+  try {
+    const router = new AIRouter();
+    const agentId = entry.input.agent.id;
+    const systemPrompt = `You are ${agentId}, a helpful PM assistant for project management.`;
+    
+    const messages = [
+      { role: "system" as const, content: systemPrompt },
+      { role: "user" as const, content: entry.input.prompt },
+    ];
+
+    const responseText = await router.chat(messages);
+    
+    const result: AIRunResult = {
+      title: `${agentId} Response`,
+      summary: responseText,
+      highlights: [],
+      nextSteps: [],
+      proposal: null,
+    };
+
+    const finalRun: AIRunRecord = {
+      ...entry.run,
+      status: "done",
+      updatedAt: new Date().toISOString(),
+      result,
+    };
+
+    await persistEntry({
+      ...entry,
+      run: finalRun,
+    });
+  } catch (error) {
+    console.error(`[Provider Run] ${runId} failed:`, error);
+    
+    const failedRun: AIRunRecord = {
+      ...entry.run,
+      status: "failed",
+      updatedAt: new Date().toISOString(),
+      errorMessage: error instanceof Error ? error.message : "Provider error",
+    };
+
+    await persistEntry({
+      ...entry,
+      run: failedRun,
+    });
+  }
+}
+
 async function executeGatewayRun(runId: string) {
   const entry = await readEntry(runId);
   if (!entry) return;
@@ -209,10 +315,17 @@ async function resolveServerAIRunEntry(runId: string) {
 }
 
 export async function createServerAIRun(input: AIRunInput) {
-  if (!shouldUseGateway()) {
+  const mode = getExecutionMode();
+
+  if (mode === "mock") {
     return createMockRun(input);
   }
 
+  if (mode === "provider") {
+    return createProviderRun(input);
+  }
+
+  // Gateway mode
   const runId = createRunId();
   const run = createQueuedGatewayRun(input, runId);
   await persistEntry({

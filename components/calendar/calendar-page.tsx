@@ -118,7 +118,7 @@ export function CalendarPage() {
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <Card>
         <CardHeader className="flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -154,7 +154,7 @@ export function CalendarPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="min-w-0">
           <CardContent className="overflow-x-auto p-4 xl:p-5">
             <div
@@ -277,7 +277,7 @@ export function CalendarPage() {
               <div className="text-xs uppercase tracking-[0.14em] text-[var(--ink-muted)]">
                 {t("calendar.openDay")}
               </div>
-              <div className="mt-2 font-heading text-3xl font-semibold tracking-[-0.05em] text-[var(--ink)]">
+              <div className="mt-2 font-heading text-xl font-semibold tracking-[-0.05em] text-[var(--ink)]">
                 {formatDateLocalized(selectedDay, "d MMM yyyy")}
               </div>
             </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
-import { Mic, Paperclip, SendHorizonal } from "lucide-react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Mic, Paperclip, SendHorizonal, X, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,22 @@ import { Textarea } from "@/components/ui/field";
 import { useAIWorkspace } from "@/contexts/ai-context";
 import { useLocale } from "@/contexts/locale-context";
 
+interface Attachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  content: string; // base64
+}
+
 export function ChatInput() {
   const [message, setMessage] = useState("");
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
   const composerHelpId = useId();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { activeContext, isSubmitting, submitPrompt } = useAIWorkspace();
   const { t } = useLocale();
 
@@ -24,34 +36,212 @@ export function ChatInput() {
     textarea.style.height = `${Math.min(textarea.scrollHeight, 220)}px`;
   }, [message]);
 
+  // Voice recording setup
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "ru-RU";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0].transcript)
+        .join("");
+      setMessage(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("[Voice] Error:", event.error);
+      setIsRecording(false);
+      toast.error("Ошибка распознавания", {
+        description: event.error === "not-allowed"
+          ? "Дайте разрешение на микрофон в настройках браузера"
+          : `Ошибка: ${event.error}`,
+      });
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognition.stop();
+    };
+  }, []);
+
+  const toggleRecording = useCallback(() => {
+    const recognition = recognitionRef.current;
+    if (!recognition) {
+      toast.error("Голосовой ввод не поддерживается", {
+        description: "Используйте Chrome, Safari или Edge",
+      });
+      return;
+    }
+
+    if (isRecording) {
+      recognition.stop();
+      setIsRecording(false);
+    } else {
+      recognition.start();
+      setIsRecording(true);
+      toast.success("Запись начата", {
+        description: "Говорите...",
+        duration: 2000,
+      });
+    }
+  }, [isRecording]);
+
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const maxFileSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = [
+      "image/jpeg", "image/png", "image/gif", "image/webp",
+      "application/pdf",
+      "text/plain", "text/csv",
+      "application/json",
+      "text/markdown",
+    ];
+
+    const newAttachments: Attachment[] = [];
+
+    Array.from(files).forEach((file) => {
+      if (file.size > maxFileSize) {
+        toast.error(`Файл слишком большой: ${file.name}`, {
+          description: "Максимум 10MB",
+        });
+        return;
+      }
+
+      if (!allowedTypes.includes(file.type) && !file.name.endsWith(".md")) {
+        toast.error(`Неподдерживаемый формат: ${file.name}`, {
+          description: "Поддерживаются: изображения, PDF, TXT, CSV, JSON, MD",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const content = reader.result as string;
+        newAttachments.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          content,
+        });
+
+        if (newAttachments.length === files.length) {
+          setAttachments((prev) => [...prev, ...newAttachments]);
+          toast.success(`Добавлено ${newAttachments.length} файл(ов)`);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  const removeAttachment = useCallback((id: string) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+  }, []);
+
   const handleSubmit = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() && attachments.length === 0) return;
 
     const nextMessage = message;
+    const nextAttachments = attachments;
+
+    console.log("[ChatInput] Submitting:", nextMessage, "attachments:", nextAttachments.length);
     setMessage("");
-    await submitPrompt(nextMessage);
+    setAttachments([]);
+
+    // Build prompt with attachments context
+    let prompt = nextMessage;
+    if (nextAttachments.length > 0) {
+      const attachmentInfo = nextAttachments.map((a) => {
+        if (a.type.startsWith("image/")) {
+          return `[Изображение: ${a.name}]`;
+        }
+        return `[Файл: ${a.name}]`;
+      }).join("\n");
+      prompt = `${nextMessage}\n\nВложения:\n${attachmentInfo}`;
+    }
+
+    await submitPrompt(prompt);
+    console.log("[ChatInput] Done");
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
     <div className="border-t border-[color:var(--line-strong)] bg-[color:var(--surface-panel)] px-4 py-4 sm:px-6">
+      {/* Attachments preview */}
+      {attachments.length > 0 && (
+        <div className="mx-auto mb-3 flex max-w-5xl flex-wrap gap-2">
+          {attachments.map((attachment) => (
+            <div
+              key={attachment.id}
+              className="flex items-center gap-2 rounded-lg border border-[var(--line-strong)] bg-[var(--surface-panel-strong)] px-3 py-2"
+            >
+              {attachment.type.startsWith("image/") ? (
+                <ImageIcon className="h-4 w-4 text-blue-500" />
+              ) : (
+                <FileText className="h-4 w-4 text-gray-500" />
+              )}
+              <span className="max-w-[150px] truncate text-sm">{attachment.name}</span>
+              <span className="text-xs text-[var(--ink-muted)]">{formatFileSize(attachment.size)}</span>
+              <button
+                onClick={() => removeAttachment(attachment.id)}
+                className="ml-1 rounded-full p-1 hover:bg-[var(--panel-soft)]"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="mx-auto flex min-w-0 w-full max-w-5xl items-end gap-3">
+        {/* File upload button */}
         <div className="relative">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf,.txt,.csv,.json,.md"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+          />
           <Button
             aria-label={t("chat.input.attach")}
-            onClick={() =>
-              toast.info("📎 Attachments coming soon", {
-                description: "File upload will be available in the next release. For now, paste text directly.",
-              })
-            }
+            onClick={() => fileInputRef.current?.click()}
             size="icon"
             type="button"
             variant="secondary"
           >
             <Paperclip className="h-4 w-4" />
           </Button>
-          <span className="absolute -right-1 -top-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
-            SOON
-          </span>
+          {attachments.length > 0 && (
+            <span className="absolute -right-1 -top-1 rounded-full bg-blue-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
+              {attachments.length}
+            </span>
+          )}
         </div>
 
         <div className="min-w-0 flex-1 rounded-[14px] border border-[var(--line-strong)] bg-[color:var(--surface-panel-strong)] px-3 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.1)]">
@@ -91,28 +281,32 @@ export function ChatInput() {
           </p>
         </div>
 
+        {/* Voice input button */}
         <div className="relative">
           <Button
             aria-label={t("chat.input.voice")}
-            onClick={() =>
-              toast.info("🎤 Voice input coming soon", {
-                description: "Voice recording will be available in the next release. For now, type your message.",
-              })
-            }
+            onClick={toggleRecording}
             size="icon"
             type="button"
-            variant="secondary"
+            variant={isRecording ? "default" : "secondary"}
+            className={isRecording ? "animate-pulse bg-red-500 hover:bg-red-600" : ""}
           >
-            <Mic className="h-4 w-4" />
+            {isRecording ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Mic className="h-4 w-4" />
+            )}
           </Button>
-          <span className="absolute -right-1 -top-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
-            SOON
-          </span>
+          {isRecording && (
+            <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
+              ●
+            </span>
+          )}
         </div>
 
         <Button
           aria-label={t("chat.input.send")}
-          disabled={isSubmitting || !message.trim()}
+          disabled={isSubmitting || (!message.trim() && attachments.length === 0)}
           onClick={() => void handleSubmit()}
           size="icon"
         >

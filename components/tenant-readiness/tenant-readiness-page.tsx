@@ -249,7 +249,7 @@ export function TenantReadinessPage({
   const runtimeBadge = getOperatorTruthBadge(runtimeTruth);
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <DomainPageHeader
         actions={
           <>
@@ -304,7 +304,7 @@ export function TenantReadinessPage({
 
       <OperatorRuntimeCard truth={runtimeTruth} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Promotion posture</CardTitle>
@@ -416,7 +416,7 @@ export function TenantReadinessPage({
         }))}
       />
 
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid gap-4 xl:grid-cols-3">
         <FindingsColumn
           emptyCopy="No tenant cutover blockers remain in the tracked surfaces."
           items={readiness.blockers}

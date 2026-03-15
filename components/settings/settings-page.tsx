@@ -142,16 +142,16 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="grid gap-6">
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
+    <div className="grid gap-4">
+      <section className="grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
         <Card className="overflow-hidden">
-          <CardContent className="grid gap-6 p-8 lg:grid-cols-[1.1fr_.9fr]">
+          <CardContent className="grid gap-4 p-6 lg:grid-cols-[1.1fr_.9fr]">
             <div className="space-y-4">
               <span className="inline-flex items-center rounded-[6px] bg-[var(--panel-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand)]">
                 {t("page.settings.eyebrow")}
               </span>
               <div>
-                <h2 className="font-heading text-3xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
+                <h2 className="font-heading text-xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
                   {t("page.settings.title")}
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm text-[var(--ink-soft)]">
@@ -204,7 +204,7 @@ export function SettingsPage() {
         </SettingsCard>
       </section>
 
-      <section className="grid gap-6 2xl:grid-cols-2">
+      <section className="grid gap-4 2xl:grid-cols-2">
         <SettingsCard
           description={t("settings.workspaceHelp")}
           title={t("settings.section.workspace")}
@@ -365,7 +365,7 @@ export function SettingsPage() {
         </SettingsCard>
 
         <Card className="overflow-hidden">
-          <CardContent className="grid gap-4 p-6">
+          <CardContent className="grid gap-4 p-4">
             <div className="flex items-center gap-3">
               <span className="flex h-12 w-12 items-center justify-center rounded-[10px] bg-[var(--panel-soft)] text-[var(--brand)]">
                 <MonitorCog className="h-5 w-5" />

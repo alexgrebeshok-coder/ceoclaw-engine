@@ -90,7 +90,7 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
 
   if (showHydrationSkeleton) {
     return (
-      <div className="grid min-w-0 gap-6">
+      <div className="grid min-w-0 gap-4">
         <AIContextActions />
 
         <Card>
@@ -105,14 +105,14 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
               <Skeleton className="h-12 w-44" />
             </div>
           </CardHeader>
-          <CardContent className="grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
+          <CardContent className="grid gap-4 xl:grid-cols-[1.1fr_.9fr]">
             <div className="grid gap-4">
               {Array.from({ length: 4 }, (_, index) => (
                 <ProjectCardSkeleton key={index} />
               ))}
             </div>
             <Card className="bg-[color:var(--surface-panel)]">
-              <CardContent className="space-y-6 p-6">
+              <CardContent className="space-y-4 p-4">
                 <Skeleton className="h-7 w-44" />
                 <ChartSkeleton className="h-[320px]" />
                 <div className="grid gap-3">
@@ -152,7 +152,7 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
 
   return (
     <>
-      <div className="grid min-w-0 gap-6">
+      <div className="grid min-w-0 gap-4">
         <Card>
           <CardHeader className="min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
@@ -183,7 +183,7 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
               <Button onClick={() => setProjectModalOpen(true)}>{t("action.addProject")}</Button>
             </div>
           </CardHeader>
-          <CardContent className="grid min-w-0 gap-6">
+          <CardContent className="grid min-w-0 gap-4">
             <div className="grid min-w-0 gap-4">
               {paginatedProjects.map((project) => (
                 <ProjectCard
@@ -234,7 +234,7 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
               <CardHeader>
                 <CardTitle>{t("projects.comparison")}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 <ClientChart className="h-[320px]">
                   <ProjectsComparisonChart data={compareData} />
                 </ClientChart>

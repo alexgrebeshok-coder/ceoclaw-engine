@@ -9,12 +9,21 @@ import { AgentSessionManager } from './agent-store';
 // Types
 // ============================================
 
+export interface MemoryItem {
+  type: string;
+  category: string;
+  key: string;
+  value: any;
+  confidence?: number;
+  createdAt?: string;
+}
+
 export interface AgentContext {
   projectId?: string;
   projectName?: string;
   tasks?: any[];
   risks?: any[];
-  memory?: any[];
+  memory?: MemoryItem[] | { longTerm: MemoryItem[]; recent: MemoryItem[] };
   metadata?: Record<string, any>;
 }
 

@@ -116,7 +116,7 @@ export const TeamPerformance = React.memo(function TeamPerformance({
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Summary */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="p-4">

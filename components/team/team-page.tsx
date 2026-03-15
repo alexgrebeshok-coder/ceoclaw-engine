@@ -9,7 +9,7 @@ import { useTeam } from "@/lib/hooks/use-api";
 
 function TeamSkeleton() {
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <Card>
         <CardHeader>
           <Skeleton className="h-7 w-40" />
@@ -17,7 +17,7 @@ function TeamSkeleton() {
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, index) => (
             <Card key={index} className="bg-[var(--panel-soft)]/60">
-              <CardContent className="space-y-4 p-6">
+              <CardContent className="space-y-4 p-4">
                 <Skeleton className="h-6 w-40" />
                 <Skeleton className="h-4 w-28" />
                 <Skeleton className="h-2 w-full" />
@@ -59,7 +59,7 @@ export function TeamPage() {
   const normalCount = team.filter(m => m.allocated < 70).length;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       {/* Team Summary Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="border-green-500/20 bg-green-500/5 dark:border-green-400/25 dark:bg-green-500/10">

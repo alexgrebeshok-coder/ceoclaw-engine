@@ -127,11 +127,11 @@ export class AgentOrchestrator {
 
     // Calculate totals
     const totalTokens = results.reduce(
-      (sum, r) => sum + (r.result.tokens || 0),
+      (sum, r) => sum + ('tokens' in r.result ? (r.result.tokens || 0) : 0),
       0
     );
     const totalCost = results.reduce(
-      (sum, r) => sum + (r.result.cost || 0),
+      (sum, r) => sum + ('cost' in r.result ? (r.result.cost || 0) : 0),
       0
     );
 

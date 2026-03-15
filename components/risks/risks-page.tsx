@@ -64,11 +64,11 @@ function riskIconClass(probability: number, impact: number) {
 
 function RisksSkeleton() {
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <div className="grid gap-4 md:grid-cols-3">
         {Array.from({ length: 3 }, (_, index) => (
           <Card key={index}>
-            <CardContent className="space-y-3 p-6">
+            <CardContent className="space-y-3 p-4">
               <Skeleton className="h-5 w-24" />
               <Skeleton className="h-10 w-16" />
             </CardContent>
@@ -204,10 +204,10 @@ export function RisksPage() {
   const mitigatedCount = risks.filter((risk) => risk.status === "mitigated").length;
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-4">
       <div className="grid gap-4 md:grid-cols-3">
         <Card className={summaryCardClass("neutral")}>
-          <CardContent className="space-y-3 p-6">
+          <CardContent className="space-y-3 p-4">
             <div className="flex items-center gap-3 text-[var(--ink-soft)]">
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${summaryIconClass("neutral")}`}>
                 <AlertTriangle className="h-4 w-4" />
@@ -220,7 +220,7 @@ export function RisksPage() {
           </CardContent>
         </Card>
         <Card className={summaryCardClass("danger")}>
-          <CardContent className="space-y-3 p-6">
+          <CardContent className="space-y-3 p-4">
             <div className="flex items-center gap-3 text-[var(--ink-soft)]">
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${summaryIconClass("danger")}`}>
                 <ShieldX className="h-4 w-4" />
@@ -233,7 +233,7 @@ export function RisksPage() {
           </CardContent>
         </Card>
         <Card className={summaryCardClass("success")}>
-          <CardContent className="space-y-3 p-6">
+          <CardContent className="space-y-3 p-4">
             <div className="flex items-center gap-3 text-[var(--ink-soft)]">
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${summaryIconClass("success")}`}>
                 <ShieldCheck className="h-4 w-4" />

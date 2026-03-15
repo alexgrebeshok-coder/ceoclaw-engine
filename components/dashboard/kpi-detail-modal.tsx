@@ -84,11 +84,11 @@ export function KpiDetailModal({
           <DialogDescription id="kpi-detail-description">{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           {/* Main Value */}
           <div className="rounded-[12px] border border-[var(--line)] bg-[var(--panel-soft)] p-5">
             <p className="text-sm text-[var(--ink-soft)]">{t("dashboard.kpi.portfolioStatus")}</p>
-            <p className="mt-2 font-heading text-4xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
+            <p className="mt-2 font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--ink)]">
               {value}
             </p>
           </div>

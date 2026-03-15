@@ -19,7 +19,7 @@ export function ErrorFallbackCard({
 
   return (
     <Card className="border-rose-200 bg-[var(--surface-panel)]">
-      <CardContent className="flex min-h-[280px] flex-col items-center justify-center gap-5 p-8 text-center">
+      <CardContent className="flex min-h-[280px] flex-col items-center justify-center gap-5 p-6 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
           <AlertTriangle className="h-7 w-7" />
         </div>

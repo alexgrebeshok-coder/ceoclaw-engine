@@ -53,7 +53,7 @@ export function AIDrawer() {
                 {t("ai.drawerBadge")}
               </div>
               <div>
-                <h2 className="font-heading text-3xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
+                <h2 className="font-heading text-xl font-semibold tracking-[-0.06em] text-[var(--ink)]">
                   {t("ai.drawerTitle")}
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">

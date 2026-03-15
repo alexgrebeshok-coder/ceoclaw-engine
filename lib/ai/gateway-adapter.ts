@@ -95,14 +95,17 @@ export function createGatewayAIAdapter(): AIAdapter {
   return {
     mode: "gateway",
     async runAgent(input: AIRunInput) {
+      console.log("[GatewayAdapter] runAgent called:", input.prompt);
       try {
         const run = await request<AIRunRecord>("/runs", {
           method: "POST",
           body: JSON.stringify(input),
         });
+        console.log("[GatewayAdapter] Gateway success:", run.id);
         runStartedAt.set(run.id, Date.now());
         return run;
-      } catch {
+      } catch (error) {
+        console.log("[GatewayAdapter] Gateway failed, using mock:", error);
         const run = await mockAdapter.runAgent(input);
         fallbackRuns.add(run.id);
         runStartedAt.set(run.id, Date.now());

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useLocale } from "@/contexts/locale-context";
+import { DraggableFAB } from "./draggable-fab";
 
 interface Message {
   id: string;
@@ -19,6 +20,11 @@ interface Message {
  * 
  * Allows users to interact with OpenClaw via text commands
  * from within the dashboard
+ * 
+ * Features:
+ * - Draggable floating button (long-press to move)
+ * - Position saved to localStorage
+ * - Works on desktop and mobile
  */
 export function ChatWidget() {
   const { t } = useLocale();
@@ -49,11 +55,11 @@ export function ChatWidget() {
     setIsLoading(true);
 
     try {
-      // Call internal API that proxies to OpenClaw
-      const response = await fetch("/api/chat", {
+      // Call CEOClaw AI backend
+      const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: input, provider: 'openrouter' }),
       });
 
       const data = await response.json();
@@ -61,7 +67,7 @@ export function ChatWidget() {
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
-        content: data.message || "Произошла ошибка. Попробуй ещё раз.",
+        content: data.success ? data.response : (data.error || "Произошла ошибка. Попробуй ещё раз."),
         timestamp: new Date(),
       };
 
@@ -79,20 +85,9 @@ export function ChatWidget() {
     }
   }, [input, isLoading]);
 
-  if (!isOpen) {
-    return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
-        size="icon"
-      >
-        <MessageCircle className="h-6 w-6" />
-      </Button>
-    );
-  }
-
-  return (
-    <Card className="fixed bottom-6 right-6 w-96 h-[500px] flex flex-col shadow-2xl z-50">
+  // Chat panel content
+  const chatPanel = (
+    <Card className="h-[450px] flex flex-col shadow-2xl">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
@@ -153,5 +148,17 @@ export function ChatWidget() {
         </form>
       </div>
     </Card>
+  );
+
+  return (
+    <DraggableFAB
+      icon={<MessageCircle className="h-6 w-6" />}
+      isOpen={isOpen}
+      onClick={() => setIsOpen(true)}
+      onClose={() => setIsOpen(false)}
+      storageKey="ceoclaw-chat-position"
+    >
+      {chatPanel}
+    </DraggableFAB>
   );
 }

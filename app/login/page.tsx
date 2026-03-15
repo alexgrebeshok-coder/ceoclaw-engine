@@ -12,7 +12,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
       {/* Left Side - Form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-[var(--surface)]">
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-md space-y-6">
           {/* Logo & Header */}
           <div className="text-center space-y-2">
             <Link href="/" className="inline-block">
@@ -47,9 +47,9 @@ export default function LoginPage() {
 
       {/* Right Side - Branding/Illustration */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-[#3b82f6] to-[#2563eb] items-center justify-center p-12">
-        <div className="max-w-lg text-white space-y-8">
+        <div className="max-w-lg text-white space-y-6">
           <div className="space-y-4">
-            <h2 className="text-4xl font-bold leading-tight">
+            <h2 className="text-xl font-bold leading-tight">
               Управляйте проектами с умом
             </h2>
             <p className="text-lg text-white/80">
@@ -58,7 +58,7 @@ export default function LoginPage() {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 gap-6 pt-8">
+          <div className="grid grid-cols-2 gap-4 pt-8">
             <div className="space-y-2">
               <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

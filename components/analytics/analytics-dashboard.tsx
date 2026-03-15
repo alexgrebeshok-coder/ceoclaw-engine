@@ -166,7 +166,7 @@ export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Аналитика</h2>
