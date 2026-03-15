@@ -11,7 +11,7 @@ export async function GET() {
     const results: string[] = [];
 
     // 1. Account table (OAuth accounts)
-    await prisma.$executeRawUnsafe(`
+    await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "Account" (
         "id" TEXT NOT NULL,
         "userId" TEXT NOT NULL,
@@ -27,11 +27,11 @@ export async function GET() {
         "session_state" TEXT,
         CONSTRAINT "Account_pkey" PRIMARY KEY ("id")
       );
-    `);
+    `;
     results.push('Account table created');
 
     // 2. Session table
-    await prisma.$executeRawUnsafe(`
+    await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "Session" (
         "id" TEXT NOT NULL,
         "sessionToken" TEXT NOT NULL UNIQUE,
@@ -39,21 +39,21 @@ export async function GET() {
         "expires" TIMESTAMP(3) NOT NULL,
         CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
       );
-    `);
+    `;
     results.push('Session table created');
 
     // 3. VerificationToken table
-    await prisma.$executeRawUnsafe(`
+    await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "VerificationToken" (
         "identifier" TEXT NOT NULL,
         "token" TEXT NOT NULL UNIQUE,
         "expires" TIMESTAMP(3) NOT NULL
       );
-    `);
+    `;
     results.push('VerificationToken table created');
 
     // 4. Organization table
-    await prisma.$executeRawUnsafe(`
+    await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "Organization" (
         "id" TEXT NOT NULL,
         "slug" TEXT NOT NULL UNIQUE,
@@ -63,11 +63,11 @@ export async function GET() {
         "updatedAt" TIMESTAMP(3) NOT NULL,
         CONSTRAINT "Organization_pkey" PRIMARY KEY ("id")
       );
-    `);
+    `;
     results.push('Organization table created');
 
     // 5. TeamMember table (needed for Membership FK)
-    await prisma.$executeRawUnsafe(`
+    await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "TeamMember" (
         "id" TEXT NOT NULL,
         "name" TEXT NOT NULL,
@@ -80,11 +80,11 @@ export async function GET() {
         "updatedAt" TIMESTAMP(3) NOT NULL,
         CONSTRAINT "TeamMember_pkey" PRIMARY KEY ("id")
       );
-    `);
+    `;
     results.push('TeamMember table created');
 
     // 6. Membership table (CRITICAL - links User to Organization)
-    await prisma.$executeRawUnsafe(`
+    await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "Membership" (
         "id" TEXT NOT NULL,
         "organizationId" TEXT NOT NULL,
@@ -98,11 +98,11 @@ export async function GET() {
         "updatedAt" TIMESTAMP(3) NOT NULL,
         CONSTRAINT "Membership_pkey" PRIMARY KEY ("id")
       );
-    `);
+    `;
     results.push('Membership table created ✅ (CRITICAL)');
 
     // 7. Workspace table
-    await prisma.$executeRawUnsafe(`
+    await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "Workspace" (
         "id" TEXT NOT NULL,
         "organizationId" TEXT NOT NULL,
@@ -115,11 +115,11 @@ export async function GET() {
         "updatedAt" TIMESTAMP(3) NOT NULL,
         CONSTRAINT "Workspace_pkey" PRIMARY KEY ("id")
       );
-    `);
+    `;
     results.push('Workspace table created');
 
     // 8. WorkspaceMembership table
-    await prisma.$executeRawUnsafe(`
+    await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "WorkspaceMembership" (
         "id" TEXT NOT NULL,
         "workspaceId" TEXT NOT NULL,
@@ -128,15 +128,15 @@ export async function GET() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT "WorkspaceMembership_pkey" PRIMARY KEY ("id")
       );
-    `);
+    `;
     results.push('WorkspaceMembership table created');
 
     // Create indexes
-    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Account_userId_idx" ON "Account"("userId");`);
-    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Session_userId_idx" ON "Session"("userId");`);
-    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Membership_organizationId_role_idx" ON "Membership"("organizationId", "role");`);
-    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Membership_userId_idx" ON "Membership"("userId");`);
-    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Membership_teamMemberId_idx" ON "Membership"("teamMemberId");`);
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Account_userId_idx" ON "Account"("userId");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Session_userId_idx" ON "Session"("userId");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Membership_organizationId_role_idx" ON "Membership"("organizationId", "role");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Membership_userId_idx" ON "Membership"("userId");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Membership_teamMemberId_idx" ON "Membership"("teamMemberId");`;
     results.push('Indexes created');
 
     return NextResponse.json({ 
