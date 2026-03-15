@@ -1,6 +1,6 @@
 /**
  * Prisma Client - Singleton
- * 
+ *
  * Prevents exhausting database connections in development
  */
 
