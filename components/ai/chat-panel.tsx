@@ -38,8 +38,10 @@ const DEFAULT_POSITION: Position = { x: 24, y: 24 }; // bottom-6 right-6 = 24px
 // Public pages where AI chat should NOT appear
 const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password'];
 
-export function AIChatPanel({ projectId, className }: AIChatPanelProps) {
-  const pathname = usePathname();
+/**
+ * Inner chat panel component (always rendered if parent allows)
+ */
+function AIChatPanelInner({ projectId, className }: AIChatPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [position, setPosition] = useState<Position>(DEFAULT_POSITION);
@@ -52,11 +54,6 @@ export function AIChatPanel({ projectId, className }: AIChatPanelProps) {
   const { messages, isLoading, error, sendMessage, clearMessages } = useAIChat({
     projectId,
   });
-
-  // Hide on public pages
-  if (PUBLIC_PATHS.some(path => pathname?.startsWith(path))) {
-    return null;
-  }
 
   // Load position from localStorage
   useEffect(() => {
@@ -194,21 +191,21 @@ export function AIChatPanel({ projectId, className }: AIChatPanelProps) {
       >
         <div className="flex items-center gap-2">
           <GripVertical className="h-4 w-4 text-muted-foreground" />
-          <Bot className="h-5 w-5 text-blue-500" />
-          <CardTitle className="text-base">CEOClaw AI</CardTitle>
+          <CardTitle className="text-base">AI Ассистент</CardTitle>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex gap-1">
           <Button
             variant="ghost"
             size="icon"
+            className="h-7 w-7"
             onClick={clearMessages}
-            title="Очистить чат"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
+            className="h-7 w-7"
             onClick={() => setIsOpen(false)}
           >
             <X className="h-4 w-4" />
@@ -220,70 +217,70 @@ export function AIChatPanel({ projectId, className }: AIChatPanelProps) {
       <CardContent className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.length === 0 && (
           <div className="text-center text-sm text-muted-foreground py-8">
-            <Bot className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-            <p>Привет! Я CEOClaw AI.</p>
-            <p className="text-xs mt-1">Задайте вопрос о ваших проектах.</p>
+            <Bot className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>Привет! Чем могу помочь?</p>
           </div>
         )}
-
-        {messages.map((msg, i) => (
+        
+        {messages.map((msg) => (
           <div
-            key={i}
+            key={msg.id}
             className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {msg.role === 'assistant' && (
-              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center">
-                <Bot className="h-4 w-4 text-white" />
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Bot className="h-3 w-3" />
               </div>
             )}
             <div
               className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                 msg.role === 'user'
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-muted'
               }`}
             >
               {msg.content}
             </div>
             {msg.role === 'user' && (
-              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gray-500 flex items-center justify-center">
-                <User className="h-4 w-4 text-white" />
+              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                <User className="h-3 w-3 text-primary-foreground" />
               </div>
             )}
           </div>
         ))}
-
+        
         {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Думаю...</span>
+          <div className="flex gap-2 justify-start">
+            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <Bot className="h-3 w-3" />
+            </div>
+            <div className="bg-muted rounded-lg px-3 py-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
           </div>
         )}
-
-        {error && (
-          <div className="text-sm text-red-500 bg-red-50 rounded p-2">
-            {error}
-          </div>
-        )}
-
+        
         <div ref={messagesEndRef} />
       </CardContent>
 
       {/* Input */}
       <div className="p-3 border-t">
+        {error && (
+          <p className="text-xs text-destructive mb-2">{error}</p>
+        )}
         <div className="flex gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Введите сообщение..."
-            disabled={isLoading}
+            placeholder="Напишите сообщение..."
             className="flex-1"
+            disabled={isLoading}
           />
           <Button
+            size="icon"
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            size="icon"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -295,4 +292,18 @@ export function AIChatPanel({ projectId, className }: AIChatPanelProps) {
       </div>
     </Card>
   );
+}
+
+/**
+ * AI Chat Panel - Wrapper that hides on public pages
+ */
+export function AIChatPanel(props: AIChatPanelProps) {
+  const pathname = usePathname();
+  
+  // Hide on public pages - this check happens before any other hooks
+  if (PUBLIC_PATHS.some(path => pathname?.startsWith(path))) {
+    return null;
+  }
+  
+  return <AIChatPanelInner {...props} />;
 }

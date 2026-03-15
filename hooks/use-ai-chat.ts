@@ -5,6 +5,7 @@
 import { useState, useCallback } from 'react';
 
 interface Message {
+  id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
