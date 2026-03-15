@@ -40,7 +40,8 @@ export interface MemoryStats {
 // Helper Functions
 // ============================================
 
-function parseValue(value: string): any {
+function parseValue(value: string | null): any {
+  if (value === null) return null;
   try {
     return JSON.parse(value);
   } catch {
@@ -54,12 +55,17 @@ function stringifyValue(value: any): string {
 }
 
 function toMemoryEntry(memory: Memory): MemoryEntry {
+  // Handle both SQLite (string) and PostgreSQL (Json) values
+  const rawValue = typeof memory.value === 'string' 
+    ? memory.value 
+    : JSON.stringify(memory.value);
+  
   return {
     id: memory.id,
     type: memory.type as MemoryEntry['type'],
     category: memory.category as MemoryEntry['category'],
     key: memory.key,
-    value: parseValue(memory.value),
+    value: parseValue(rawValue),
     validFrom: memory.validFrom,
     validUntil: memory.validUntil,
     confidence: memory.confidence,
@@ -247,11 +253,11 @@ export const prismaMemoryManager = {
    * Search memories by query
    */
   async search(query: string): Promise<MemoryEntry[]> {
+    // Note: PostgreSQL Json type doesn't support 'contains', so we exclude value from search
     const memories = await prisma.memory.findMany({
       where: {
         OR: [
           { key: { contains: query } },
-          { value: { contains: query } },
           { category: { contains: query } },
           { type: { contains: query } },
         ],
@@ -259,9 +265,17 @@ export const prismaMemoryManager = {
       orderBy: { updatedAt: 'desc' },
     });
 
+    // Filter in memory for value content
     return memories
       .map(toMemoryEntry)
-      .filter((e) => this.isValid(e));
+      .filter((e) => {
+        // Check if query matches value (as JSON string)
+        const valueStr = JSON.stringify(e.value).toLowerCase();
+        return this.isValid(e) && (
+          e.key.toLowerCase().includes(query.toLowerCase()) ||
+          valueStr.includes(query.toLowerCase())
+        );
+      });
   },
 
   /**
