@@ -1,5 +1,5 @@
 /**
- * Admin API - Fix all tables (drop and recreate)
+ * Admin API - Fix all tables (drop and recreate with FULL schema from Prisma)
  */
 
 import { NextResponse } from 'next/server';
@@ -22,6 +22,7 @@ export async function GET() {
       'DROP TABLE IF EXISTS "Task" CASCADE',
       'DROP TABLE IF EXISTS "Project" CASCADE',
       'DROP TABLE IF EXISTS "Memory" CASCADE',
+      'DROP TABLE IF EXISTS "TeamMember" CASCADE',
     ];
 
     for (const sql of dropTables) {
@@ -33,7 +34,7 @@ export async function GET() {
     }
     results.push('Business tables dropped');
 
-    // Create Organization table (if not exists with correct schema)
+    // Organization table
     await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "Organization" (
         "id" TEXT NOT NULL,
@@ -47,7 +48,7 @@ export async function GET() {
     `;
     results.push('Organization table ready');
 
-    // Create Workspace table
+    // Workspace table
     await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "Workspace" (
         "id" TEXT NOT NULL,
@@ -83,32 +84,30 @@ export async function GET() {
     `;
     results.push('Memory table created ✅');
 
-    // Project table
+    // Project table - FULL SCHEMA from schema.prisma
     await prisma.$executeRaw`
       CREATE TABLE "Project" (
         "id" TEXT NOT NULL,
         "name" TEXT NOT NULL,
-        "slug" TEXT NOT NULL UNIQUE,
         "description" TEXT,
-        "status" TEXT NOT NULL DEFAULT 'planning',
+        "status" TEXT NOT NULL,
+        "direction" TEXT NOT NULL,
         "priority" TEXT NOT NULL DEFAULT 'medium',
+        "health" TEXT NOT NULL DEFAULT 'good',
+        "start" TIMESTAMP(3) NOT NULL,
+        "end" TIMESTAMP(3) NOT NULL,
+        "budgetPlan" DOUBLE PRECISION,
+        "budgetFact" DOUBLE PRECISION DEFAULT 0,
         "progress" INTEGER NOT NULL DEFAULT 0,
-        "budget" DOUBLE PRECISION,
-        "spent" DOUBLE PRECISION NOT NULL DEFAULT 0,
         "location" TEXT,
-        "startDate" TIMESTAMP(3),
-        "endDate" TIMESTAMP(3),
-        "organizationId" TEXT NOT NULL,
-        "workspaceId" TEXT,
-        "ownerId" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL,
         CONSTRAINT "Project_pkey" PRIMARY KEY ("id")
       );
     `;
-    results.push('Project table created');
+    results.push('Project table created ✅ (with direction)');
 
-    // Task table
+    // Task table - FULL SCHEMA from schema.prisma
     await prisma.$executeRaw`
       CREATE TABLE "Task" (
         "id" TEXT NOT NULL,
@@ -116,26 +115,26 @@ export async function GET() {
         "description" TEXT,
         "status" TEXT NOT NULL DEFAULT 'todo',
         "priority" TEXT NOT NULL DEFAULT 'medium',
-        "progress" INTEGER NOT NULL DEFAULT 0,
-        "dueDate" TIMESTAMP(3),
-        "projectId" TEXT,
-        "assigneeId" TEXT,
-        "creatorId" TEXT,
-        "estimatedHours" DOUBLE PRECISION,
-        "actualHours" DOUBLE PRECISION NOT NULL DEFAULT 0,
+        "order" INTEGER NOT NULL DEFAULT 0,
+        "dueDate" TIMESTAMP(3) NOT NULL,
+        "completedAt" TIMESTAMP(3),
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL,
+        "projectId" TEXT NOT NULL,
+        "assigneeId" TEXT,
+        "columnId" TEXT,
         CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
       );
     `;
-    results.push('Task table created');
+    results.push('Task table created ✅');
 
-    // Risk table
+    // Risk table - FULL SCHEMA from schema.prisma
     await prisma.$executeRaw`
       CREATE TABLE "Risk" (
         "id" TEXT NOT NULL,
         "title" TEXT NOT NULL,
         "description" TEXT,
+        "severity" TEXT NOT NULL DEFAULT 'medium',
         "probability" TEXT NOT NULL DEFAULT 'medium',
         "impact" TEXT NOT NULL DEFAULT 'medium',
         "status" TEXT NOT NULL DEFAULT 'open',
@@ -147,7 +146,7 @@ export async function GET() {
         CONSTRAINT "Risk_pkey" PRIMARY KEY ("id")
       );
     `;
-    results.push('Risk table created');
+    results.push('Risk table created ✅ (with severity)');
 
     // Milestone table
     await prisma.$executeRaw`
@@ -240,34 +239,58 @@ export async function GET() {
     `;
     results.push('TimeEntry table created');
 
-    // Notification table
+    // Notification table - FULL SCHEMA with entityType
     await prisma.$executeRaw`
       CREATE TABLE "Notification" (
         "id" TEXT NOT NULL,
         "type" TEXT NOT NULL,
         "title" TEXT NOT NULL,
         "message" TEXT NOT NULL,
+        "entityType" TEXT,
+        "entityId" TEXT,
         "read" BOOLEAN NOT NULL DEFAULT false,
         "userId" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
       );
     `;
-    results.push('Notification table created');
+    results.push('Notification table created ✅ (with entityType)');
+
+    // TeamMember table
+    await prisma.$executeRaw`
+      CREATE TABLE "TeamMember" (
+        "id" TEXT NOT NULL,
+        "name" TEXT NOT NULL,
+        "email" TEXT,
+        "role" TEXT NOT NULL,
+        "avatar" TEXT,
+        "projectId" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL,
+        CONSTRAINT "TeamMember_pkey" PRIMARY KEY ("id")
+      );
+    `;
+    results.push('TeamMember table created');
 
     // Create indexes
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_category_idx" ON "Memory"("category");`;
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_type_idx" ON "Memory"("type");`;
-    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Project_organizationId_idx" ON "Project"("organizationId");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Project_status_idx" ON "Project"("status");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Project_direction_idx" ON "Project"("direction");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Project_health_idx" ON "Project"("health");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Task_status_idx" ON "Task"("status");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Task_priority_idx" ON "Task"("priority");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Task_dueDate_idx" ON "Task"("dueDate");`;
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Task_projectId_idx" ON "Task"("projectId");`;
-    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Task_assigneeId_idx" ON "Task"("assigneeId");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Task_projectId_status_order_idx" ON "Task"("projectId", "status", "order");`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Task_columnId_idx" ON "Task"("columnId");`;
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Risk_projectId_idx" ON "Risk"("projectId");`;
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Workspace_organizationId_idx" ON "Workspace"("organizationId");`;
     results.push('Indexes created');
 
     return NextResponse.json({ 
       success: true, 
-      message: 'All tables recreated successfully',
+      message: 'All tables recreated with FULL schema ✅',
       tables: results
     });
   } catch (error) {
