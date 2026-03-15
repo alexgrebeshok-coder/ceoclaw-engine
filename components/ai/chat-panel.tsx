@@ -5,6 +5,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAIChat } from '@/hooks/use-ai-chat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +35,11 @@ const STORAGE_KEY = 'ceoclaw-chat-position';
 const BUTTON_SIZE = 56; // h-14 w-14 = 56px
 const DEFAULT_POSITION: Position = { x: 24, y: 24 }; // bottom-6 right-6 = 24px
 
+// Public pages where AI chat should NOT appear
+const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password'];
+
 export function AIChatPanel({ projectId, className }: AIChatPanelProps) {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [position, setPosition] = useState<Position>(DEFAULT_POSITION);
@@ -47,6 +52,11 @@ export function AIChatPanel({ projectId, className }: AIChatPanelProps) {
   const { messages, isLoading, error, sendMessage, clearMessages } = useAIChat({
     projectId,
   });
+
+  // Hide on public pages
+  if (PUBLIC_PATHS.some(path => pathname?.startsWith(path))) {
+    return null;
+  }
 
   // Load position from localStorage
   useEffect(() => {
