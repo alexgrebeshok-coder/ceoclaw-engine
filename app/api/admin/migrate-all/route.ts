@@ -134,19 +134,19 @@ export async function GET() {
         "id" TEXT NOT NULL,
         "title" TEXT NOT NULL,
         "description" TEXT,
-        "severity" TEXT NOT NULL DEFAULT 'medium',
+        "severity" INTEGER NOT NULL DEFAULT 3,
         "probability" TEXT NOT NULL DEFAULT 'medium',
         "impact" TEXT NOT NULL DEFAULT 'medium',
         "status" TEXT NOT NULL DEFAULT 'open',
         "mitigation" TEXT,
-        "owner" TEXT,
-        "projectId" TEXT,
+        "ownerId" TEXT,
+        "projectId" TEXT NOT NULL,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL,
         CONSTRAINT "Risk_pkey" PRIMARY KEY ("id")
       );
     `;
-    results.push('Risk table created ✅ (with severity)');
+    results.push('Risk table created ✅ (with severity INTEGER)');
 
     // Milestone table
     await prisma.$executeRaw`
@@ -261,16 +261,17 @@ export async function GET() {
       CREATE TABLE "TeamMember" (
         "id" TEXT NOT NULL,
         "name" TEXT NOT NULL,
+        "initials" TEXT,
         "email" TEXT,
         "role" TEXT NOT NULL,
         "avatar" TEXT,
-        "projectId" TEXT,
+        "capacity" INTEGER NOT NULL DEFAULT 100,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL,
         CONSTRAINT "TeamMember_pkey" PRIMARY KEY ("id")
       );
     `;
-    results.push('TeamMember table created');
+    results.push('TeamMember table created ✅ (with capacity)');
 
     // Create indexes
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Memory_category_idx" ON "Memory"("category");`;

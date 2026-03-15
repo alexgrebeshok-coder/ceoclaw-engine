@@ -62,10 +62,10 @@ export async function GET() {
 
     // 4. Create Team Members
     const teamMembers = [
-      { id: 'tm_1', name: 'Александр', role: 'Руководитель проекта', email: 'alex@example.com', capacity: 100 },
-      { id: 'tm_2', name: 'Мария', role: 'Аналитик', email: 'maria@example.com', capacity: 80 },
-      { id: 'tm_3', name: 'Дмитрий', role: 'Разработчик', email: 'dmitry@example.com', capacity: 100 },
-      { id: 'tm_4', name: 'Елена', role: 'Дизайнер', email: 'elena@example.com', capacity: 60 },
+      { id: 'tm_1', name: 'Александр', initials: 'АГ', role: 'Руководитель проекта', email: 'alex@example.com', capacity: 100 },
+      { id: 'tm_2', name: 'Мария', initials: 'МП', role: 'Аналитик', email: 'maria@example.com', capacity: 80 },
+      { id: 'tm_3', name: 'Дмитрий', initials: 'ДК', role: 'Разработчик', email: 'dmitry@example.com', capacity: 100 },
+      { id: 'tm_4', name: 'Елена', initials: 'ЕС', role: 'Дизайнер', email: 'elena@example.com', capacity: 60 },
     ];
 
     for (const tm of teamMembers) {
@@ -73,8 +73,12 @@ export async function GET() {
         where: { id: tm.id },
         update: {},
         create: {
-          ...tm,
-          updatedAt: new Date(),
+          id: tm.id,
+          name: tm.name,
+          initials: tm.initials,
+          role: tm.role,
+          email: tm.email,
+          capacity: tm.capacity,
         },
       });
     }
