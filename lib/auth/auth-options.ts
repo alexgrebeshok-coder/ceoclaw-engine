@@ -65,8 +65,8 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or password");
         }
 
-        // Check email verification
-        if (!user.emailVerified) {
+        // Check email verification (skip if SKIP_EMAIL_VERIFICATION is set)
+        if (!user.emailVerified && process.env.SKIP_EMAIL_VERIFICATION !== 'true') {
           throw new Error("Please verify your email address before logging in");
         }
 
@@ -164,8 +164,8 @@ export const authOptions: NextAuthOptions = {
           return false;
         }
 
-        // Check if email is verified
-        if (!existingUser.emailVerified) {
+        // Check if email is verified (skip if SKIP_EMAIL_VERIFICATION is set)
+        if (!existingUser.emailVerified && process.env.SKIP_EMAIL_VERIFICATION !== 'true') {
           console.log(`OAuth sign-in rejected - email not verified: ${user.email}`);
           return false;
         }
