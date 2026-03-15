@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { AlertTriangle, Edit2, Plus, ShieldCheck, ShieldX, Trash2 } from "lucide-react";
 
 import { RiskFormModal } from "@/components/risks/risk-form-modal";
@@ -225,8 +225,8 @@ export function RisksPage() {
                 
                 {/* Matrix rows (5 to 1 for proper display) */}
                 {[5, 4, 3, 2, 1].map(p => (
-                  <>
-                    <div key={`label-${p}`} className="text-[10px] text-muted-foreground pr-1 flex items-center">
+                  <Fragment key={p}>
+                    <div className="text-[10px] text-muted-foreground pr-1 flex items-center">
                       {p}
                     </div>
                     {[1, 2, 3, 4, 5].map(i => {
@@ -246,7 +246,7 @@ export function RisksPage() {
                         </div>
                       );
                     })}
-                  </>
+                  </Fragment>
                 ))}
               </div>
               
