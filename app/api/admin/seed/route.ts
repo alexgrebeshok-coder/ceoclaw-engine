@@ -85,44 +85,47 @@ export async function GET() {
       {
         id: 'proj_1',
         name: 'ЧЭМК — Переработка дунита',
-        slug: 'chemk-dunite',
         description: 'Проект по переработке дунита в Харпе, ЯНАО',
         status: 'active',
+        direction: 'metallurgy',
         priority: 'high',
+        health: 'good',
         progress: 35,
-        budget: 50000000,
-        spent: 17500000,
+        budgetPlan: 50000000,
+        budgetFact: 17500000,
         location: 'Харп, ЯНАО',
-        organizationId: org.id,
-        workspaceId: workspace.id,
+        start: new Date('2026-01-01'),
+        end: new Date('2026-12-31'),
       },
       {
         id: 'proj_2',
         name: 'Бентонитовые глины',
-        slug: 'bentonite',
         description: 'Карьер в Казахстане → поставка в РФ',
         status: 'planning',
+        direction: 'logistics',
         priority: 'medium',
+        health: 'good',
         progress: 15,
-        budget: 25000000,
-        spent: 3750000,
+        budgetPlan: 25000000,
+        budgetFact: 3750000,
         location: 'Казахстан',
-        organizationId: org.id,
-        workspaceId: workspace.id,
+        start: new Date('2026-03-01'),
+        end: new Date('2026-12-31'),
       },
       {
         id: 'proj_3',
         name: 'CEOClaw Dashboard',
-        slug: 'ceoclaw',
         description: 'AI-powered PM Dashboard',
         status: 'active',
+        direction: 'construction',
         priority: 'high',
+        health: 'good',
         progress: 70,
-        budget: 5000000,
-        spent: 3500000,
+        budgetPlan: 5000000,
+        budgetFact: 3500000,
         location: 'Remote',
-        organizationId: org.id,
-        workspaceId: workspace.id,
+        start: new Date('2026-02-01'),
+        end: new Date('2026-06-30'),
       },
     ];
 
@@ -131,8 +134,19 @@ export async function GET() {
         where: { id: proj.id },
         update: {},
         create: {
-          ...proj,
-          updatedAt: new Date(),
+          id: proj.id,
+          name: proj.name,
+          description: proj.description,
+          status: proj.status,
+          direction: proj.direction,
+          priority: proj.priority,
+          health: proj.health,
+          progress: proj.progress,
+          budgetPlan: proj.budgetPlan,
+          budgetFact: proj.budgetFact,
+          location: proj.location,
+          start: proj.start,
+          end: proj.end,
         },
       });
     }
@@ -140,12 +154,12 @@ export async function GET() {
 
     // 6. Create Tasks
     const tasks = [
-      { id: 'task_1', title: 'Согласовать СП с ЧЭМК', status: 'in_progress', priority: 'high', progress: 50, projectId: 'proj_1' },
-      { id: 'task_2', title: 'Подготовить КП для МИПТЭК', status: 'todo', priority: 'high', progress: 0, projectId: 'proj_1' },
-      { id: 'task_3', title: 'Анализ рынка бентонита', status: 'done', priority: 'medium', progress: 100, projectId: 'proj_2' },
-      { id: 'task_4', title: 'Интеграция AI чата', status: 'done', priority: 'high', progress: 100, projectId: 'proj_3' },
-      { id: 'task_5', title: 'Telegram Bot интеграция', status: 'todo', priority: 'medium', progress: 0, projectId: 'proj_3' },
-      { id: 'task_6', title: 'Мультиязычность (RU/EN/ZH)', status: 'todo', priority: 'low', progress: 0, projectId: 'proj_3' },
+      { id: 'task_1', title: 'Согласовать СП с ЧЭМК', status: 'in_progress', priority: 'high', dueDate: new Date('2026-04-15'), projectId: 'proj_1' },
+      { id: 'task_2', title: 'Подготовить КП для МИПТЭК', status: 'todo', priority: 'high', dueDate: new Date('2026-04-30'), projectId: 'proj_1' },
+      { id: 'task_3', title: 'Анализ рынка бентонита', status: 'done', priority: 'medium', dueDate: new Date('2026-03-20'), projectId: 'proj_2' },
+      { id: 'task_4', title: 'Интеграция AI чата', status: 'done', priority: 'high', dueDate: new Date('2026-03-15'), projectId: 'proj_3' },
+      { id: 'task_5', title: 'Telegram Bot интеграция', status: 'todo', priority: 'medium', dueDate: new Date('2026-05-01'), projectId: 'proj_3' },
+      { id: 'task_6', title: 'Мультиязычность (RU/EN/ZH)', status: 'todo', priority: 'low', dueDate: new Date('2026-06-01'), projectId: 'proj_3' },
     ];
 
     for (const task of tasks) {
@@ -153,10 +167,13 @@ export async function GET() {
         where: { id: task.id },
         update: {},
         create: {
-          ...task,
+          id: task.id,
+          title: task.title,
           description: '',
-          actualHours: 0,
-          updatedAt: new Date(),
+          status: task.status,
+          priority: task.priority,
+          dueDate: task.dueDate,
+          projectId: task.projectId,
         },
       });
     }
@@ -164,9 +181,9 @@ export async function GET() {
 
     // 7. Create Risks
     const risks = [
-      { id: 'risk_1', title: 'Задержка согласования СП', probability: 'high', impact: 'high', status: 'open', projectId: 'proj_1' },
-      { id: 'risk_2', title: 'Изменение цен на логистику', probability: 'medium', impact: 'medium', status: 'mitigating', projectId: 'proj_2' },
-      { id: 'risk_3', title: 'Блокировка Neon из РФ', probability: 'high', impact: 'low', status: 'mitigated', projectId: 'proj_3' },
+      { id: 'risk_1', title: 'Задержка согласования СП', probability: 'high', impact: 'high', severity: 4, status: 'open', projectId: 'proj_1' },
+      { id: 'risk_2', title: 'Изменение цен на логистику', probability: 'medium', impact: 'medium', severity: 3, status: 'mitigating', projectId: 'proj_2' },
+      { id: 'risk_3', title: 'Блокировка Neon из РФ', probability: 'high', impact: 'low', severity: 2, status: 'mitigated', projectId: 'proj_3' },
     ];
 
     for (const risk of risks) {
@@ -174,9 +191,14 @@ export async function GET() {
         where: { id: risk.id },
         update: {},
         create: {
-          ...risk,
+          id: risk.id,
+          title: risk.title,
           description: '',
-          updatedAt: new Date(),
+          probability: risk.probability,
+          impact: risk.impact,
+          severity: risk.severity,
+          status: risk.status,
+          projectId: risk.projectId,
         },
       });
     }
