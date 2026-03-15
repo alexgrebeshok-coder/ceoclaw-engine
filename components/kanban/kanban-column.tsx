@@ -20,29 +20,29 @@ export const KanbanColumn = React.memo(function KanbanColumn({ column, tasks }: 
   return (
     <Card
       ref={setNodeRef}
-      className={`flex w-80 flex-col ${
+      className={`flex w-64 flex-col ${
         isOver ? "ring-2 ring-[var(--accent)]" : ""
       }`}
     >
-      {/* Column Header */}
-      <div className="flex items-center gap-2 border-b border-[var(--line)] px-4 py-3">
+      {/* Column Header - Compact */}
+      <div className="flex items-center gap-2 border-b border-[var(--line)] px-2.5 py-2">
         <div
-          className="h-3 w-3 rounded-full"
+          className="h-2.5 w-2.5 rounded-full"
           style={{ backgroundColor: column.color || "#6b7280" }}
         />
-        <h3 className="font-medium">{column.title}</h3>
-        <span className="ml-auto text-sm text-[var(--ink-muted)]">
+        <h3 className="text-xs font-medium">{column.title}</h3>
+        <span className="ml-auto text-[10px] text-[var(--ink-muted)]">
           {tasks.length}
         </span>
       </div>
 
       {/* Tasks */}
-      <div className="flex-1 overflow-y-auto p-2" role="list" aria-label={`Задачи в колонке ${column.title}`}>
+      <div className="flex-1 overflow-y-auto p-1.5" role="list" aria-label={`Задачи в колонке ${column.title}`}>
         <SortableContext
           items={tasks.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {tasks.map((task) => (
               <KanbanTaskCard key={task.id} task={task} />
             ))}
@@ -50,7 +50,7 @@ export const KanbanColumn = React.memo(function KanbanColumn({ column, tasks }: 
         </SortableContext>
 
         {tasks.length === 0 && (
-          <p className="py-8 text-center text-sm text-[var(--ink-muted)]">
+          <p className="py-4 text-center text-[10px] text-[var(--ink-muted)]">
             Нет задач
           </p>
         )}

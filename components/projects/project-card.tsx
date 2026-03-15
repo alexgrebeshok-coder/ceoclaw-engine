@@ -2,21 +2,14 @@
 
 import { memo } from "react";
 import Link from "next/link";
-import { Copy, Edit3, Flag, MoveRight } from "lucide-react";
+import { ArrowRight, Calendar, MapPin, Users, AlertTriangle } from "lucide-react";
 
 import { useLocale } from "@/contexts/locale-context";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Project } from "@/lib/types";
-import {
-  cn,
-  formatCurrency,
-  initials,
-  priorityMeta,
-  projectStatusMeta,
-} from "@/lib/utils";
+import { cn, formatCurrency, projectStatusMeta } from "@/lib/utils";
 
 interface ProjectCardProps {
   project: Project;
@@ -32,125 +25,87 @@ function ProjectCardComponent({
   onDuplicate,
 }: ProjectCardProps) {
   const { enumLabel, formatDateLocalized, t } = useLocale();
+  const statusMeta = projectStatusMeta[project.status];
 
   return (
-    <Card className="group overflow-hidden transition duration-150 hover:border-[var(--brand)]">
-      <CardContent className="flex h-full min-w-0 flex-col gap-5 p-5">
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge className={cn("ring-1", projectStatusMeta[project.status].className)}>
-              {enumLabel("projectStatus", project.status)}
-            </Badge>
-            <Badge className={cn("ring-1", priorityMeta[project.priority].className)}>
-              {enumLabel("priority", project.priority)}
-            </Badge>
-            <div className="rounded-[8px] border border-[var(--line)] bg-[var(--panel-soft)] px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--ink-muted)]">
-              {enumLabel("direction", project.direction)}
-            </div>
-          </div>
-          <div className="min-w-0">
-            <h3 className="break-words font-heading text-[1.8rem] font-semibold tracking-[-0.05em] text-[var(--ink)]">
-              {project.name}
-            </h3>
-            <p className="mt-2 break-words text-sm leading-7 text-[var(--ink-soft)]">
-              {project.description}
-            </p>
-          </div>
-        </div>
+    <Link href={`/projects/${project.id}`}>
+      <Card className="group relative h-full min-h-[220px] overflow-hidden transition-all duration-150 hover:border-[var(--brand)] hover:shadow-md cursor-pointer">
+        {/* Status bar at top */}
+        <div className={cn("h-1.5 w-full opacity-80", statusMeta.className)} />
 
-        <div className="space-y-4 rounded-[10px] border border-[var(--line)] bg-[var(--panel-soft)] p-4">
-          {/* Progress - Enhanced Visual Hierarchy */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-[var(--ink-muted)]">{t("project.progressLabel")}</span>
-            <span className="text-2xl font-bold text-[var(--ink)]">{project.progress}%</span>
-          </div>
-          <Progress value={project.progress} className="h-2" />
-
-          {/* Metrics Grid - Clear Visual Separation */}
-          <div className="grid grid-cols-1 gap-3 text-sm">
-            {/* Budget */}
-            <div className="flex items-center gap-2 text-[var(--ink-soft)]">
-              <span className="text-base">💰</span>
-              <span className="font-medium text-[var(--ink)]">
-                {formatCurrency(project.budget.actual, project.budget.currency)}
-              </span>
-              <span className="text-[var(--ink-muted)]">
-                / {formatCurrency(project.budget.planned, project.budget.currency)}
-              </span>
-            </div>
-
-            {/* Next Milestone */}
-            <div className="flex items-center gap-2 text-[var(--ink-soft)]">
-              <span className="text-base">📅</span>
-              <span className="font-medium text-[var(--ink)]">
-                {project.nextMilestone?.name ?? t("project.none")}
-              </span>
-              {project.nextMilestone && (
-                <span className="text-[var(--ink-muted)]">
-                  — {formatDateLocalized(project.nextMilestone.date, "d MMM yyyy")}
+        <div className="p-4 space-y-3">
+          {/* Header: Status + Name + Location */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge className={cn("text-xs px-2 py-0.5 opacity-80", statusMeta.className)}>
+                {enumLabel("projectStatus", project.status)}
+              </Badge>
+              {project.location && (
+                <span className="flex items-center gap-1 text-xs text-[var(--ink-soft)]">
+                  <MapPin className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{project.location}</span>
                 </span>
               )}
             </div>
+            <h3 className="font-semibold text-base text-[var(--ink)] line-clamp-2 leading-tight">
+              {project.name}
+            </h3>
+          </div>
 
-            {/* Location */}
-            <div className="flex items-center gap-2 text-[var(--ink-soft)]">
-              <span className="text-base">📍</span>
-              <span className="font-medium text-[var(--ink)]">
-                {project.location || t("project.none")}
+          {/* Progress */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-[var(--ink-soft)]">{t("project.progressLabel")}</span>
+              <span className="font-medium text-[var(--ink)]">{project.progress}%</span>
+            </div>
+            <Progress value={project.progress} className="h-2" />
+          </div>
+
+          {/* Budget */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-[var(--ink-soft)]">{t("dashboard.evm.budget")}</span>
+            <span className="text-sm font-semibold text-[var(--ink)]">
+              {formatCurrency(project.budget.actual, project.budget.currency)}
+            </span>
+          </div>
+
+          {/* Dates */}
+          <div className="flex items-center justify-between text-xs text-[var(--ink-soft)]">
+            <span className="flex-1 truncate text-left">{formatDateLocalized(project.dates.start, "d MMM")}</span>
+            <span className="px-1.5 flex-shrink-0">→</span>
+            <span className="flex-1 truncate text-right">{formatDateLocalized(project.dates.end, "d MMM")}</span>
+          </div>
+
+          {/* Footer: Team + Tasks + Risks + Milestone */}
+          <div className="flex items-center justify-between pt-2 border-t border-[var(--line)]">
+            <div className="flex items-center gap-3 text-xs text-[var(--ink-soft)]">
+              <span className="flex items-center gap-1">
+                <Users className="h-3.5 w-3.5" />
+                {project.team.length}
               </span>
+              <span>{taskCount} {t("dashboard.activeTasks")}</span>
+              {project.risks > 0 && (
+                <span className="flex items-center gap-0.5 text-amber-600">
+                  <AlertTriangle className="h-3 w-3" />
+                  {project.risks}
+                </span>
+              )}
             </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {project.team.map((member) => (
-                <div
-                  key={member}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-panel)] text-xs font-semibold text-[var(--ink)]"
-                  title={member}
-                >
-                  {initials(member)}
-                </div>
-              ))}
-            </div>
-            <div className="text-sm text-[var(--ink-soft)]">
-              <div className="font-medium text-[var(--ink)]">
-                {project.team.length} {t("dashboard.participants")}
-              </div>
-              <div>
-                {taskCount} {t("dashboard.activeTasks")}
-              </div>
-            </div>
+            {project.nextMilestone && (
+              <span className="flex items-center gap-1 text-xs text-[var(--ink-soft)]">
+                <Calendar className="h-3 w-3" />
+                {formatDateLocalized(project.nextMilestone.date, "d MMM")}
+              </span>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {onEdit ? (
-              <Button aria-label={`${t("action.edit")}: ${project.name}`} size="sm" variant="secondary" onClick={() => onEdit(project)}>
-                <Edit3 className="h-4 w-4" />
-                {t("action.edit")}
-              </Button>
-            ) : null}
-            {onDuplicate ? (
-              <Button aria-label={`${t("action.duplicate")}: ${project.name}`} size="sm" variant="ghost" onClick={() => onDuplicate(project.id)}>
-                <Copy className="h-4 w-4" />
-                {t("action.duplicate")}
-              </Button>
-            ) : null}
-            <Link
-              aria-label={`${t("action.open")}: ${project.name}`}
-              className={buttonVariants({ size: "sm" })}
-              href={`/projects/${project.id}`}
-            >
-              <Flag className="h-4 w-4" />
-              {t("action.open")}
-              <MoveRight className="h-4 w-4" />
-            </Link>
+          {/* Hover indicator */}
+          <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <ArrowRight className="h-5 w-5 text-[var(--brand)]" />
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </Card>
+    </Link>
   );
 }
 

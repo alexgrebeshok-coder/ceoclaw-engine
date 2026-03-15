@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { useDashboard } from "@/components/dashboard-provider";
 import { ClientChart } from "@/components/ui/client-chart";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { fieldStyles } from "@/components/ui/field";
 import { ChartSkeleton } from "@/components/ui/skeleton";
 import { useLocale } from "@/contexts/locale-context";
@@ -91,96 +91,80 @@ export function AnalyticsPage() {
   }));
 
   return (
-    <div className="grid min-w-0 gap-4">
-      <Card>
-        <CardHeader className="min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div className="grid gap-3">
+      {/* Header */}
+      <Card className="p-3">
+        <div className="flex items-center justify-between">
           <div>
-            <CardTitle>{t("analytics.title")}</CardTitle>
-            <CardDescription>
-              {t("analytics.description")}
-            </CardDescription>
+            <h2 className="text-sm font-medium">{t("analytics.title")}</h2>
+            <p className="text-[10px] text-muted-foreground">{t("analytics.description")}</p>
           </div>
-          <select className={fieldStyles} onChange={(event) => setPeriod(event.target.value)} value={period}>
+          <select 
+            className={`${fieldStyles} !py-1 h-8 text-xs`} 
+            onChange={(event) => setPeriod(event.target.value)} 
+            value={period}
+          >
             <option value="30d">{t("analytics.period30d")}</option>
             <option value="90d">{t("analytics.period90d")}</option>
             <option value="180d">{t("analytics.period180d")}</option>
           </select>
-        </CardHeader>
+        </div>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[1.05fr_.95fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("analytics.trendline")}</CardTitle>
-            <CardDescription>{t("analytics.trendlineDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ClientChart className="h-[340px]">
-              <AnalyticsTrendChart data={progressTrend} />
-            </ClientChart>
-          </CardContent>
+      {/* Charts Grid 2x2 */}
+      <div className="grid gap-3 md:grid-cols-2">
+        {/* Trend Chart */}
+        <Card className="p-3">
+          <h3 className="text-xs font-medium mb-2">{t("analytics.trendline")}</h3>
+          <ClientChart className="h-48">
+            <AnalyticsTrendChart data={progressTrend} />
+          </ClientChart>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("analytics.healthMix")}</CardTitle>
-            <CardDescription>{t("analytics.healthMixDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 lg:grid-cols-[.95fr_1.05fr]">
-            <ClientChart className="h-[260px]">
+        {/* Health Mix */}
+        <Card className="p-3">
+          <h3 className="text-xs font-medium mb-2">{t("analytics.healthMix")}</h3>
+          <div className="grid gap-2 lg:grid-cols-2">
+            <ClientChart className="h-36">
               <AnalyticsHealthChart data={healthMix} />
             </ClientChart>
-            <div className="grid gap-3">
+            <div className="space-y-1.5">
               {healthMix.map((entry) => (
                 <div
                   key={entry.name}
-                  className="rounded-[8px] border border-[var(--line)] bg-[var(--panel-soft)] p-4"
+                  className="flex items-center justify-between p-2 rounded border bg-[var(--panel-soft)]/40"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                      <span className="font-medium text-[var(--ink)]">{entry.name}</span>
-                    </div>
-                    <span className="font-heading text-2xl font-semibold tracking-[-0.05em] text-[var(--ink)]">
-                      {entry.value}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                    <span className="text-[10px]">{entry.name}</span>
                   </div>
+                  <span className="text-sm font-bold">{entry.value}</span>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("analytics.budgetVariance")}</CardTitle>
-            <CardDescription>{t("analytics.budgetVarianceDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ClientChart className="h-[320px]">
-              <AnalyticsBudgetChart data={portfolioHealthData} />
-            </ClientChart>
-          </CardContent>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("analytics.resourceUtilization")}</CardTitle>
-            <CardDescription>{t("analytics.resourceUtilizationDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3">
+        {/* Budget Variance */}
+        <Card className="p-3">
+          <h3 className="text-xs font-medium mb-2">{t("analytics.budgetVariance")}</h3>
+          <ClientChart className="h-48">
+            <AnalyticsBudgetChart data={portfolioHealthData} />
+          </ClientChart>
+        </Card>
+
+        {/* Resource Utilization */}
+        <Card className="p-3">
+          <h3 className="text-xs font-medium mb-2">{t("analytics.resourceUtilization")}</h3>
+          <div className="space-y-1.5 max-h-48 overflow-y-auto">
             {utilization.map((member) => (
               <div
                 key={member.name}
-                className="rounded-[8px] border border-[var(--line)] bg-[var(--panel-soft)] p-4"
+                className="flex items-center gap-2 p-2 rounded border bg-[var(--panel-soft)]/40"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-[var(--ink)]">{member.name}</span>
-                  <span className="text-sm text-[var(--ink-soft)]">{member.allocated}%</span>
-                </div>
-                <div className="mt-3 h-1.5 rounded-full bg-[var(--panel-soft-strong)] dark:bg-[#3a3a3a]">
+                <span className="text-xs flex-1 truncate">{member.name}</span>
+                <span className="text-[10px] text-muted-foreground w-8 text-right">{member.allocated}%</span>
+                <div className="w-16 h-1.5 rounded-full bg-[var(--panel-soft-strong)]">
                   <div
                     className="h-full rounded-full bg-[var(--brand)]"
                     style={{ width: `${member.allocated}%` }}
@@ -188,32 +172,29 @@ export function AnalyticsPage() {
                 </div>
               </div>
             ))}
-          </CardContent>
+          </div>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("analytics.financialSnapshot")}</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {projects.map((project) => (
+      {/* Financial Snapshot - Compact */}
+      <Card className="p-3">
+        <h3 className="text-xs font-medium mb-2">{t("analytics.financialSnapshot")}</h3>
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+          {projects.slice(0, 4).map((project) => (
             <div
               key={project.id}
-              className="rounded-[8px] border border-[var(--line)] bg-[var(--panel-soft)] p-4"
+              className="p-2 rounded border bg-[var(--panel-soft)]/40"
             >
-              <p className="font-medium text-[var(--ink)]">{project.name}</p>
-              <p className="mt-2 text-sm text-[var(--ink-soft)]">
-                {t("analytics.planned")}:{" "}
-                {formatCurrency(project.budget.planned, project.budget.currency)}
-              </p>
-              <p className="text-sm text-[var(--ink-soft)]">
-                {t("analytics.actual")}:{" "}
-                {formatCurrency(project.budget.actual, project.budget.currency)}
-              </p>
+              <p className="text-xs font-medium truncate">{project.name}</p>
+              <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                <span>{formatCurrency(project.budget.planned, project.budget.currency)}</span>
+                <span className="text-[var(--ink-soft)]">
+                  {formatCurrency(project.budget.actual, project.budget.currency)}
+                </span>
+              </div>
             </div>
           ))}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

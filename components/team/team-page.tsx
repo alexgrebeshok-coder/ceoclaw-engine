@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { DataErrorState } from "@/components/ui/data-error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamMemberCard } from "@/components/team/team-member-card";
@@ -9,25 +9,30 @@ import { useTeam } from "@/lib/hooks/use-api";
 
 function TeamSkeleton() {
   return (
-    <div className="grid min-w-0 gap-4">
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-7 w-40" />
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }, (_, index) => (
-            <Card key={index} className="bg-[var(--panel-soft)]/60">
-              <CardContent className="space-y-4 p-4">
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-2 w-full" />
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-4 w-36" />
-              </CardContent>
-            </Card>
-          ))}
-        </CardContent>
-      </Card>
+    <div className="grid min-w-0 gap-3">
+      <div className="grid gap-2 grid-cols-3">
+        {Array.from({ length: 3 }, (_, index) => (
+          <Card key={index} className="p-2">
+            <Skeleton className="h-4 w-16 mb-1" />
+            <Skeleton className="h-6 w-10" />
+          </Card>
+        ))}
+      </div>
+      <div className="grid gap-2 md:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 6 }, (_, index) => (
+          <Card key={index} className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex-1">
+                <Skeleton className="h-4 w-24 mb-1" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
+            <Skeleton className="h-1.5 w-full mb-2" />
+            <Skeleton className="h-3 w-20" />
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
@@ -59,60 +64,31 @@ export function TeamPage() {
   const normalCount = team.filter(m => m.allocated < 70).length;
 
   return (
-    <div className="grid gap-4">
-      {/* Team Summary Stats */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="border-green-500/20 bg-green-500/5 dark:border-green-400/25 dark:bg-green-500/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-green-500/14 flex items-center justify-center">
-                <div className="h-3 w-3 rounded-full bg-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-heading font-semibold text-green-600 dark:text-green-300">{normalCount}</p>
-                <p className="text-xs text-[var(--ink-muted)]">Normal Load</p>
-              </div>
-            </div>
-          </CardContent>
+    <div className="grid gap-3">
+      {/* Compact Stats Row */}
+      <div className="grid gap-2 grid-cols-3">
+        <Card className="p-2 border-green-500/20 bg-green-500/5">
+          <p className="text-[10px] uppercase text-green-600 dark:text-green-300">Normal Load</p>
+          <p className="text-lg font-bold text-green-600 dark:text-green-300">{normalCount}</p>
         </Card>
-        <Card className="border-amber-500/20 bg-amber-500/5 dark:border-amber-400/25 dark:bg-amber-500/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-amber-500/14 flex items-center justify-center">
-                <div className="h-3 w-3 rounded-full bg-amber-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-heading font-semibold text-amber-600 dark:text-amber-300">{highLoadCount}</p>
-                <p className="text-xs text-[var(--ink-muted)]">High Load</p>
-              </div>
-            </div>
-          </CardContent>
+        <Card className="p-2 border-amber-500/20 bg-amber-500/5">
+          <p className="text-[10px] uppercase text-amber-600 dark:text-amber-300">High Load</p>
+          <p className="text-lg font-bold text-amber-600 dark:text-amber-300">{highLoadCount}</p>
         </Card>
-        <Card className="border-red-500/20 bg-red-500/5 dark:border-red-400/25 dark:bg-red-500/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-red-500/14 flex items-center justify-center">
-                <div className="h-3 w-3 rounded-full bg-red-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-heading font-semibold text-red-600 dark:text-red-300">{criticalCount}</p>
-                <p className="text-xs text-[var(--ink-muted)]">Critical</p>
-              </div>
-            </div>
-          </CardContent>
+        <Card className="p-2 border-red-500/20 bg-red-500/5">
+          <p className="text-[10px] uppercase text-red-600 dark:text-red-300">Critical</p>
+          <p className="text-lg font-bold text-red-600 dark:text-red-300">{criticalCount}</p>
         </Card>
       </div>
 
-      {/* Team Grid */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("team.title")}</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {/* Team Grid - Compact Cards */}
+      <Card className="p-3">
+        <h2 className="text-sm font-medium mb-3">{t("team.title")} ({team.length})</h2>
+        <div className="grid gap-2 md:grid-cols-3 lg:grid-cols-4">
           {team.map((member) => (
             <TeamMemberCard key={member.id} member={member} />
           ))}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckSquare2, Download, Filter } from "lucide-react";
+import { CheckSquare2, Download, Filter, Plus } from "lucide-react";
 
 import { AIContextActions } from "@/components/ai/ai-context-actions";
 import { useDashboard } from "@/components/dashboard-provider";
 import { TaskFormModal } from "@/components/tasks/task-form-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { DataErrorState } from "@/components/ui/data-error-state";
 import { fieldStyles } from "@/components/ui/field";
 import {
@@ -75,12 +75,18 @@ export function TasksPage() {
     void Promise.all([mutateProjects(), mutateTasks()]);
   };
 
+  // Stats
+  const totalTasks = tasks.length;
+  const inProgressTasks = tasks.filter((task) => task.status === "in-progress").length;
+  const doneTasks = tasks.filter((task) => task.status === "done").length;
+  const blockedTasks = tasks.filter((task) => task.status === "blocked").length;
+
   if (showHydrationSkeleton) {
     return (
-      <div className="grid min-w-0 gap-4">
+      <div className="grid min-w-0 gap-3">
         <AIContextActionsSkeleton />
 
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-2 grid-cols-4">
           {Array.from({ length: 4 }, (_, index) => (
             <KpiCardSkeleton key={index} />
           ))}
@@ -103,53 +109,41 @@ export function TasksPage() {
   }
 
   return (
-    <div className="grid min-w-0 gap-4">
+    <div className="grid min-w-0 gap-3">
       <AIContextActions />
 
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-[var(--ink-muted)]">{t("tasks.total")}</p>
-            <p className="mt-2 font-heading text-5xl font-semibold tracking-[-0.08em] text-[var(--ink)]">
-              {tasks.length}
-            </p>
-          </CardContent>
+      {/* Compact KPI Row */}
+      <div className="grid gap-2 grid-cols-4">
+        <Card className="p-2">
+          <p className="text-[10px] uppercase text-muted-foreground">{t("tasks.total")}</p>
+          <p className="text-lg font-bold">{totalTasks}</p>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-[var(--ink-muted)]">{t("tasks.inProgress")}</p>
-            <p className="mt-2 font-heading text-5xl font-semibold tracking-[-0.08em] text-[var(--ink)]">
-              {tasks.filter((task) => task.status === "in-progress").length}
-            </p>
-          </CardContent>
+        <Card className="p-2">
+          <p className="text-[10px] uppercase text-muted-foreground">{t("tasks.inProgress")}</p>
+          <p className="text-lg font-bold text-blue-600">{inProgressTasks}</p>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-[var(--ink-muted)]">{t("tasks.blocked")}</p>
-            <p className="mt-2 font-heading text-5xl font-semibold tracking-[-0.08em] text-[var(--ink)]">
-              {tasks.filter((task) => task.status === "blocked").length}
-            </p>
-          </CardContent>
+        <Card className="p-2">
+          <p className="text-[10px] uppercase text-muted-foreground">{t("tasks.blocked")}</p>
+          <p className="text-lg font-bold text-red-600">{blockedTasks}</p>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-[var(--ink-muted)]">{t("tasks.selected")}</p>
-            <p className="mt-2 font-heading text-5xl font-semibold tracking-[-0.08em] text-[var(--ink)]">
-              {selectedIds.length}
-            </p>
-          </CardContent>
+        <Card className="p-2">
+          <p className="text-[10px] uppercase text-muted-foreground">{t("tasks.selected")}</p>
+          <p className="text-lg font-bold">{selectedIds.length}</p>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <CardTitle>{t("tasks.title")}</CardTitle>
-            <p className="text-sm text-[var(--ink-soft)]">{t("tasks.description")}</p>
+      {/* Main Card */}
+      <Card className="p-3">
+        {/* Header + Filters in one row */}
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-medium">{t("tasks.title")}</h2>
+            <span className="text-xs text-muted-foreground">({filteredTasks.length})</span>
           </div>
-          <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
+          
+          <div className="flex items-center gap-2">
             <select
-              className={fieldStyles}
+              className={`${fieldStyles} !py-1 h-8 text-xs`}
               onChange={(event) => setStatus(event.target.value as "all" | TaskStatus)}
               value={status}
             >
@@ -160,7 +154,7 @@ export function TasksPage() {
               <option value="blocked">{enumLabel("taskStatus", "blocked")}</option>
             </select>
             <select
-              className={fieldStyles}
+              className={`${fieldStyles} !py-1 h-8 text-xs`}
               onChange={(event) => setPriority(event.target.value as "all" | Priority)}
               value={priority}
             >
@@ -171,7 +165,7 @@ export function TasksPage() {
               <option value="critical">{enumLabel("priority", "critical")}</option>
             </select>
             <select
-              className={fieldStyles}
+              className={`${fieldStyles} !py-1 h-8 text-xs`}
               onChange={(event) => setProjectFilter(event.target.value)}
               value={projectFilter}
             >
@@ -183,85 +177,97 @@ export function TasksPage() {
               ))}
             </select>
             <input
-              className={fieldStyles}
+              className={`${fieldStyles} !py-1 h-8 text-xs w-32`}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={t("filters.search") || "Search..."}
               type="text"
               value={searchQuery}
             />
-            <Button onClick={() => setTaskModalOpen(true)}>{t("action.addTask")}</Button>
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="flex flex-wrap gap-3">
-            <Button
-              disabled={!selectedIds.length}
-              onClick={() => updateTaskStatus(selectedIds, "in-progress")}
-              variant="secondary"
-            >
-              <Filter className="h-4 w-4" />
-              {t("tasks.bulkMove")}
-            </Button>
-            <Button
-              disabled={!selectedIds.length}
-              onClick={() => updateTaskStatus(selectedIds, "done")}
-              variant="secondary"
-            >
-              <CheckSquare2 className="h-4 w-4" />
-              {t("tasks.bulkDone")}
-            </Button>
-            <Button onClick={() => downloadTasksCsv(filteredTasks)} variant="outline">
-              <Download className="h-4 w-4" />
-              {t("action.exportExcel")}
+            <Button size="sm" onClick={() => setTaskModalOpen(true)} className="h-8">
+              <Plus className="h-3 w-3 mr-1" />
+              {t("action.addTask")}
             </Button>
           </div>
+        </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead />
-                <TableHead>{t("project.tasks")}</TableHead>
-                <TableHead>{t("tasks.project")}</TableHead>
-                <TableHead>{t("field.status")}</TableHead>
-                <TableHead>{t("tasks.assignee")}</TableHead>
-                <TableHead>{t("tasks.dueDate")}</TableHead>
-                <TableHead>{t("tasks.priority")}</TableHead>
+        {/* Action buttons */}
+        <div className="flex gap-2 mb-3">
+          <Button
+            size="sm"
+            disabled={!selectedIds.length}
+            onClick={() => updateTaskStatus(selectedIds, "in-progress")}
+            variant="secondary"
+            className="h-7 text-xs"
+          >
+            <Filter className="h-3 w-3 mr-1" />
+            {t("tasks.bulkMove")}
+          </Button>
+          <Button
+            size="sm"
+            disabled={!selectedIds.length}
+            onClick={() => updateTaskStatus(selectedIds, "done")}
+            variant="secondary"
+            className="h-7 text-xs"
+          >
+            <CheckSquare2 className="h-3 w-3 mr-1" />
+            {t("tasks.bulkDone")}
+          </Button>
+          <Button size="sm" onClick={() => downloadTasksCsv(filteredTasks)} variant="outline" className="h-7 text-xs">
+            <Download className="h-3 w-3 mr-1" />
+            {t("action.exportExcel")}
+          </Button>
+        </div>
+
+        {/* Compact Table */}
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-8 py-1.5"></TableHead>
+              <TableHead className="py-1.5 text-xs">{t("project.tasks")}</TableHead>
+              <TableHead className="py-1.5 text-xs">{t("tasks.project")}</TableHead>
+              <TableHead className="py-1.5 text-xs">{t("field.status")}</TableHead>
+              <TableHead className="py-1.5 text-xs">{t("tasks.assignee")}</TableHead>
+              <TableHead className="py-1.5 text-xs">{t("tasks.dueDate")}</TableHead>
+              <TableHead className="py-1.5 text-xs">{t("tasks.priority")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTasks.map((task) => (
+              <TableRow key={task.id} className="group">
+                <TableCell className="py-1.5">
+                  <input
+                    checked={selectedIds.includes(task.id)}
+                    onChange={() => toggleTask(task.id)}
+                    type="checkbox"
+                    className="h-3.5 w-3.5"
+                  />
+                </TableCell>
+                <TableCell className="py-1.5">
+                  <p className="text-xs font-medium truncate max-w-[200px]">{task.title}</p>
+                </TableCell>
+                <TableCell className="py-1.5 text-xs text-muted-foreground truncate max-w-[120px]">
+                  {projectNameById[task.projectId]}
+                </TableCell>
+                <TableCell className="py-1.5">
+                  <Badge className={`${taskStatusMeta[task.status].className} text-[10px] px-1.5 py-0.5`}>
+                    {enumLabel("taskStatus", task.status)}
+                  </Badge>
+                </TableCell>
+                <TableCell className="py-1.5 text-xs text-muted-foreground">
+                  {task.assignee?.name || "-"}
+                </TableCell>
+                <TableCell className="py-1.5 text-xs text-muted-foreground">
+                  {formatDateLocalized(task.dueDate, "d MMM")}
+                </TableCell>
+                <TableCell className="py-1.5">
+                  <Badge className={`${priorityMeta[task.priority].className} text-[10px] px-1.5 py-0.5`}>
+                    {enumLabel("priority", task.priority)}
+                  </Badge>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTasks.map((task) => (
-                <TableRow key={task.id}>
-                  <TableCell>
-                    <input
-                      checked={selectedIds.includes(task.id)}
-                      onChange={() => toggleTask(task.id)}
-                      type="checkbox"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium text-[var(--ink)]">{task.title}</p>
-                      <p className="text-sm text-[var(--ink-soft)]">{task.description}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{projectNameById[task.projectId]}</TableCell>
-                  <TableCell>
-                    <Badge className={taskStatusMeta[task.status].className}>
-                      {enumLabel("taskStatus", task.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{task.assignee?.name || "-"}</TableCell>
-                  <TableCell>{formatDateLocalized(task.dueDate, "d MMM yyyy")}</TableCell>
-                  <TableCell>
-                    <Badge className={priorityMeta[task.priority].className}>
-                      {enumLabel("priority", task.priority)}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
+            ))}
+          </TableBody>
+        </Table>
       </Card>
 
       <TaskFormModal open={taskModalOpen} onOpenChange={setTaskModalOpen} />

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useCallback } from "react";
+import React, { useCallback } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card } from "@/components/ui/card";
@@ -14,12 +14,12 @@ interface KanbanTaskCardProps {
   isDragging?: boolean;
 }
 
-// Priority colors - memoized outside component
+// Priority colors - compact style
 const PRIORITY_COLORS: Record<string, string> = {
-  low: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-  medium: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-  high: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
-  critical: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+  low: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  medium: "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400",
+  high: "bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400",
+  critical: "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400",
 };
 
 export const KanbanTaskCard = React.memo(function KanbanTaskCard({ task, isDragging }: KanbanTaskCardProps) {
@@ -44,7 +44,6 @@ export const KanbanTaskCard = React.memo(function KanbanTaskCard({ task, isDragg
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
-      // Allow keyboard activation
       e.preventDefault();
     }
   }, []);
@@ -60,43 +59,41 @@ export const KanbanTaskCard = React.memo(function KanbanTaskCard({ task, isDragg
       tabIndex={0}
       onKeyDown={handleKeyDown}
       className={cn(
-        "cursor-grab p-3 transition-all duration-200",
+        "cursor-grab p-2 transition-all duration-200",
         "active:cursor-grabbing focus:ring-2 focus:ring-[var(--accent)] focus:outline-none",
-        "hover:shadow-md hover:scale-[1.02]",
+        "hover:shadow-md",
         (isDragging || isSortableDragging) && "opacity-50 scale-105 shadow-lg",
-        isOverdue && "border-l-4 border-l-red-500"
+        isOverdue && "border-l-2 border-l-red-500"
       )}
     >
-      {/* Title */}
-      <h4 className="mb-2 font-medium leading-tight">{task.title}</h4>
+      {/* Title - Compact */}
+      <h4 className="text-xs font-medium leading-tight truncate mb-1">{task.title}</h4>
 
-      {/* Priority Badge */}
-      <div className="mb-2 flex items-center gap-2">
+      {/* Footer - Compact */}
+      <div className="flex items-center justify-between">
+        {/* Priority */}
         <Badge
           variant="neutral"
-          className={priorityColor}
+          className={`${priorityColor} text-[9px] px-1 py-0.5`}
         >
           {task.priority}
         </Badge>
-      </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-[var(--ink-muted)]">
-        {/* Due Date */}
-        {task.dueDate && (
-          <div className={cn("flex items-center gap-1", isOverdue && "text-red-500")}>
-            <Calendar className="h-3 w-3" />
-            <span>{new Date(task.dueDate).toLocaleDateString("ru-RU")}</span>
-          </div>
-        )}
-
-        {/* Assignee */}
-        {task.assignee && (
-          <div className="flex items-center gap-1">
-            <User className="h-3 w-3" />
-            <span>{task.assignee.initials || task.assignee.name}</span>
-          </div>
-        )}
+        {/* Meta */}
+        <div className="flex items-center gap-1.5 text-[10px] text-[var(--ink-muted)]">
+          {task.dueDate && (
+            <div className={cn("flex items-center gap-0.5", isOverdue && "text-red-500")}>
+              <Calendar className="h-2.5 w-2.5" />
+              <span>{new Date(task.dueDate).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}</span>
+            </div>
+          )}
+          {task.assignee && (
+            <div className="flex items-center gap-0.5">
+              <User className="h-2.5 w-2.5" />
+              <span>{task.assignee.initials || task.assignee.name.split(" ").map(n => n[0]).join("")}</span>
+            </div>
+          )}
+        </div>
       </div>
     </Card>
   );

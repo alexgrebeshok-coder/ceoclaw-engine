@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
+import { LayoutGrid, List } from "lucide-react";
 
-import { AIContextActions } from "@/components/ai/ai-context-actions";
 import { useDashboard } from "@/components/dashboard-provider";
 import { ProjectFormModal } from "@/components/projects/project-form-modal";
 import { ProjectCard } from "@/components/projects/project-card";
@@ -42,14 +42,14 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
   } = useTasks();
   const [query, setQuery] = useState(initialQuery);
   const [direction, setDirection] = useState<"all" | Project["direction"]>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | Project["status"]>("all");
+  const [sortBy, setSortBy] = useState<"progress" | "date" | "budget">("progress");
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [projectModalOpen, setProjectModalOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 6;
 
   const filteredProjects = useMemo(
-    () =>
-      projects.filter((project) => {
+    () => {
+      const filtered = projects.filter((project) => {
         const queryMatch =
           query.trim().length === 0
             ? true
@@ -58,22 +58,28 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
                 .toLowerCase()
                 .includes(query.toLowerCase());
         const directionMatch = direction === "all" ? true : project.direction === direction;
-        return queryMatch && directionMatch;
-      }),
-    [direction, projects, query]
+        const statusMatch = statusFilter === "all" ? true : project.status === statusFilter;
+        return queryMatch && directionMatch && statusMatch;
+      });
+
+      // Sort
+      return filtered.sort((a, b) => {
+        if (sortBy === "progress") return b.progress - a.progress;
+        if (sortBy === "date") return new Date(b.dates.start).getTime() - new Date(a.dates.start).getTime();
+        if (sortBy === "budget") return b.budget.planned - a.budget.planned;
+        return 0;
+      });
+    },
+    [direction, projects, query, statusFilter, sortBy]
   );
 
-  // Pagination
-  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
-  const paginatedProjects = filteredProjects.slice(
-    (page - 1) * itemsPerPage,
-    page * itemsPerPage
-  );
-
-  // Reset page when filters change
-  useMemo(() => {
-    setPage(1);
-  }, [query, direction]);
+  // Stats
+  const totalBudget = filteredProjects.reduce((sum, p) => sum + p.budget.planned, 0);
+  const totalActual = filteredProjects.reduce((sum, p) => sum + p.budget.actual, 0);
+  const avgProgress = filteredProjects.length > 0 
+    ? Math.round(filteredProjects.reduce((sum, p) => sum + p.progress, 0) / filteredProjects.length)
+    : 0;
+  const atRiskCount = filteredProjects.filter(p => p.status === "at-risk").length;
 
   const compareData = filteredProjects.map((project) => ({
     name: project.name.slice(0, 12),
@@ -81,6 +87,7 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
     health: project.health,
     budget: Math.round((project.budget.actual / project.budget.planned) * 100),
   }));
+
   const showHydrationSkeleton =
     isLoading && tasksLoading && projects.length === 0 && tasks.length === 0;
 
@@ -91,50 +98,27 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
   if (showHydrationSkeleton) {
     return (
       <div className="grid min-w-0 gap-4">
-        <AIContextActions />
-
         <Card>
-          <CardHeader className="flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div className="space-y-2">
-              <Skeleton className="h-7 w-52" />
-              <Skeleton className="h-4 w-80" />
-            </div>
-            <div className="grid gap-3 md:grid-cols-[minmax(280px,1fr)_220px_auto]">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-44" />
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-4 xl:grid-cols-[1.1fr_.9fr]">
-            <div className="grid gap-4">
-              {Array.from({ length: 4 }, (_, index) => (
-                <ProjectCardSkeleton key={index} />
+          <CardContent className="p-4">
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton key={i} className="h-16" />
               ))}
             </div>
-            <Card className="bg-[color:var(--surface-panel)]">
-              <CardContent className="space-y-4 p-4">
-                <Skeleton className="h-7 w-44" />
-                <ChartSkeleton className="h-[320px]" />
-                <div className="grid gap-3">
-                  {Array.from({ length: 4 }, (_, index) => (
-                    <div
-                      key={index}
-                      className="rounded-[10px] border border-[var(--line)] bg-[var(--panel-soft)] px-4 py-4"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0 flex-1 space-y-2">
-                          <Skeleton className="h-5 w-4/5" />
-                          <Skeleton className="h-4 w-3/5" />
-                        </div>
-                        <Skeleton className="h-8 w-16 rounded-full" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </CardContent>
         </Card>
+        <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
+            {Array.from({ length: 6 }, (_, i) => (
+              <ProjectCardSkeleton key={i} />
+            ))}
+          </div>
+          <Card>
+            <CardContent className="p-4">
+              <ChartSkeleton className="h-[300px]" />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -153,23 +137,22 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
   return (
     <>
       <div className="grid min-w-0 gap-4">
-        <Card>
-          <CardHeader className="min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        {/* Header with filters */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             <div>
-              <CardTitle>{t("projects.portfolioView")}</CardTitle>
-              <p className="text-sm leading-6 text-[var(--ink-soft)]">
-                {t("projects.portfolioViewDescription")}
-              </p>
+              <h1 className="text-lg font-semibold text-[var(--ink)]">{t("projects.portfolioView")}</h1>
+              <p className="text-xs text-[var(--ink-soft)]">{filteredProjects.length} проектов</p>
             </div>
-            <div className="grid min-w-0 gap-3 grid-cols-1 sm:grid-cols-[minmax(0,1fr)_220px_auto]">
+            <div className="flex items-center gap-2">
               <input
-                className={fieldStyles}
+                className={cn(fieldStyles, "h-9 w-44 text-sm !py-1.5 leading-normal")}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t("placeholder.search")}
                 value={query}
               />
               <select
-                className={fieldStyles}
+                className={cn(fieldStyles, "h-9 text-sm !py-1.5 px-3 leading-normal")}
                 onChange={(event) => setDirection(event.target.value as "all" | Project["direction"])}
                 value={direction}
               >
@@ -180,87 +163,100 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
                   </option>
                 ))}
               </select>
-              <Button onClick={() => setProjectModalOpen(true)}>{t("action.addProject")}</Button>
+              <select
+                className={cn(fieldStyles, "h-9 text-sm !py-1.5 px-3 leading-normal")}
+                onChange={(event) => setStatusFilter(event.target.value as "all" | Project["status"])}
+                value={statusFilter}
+              >
+                <option value="all">{t("filters.allStatuses")}</option>
+                {(["active", "on-hold", "completed", "at-risk"] as const).map((value) => (
+                  <option key={value} value={value}>
+                    {enumLabel("projectStatus", value)}
+                  </option>
+                ))}
+              </select>
+              <select
+                className={cn(fieldStyles, "h-9 text-sm !py-1.5 px-3 leading-normal")}
+                onChange={(event) => setSortBy(event.target.value as "progress" | "date" | "budget")}
+                value={sortBy}
+              >
+                <option value="progress">По прогрессу</option>
+                <option value="date">По дате</option>
+                <option value="budget">По бюджету</option>
+              </select>
             </div>
-          </CardHeader>
-          <CardContent className="grid min-w-0 gap-4">
-            <div className="grid min-w-0 gap-4">
-              {paginatedProjects.map((project) => (
-                <ProjectCard
+          </div>
+          <Button size="sm" onClick={() => setProjectModalOpen(true)}>
+            {t("action.addProject")}
+          </Button>
+        </div>
+
+        {/* Stats row */}
+        <div className="grid gap-2 grid-cols-4">
+          <Card className="p-2">
+            <div className="text-[10px] text-[var(--ink-soft)]">{t("dashboard.kpi.budgetUsed")}</div>
+            <div className="text-sm font-semibold text-[var(--ink)]">{formatCurrency(totalBudget, "RUB")}</div>
+          </Card>
+          <Card className="p-2">
+            <div className="text-[10px] text-[var(--ink-soft)]">{t("dashboard.evm.budget")}</div>
+            <div className="text-sm font-semibold text-[var(--ink)]">{formatCurrency(totalActual, "RUB")}</div>
+          </Card>
+          <Card className="p-2">
+            <div className="text-[10px] text-[var(--ink-soft)]">{t("project.progressLabel")}</div>
+            <div className="text-sm font-semibold text-[var(--ink)]">{avgProgress}%</div>
+          </Card>
+          <Card className="p-2">
+            <div className="text-[10px] text-[var(--ink-soft)]">{t("dashboard.atRisk")}</div>
+            <div className={cn("text-sm font-semibold", atRiskCount > 0 ? "text-red-500" : "text-[var(--ink)]")}>
+              {atRiskCount}
+            </div>
+          </Card>
+        </div>
+
+        {/* Projects grid + sidebar */}
+        <div className="grid min-w-0 gap-4 lg:grid-cols-[1fr_320px]">
+          {/* Projects grid */}
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
+            {filteredProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                taskCount={tasks.filter((task) => task.projectId === project.id && task.status !== "done").length}
+                onDuplicate={duplicateProject}
+                onEdit={setEditingProject}
+              />
+            ))}
+          </div>
+
+          {/* Sidebar with chart */}
+          <Card className="h-fit bg-[var(--surface-panel)] p-4">
+            <h3 className="text-sm font-semibold text-[var(--ink)] mb-3">{t("projects.comparison")}</h3>
+            <ClientChart className="h-[180px] mb-3">
+              <ProjectsComparisonChart data={compareData} />
+            </ClientChart>
+            
+            {/* Mini list */}
+            <div className="space-y-2">
+              {filteredProjects.slice(0, 4).map((project) => (
+                <div
                   key={project.id}
-                  onDuplicate={duplicateProject}
-                  onEdit={setEditingProject}
-                  project={project}
-                  taskCount={tasks.filter((task) => task.projectId === project.id && task.status !== "done").length}
-                />
+                  className="flex items-center justify-between rounded-lg border border-[var(--line)] bg-[var(--panel-soft)] px-3 py-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[var(--ink)] truncate">{project.name}</p>
+                    <p className="text-xs text-[var(--ink-soft)]">{project.progress}%</p>
+                  </div>
+                  <Badge 
+                    variant={project.status === "at-risk" ? "danger" : "success"}
+                    className="text-xs"
+                  >
+                    {project.health}%
+                  </Badge>
+                </div>
               ))}
             </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-6">
-                <Button
-                  disabled={page === 1}
-                  onClick={() => setPage(page - 1)}
-                  variant="secondary"
-                  size="sm"
-                >
-                  {t("action.previous")}
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                    <Button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      variant={page === p ? "default" : "ghost"}
-                      size="sm"
-                      className="w-9"
-                    >
-                      {p}
-                    </Button>
-                  ))}
-                </div>
-                <Button
-                  disabled={page === totalPages}
-                  onClick={() => setPage(page + 1)}
-                  variant="secondary"
-                  size="sm"
-                >
-                  {t("action.next")}
-                </Button>
-              </div>
-            )}
-            <Card className="min-w-0 bg-[color:var(--surface-panel)]">
-              <CardHeader>
-                <CardTitle>{t("projects.comparison")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ClientChart className="h-[320px]">
-                  <ProjectsComparisonChart data={compareData} />
-                </ClientChart>
-                <div className="grid gap-4">
-                  {filteredProjects.slice(0, 5).map((project) => (
-                    <div
-                      key={project.id}
-                      className="flex items-center justify-between rounded-[10px] border border-[var(--line)] bg-[var(--panel-soft)] px-4 py-4"
-                    >
-                      <div>
-                        <p className="font-medium text-[var(--ink)]">{project.name}</p>
-                        <p className="text-sm text-[var(--ink-soft)]">
-                          {formatCurrency(project.budget.actual, project.budget.currency)} /{" "}
-                          {formatCurrency(project.budget.planned, project.budget.currency)}
-                        </p>
-                      </div>
-                      <Badge variant={project.status === "at-risk" ? "danger" : "success"}>
-                        {project.health}%
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
 
       <ProjectFormModal
@@ -276,4 +272,9 @@ export function ProjectsPage({ initialQuery = "" }: { initialQuery?: string }) {
       />
     </>
   );
+}
+
+// Helper
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
 }
