@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { AIRouter } from '@/lib/ai/providers';
-import { memoryManager, contextBuilder } from '@/lib/memory/memory-manager';
+import { prismaMemoryManager, prismaContextBuilder } from '@/lib/memory/prisma-memory-manager';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,14 +13,14 @@ export async function POST(req: NextRequest) {
     // Initialize
     const router = new AIRouter();
 
-    // Build context
-    const context = contextBuilder.build({ projectId });
+    // Build context from Prisma memory
+    const context = await prismaContextBuilder.build();
 
     // System prompt
     const systemPrompt = `Ты CEOClaw AI — ассистент для управления проектами.
 
 Контекст:
-${JSON.stringify(context, null, 2)}
+${context}
 
 Отвечай кратко, по делу. Используй данные из контекста.
 Если не хватает данных — спроси уточнение.`;
@@ -34,17 +34,16 @@ ${JSON.stringify(context, null, 2)}
       { provider, model }
     );
 
-    // Save to memory
-    memoryManager.add({
+    // Save to Prisma memory
+    await prismaMemoryManager.add({
       type: 'episodic',
       category: 'chat',
       key: `chat-${Date.now()}`,
       value: { user: message, assistant: response },
-      validFrom: new Date().toISOString(),
+      validFrom: new Date(),
       validUntil: null,
       confidence: 100,
       source: 'system',
-      tags: ['chat', projectId || 'main'],
     });
 
     return NextResponse.json({
