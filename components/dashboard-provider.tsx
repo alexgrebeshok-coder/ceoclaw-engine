@@ -275,12 +275,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       }
       setError(null);
 
-      const [projects, tasks, team, risks] = await Promise.all([
-        api.get<ApiProject[]>("/api/projects"),
+      const [projectsResponse, tasks, team, risks] = await Promise.all([
+        api.get<{ projects: ApiProject[] }>("/api/projects"),
         api.get<ApiTask[]>("/api/tasks"),
         api.get<ApiTeamMember[]>("/api/team"),
         api.get<ApiRisk[]>("/api/risks"),
       ]);
+
+      const projects = projectsResponse.projects;
 
       const nextState = buildDashboardStateFromApi({
         projects,

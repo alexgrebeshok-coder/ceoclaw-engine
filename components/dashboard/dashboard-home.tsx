@@ -31,7 +31,8 @@ import { useLocale } from "@/contexts/locale-context";
 import { useDashboardSnapshot } from "@/lib/hooks/use-api";
 import { usePortfolioHealth } from "@/lib/hooks/use-portfolio-health";
 import { Project } from "@/lib/types";
-import { leadingLabel, safePercent, cn } from "@/lib/utils";
+import { leadingLabel, safePercent } from "@/lib/utils";
+import { DashboardSkeleton } from "@/components/ui/loading-skeleton";
 
 const DashboardTrendChart = dynamic(
   () => import("@/components/dashboard/dashboard-trend-chart").then((module) => module.DashboardTrendChart),
@@ -276,9 +277,12 @@ export function DashboardHome() {
           <div className="grid gap-3">
             {/* Critical Events */}
             <Card className="p-3">
-              <h3 className="text-xs font-medium mb-2">{t("dashboard.criticalFeed")}</h3>
-              <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                {notifications.slice(0, 3).map((notification) => (
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-medium">{t("dashboard.criticalFeed")}</h3>
+                <span className="text-[10px] text-muted-foreground">{notifications.length} событий</span>
+              </div>
+              <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
+                {notifications.map((notification) => (
                   <Link
                     key={notification.id}
                     className="block p-2 rounded border bg-[var(--panel-soft)]/40 hover:bg-[var(--panel-soft)]/60"
@@ -302,8 +306,8 @@ export function DashboardHome() {
                   {t("dashboard.noTeamMembers")}
                 </div>
               ) : (
-                <div className="space-y-1.5">
-                  {team.slice(0, 4).map((member) => {
+                <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
+                  {team.map((member) => {
                     const loadLevel = member.allocated >= 90 ? "critical" : member.allocated >= 70 ? "warning" : "normal";
                     return (
                       <div key={member.id} className="flex items-center gap-2 p-2 rounded border bg-[var(--panel-soft)]/40 hover:bg-[var(--panel-soft)]/60 transition-colors">
@@ -344,7 +348,7 @@ export function DashboardHome() {
             <Card className="p-3">
               <h3 className="text-xs font-medium mb-2">{t("dashboard.riskMix")}</h3>
               <div className="grid gap-2 grid-cols-2">
-                <ClientChart className="h-32">
+                <ClientChart className="h-40">
                   <DashboardRiskChart data={riskData} />
                 </ClientChart>
                 <div className="space-y-1">

@@ -74,7 +74,7 @@ function ProjectCardComponent({
           <div className="flex items-center justify-between">
             <span className="text-xs text-[var(--ink-soft)]">{t("dashboard.evm.budget")}</span>
             <span className="text-sm font-semibold text-[var(--ink)]">
-              {formatCurrency(project.budget.actual, project.budget.currency)}
+              {formatCurrency(project.budget.planned, project.budget.currency)}
             </span>
           </div>
 

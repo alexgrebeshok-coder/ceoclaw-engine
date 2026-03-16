@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Folder, LayoutDashboard, ListTodo, Users2, BarChart3, Calendar, GanttChart, AlertTriangle, Settings, Bell, Search, Briefcase, ChevronDown, Database, Shield, Rocket } from "lucide-react";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
 
 import { useDashboard } from "@/components/dashboard-provider";
@@ -259,7 +260,7 @@ export function Sidebar({
       </div>
 
       {/* Main Navigation - Always Visible */}
-      <nav className="grid gap-1">
+      <nav className="grid gap-1" role="navigation" aria-label="Main navigation">
         {renderNavItem(navigation[0])}
         {renderNavItem(navigation[1])}
         {renderNavItem(navigation[2], totalTaskCount)}
@@ -268,6 +269,8 @@ export function Sidebar({
       {/* Planning Section - Collapsible */}
       <div className="mt-2">
         <button
+          aria-expanded={!collapsedSections.planning}
+          aria-label="Планирование секция"
           className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)] hover:text-[var(--ink-soft)]"
           onClick={() => toggleSection("planning")}
           type="button"
@@ -281,7 +284,7 @@ export function Sidebar({
           />
         </button>
         {!collapsedSections.planning && (
-          <div className="grid gap-1">
+          <div className="grid gap-1" role="group">
             {navigation.slice(3, 7).map((item) => renderNavItem(item, undefined, true))}
           </div>
         )}
@@ -290,6 +293,8 @@ export function Sidebar({
       {/* Team & Risks - Collapsible */}
       <div className="mt-2">
         <button
+          aria-expanded={!collapsedSections.team}
+          aria-label="Команда секция"
           className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)] hover:text-[var(--ink-soft)]"
           onClick={() => toggleSection("team")}
           type="button"
@@ -303,7 +308,7 @@ export function Sidebar({
           />
         </button>
         {!collapsedSections.team && (
-          <div className="grid gap-1">
+          <div className="grid gap-1" role="group">
             {renderNavItem(navigation[7], undefined, true)}
             {renderNavItem(navigation[8], totalRiskCount, true)}
           </div>
@@ -318,6 +323,8 @@ export function Sidebar({
       {/* Executive Ops - Collapsible */}
       <div className="mt-2">
         <button
+          aria-expanded={!collapsedSections.ops}
+          aria-label="Executive Ops секция"
           className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)] hover:text-[var(--ink-soft)]"
           onClick={() => toggleSection("ops")}
           type="button"
@@ -331,10 +338,12 @@ export function Sidebar({
           />
         </button>
         {!collapsedSections.ops && (
-          <div className="space-y-2">
+          <div className="space-y-2" role="group">
             {operationsSections.map((section) => (
               <div key={section.id}>
                 <button
+                  aria-expanded={!collapsedSections[`ops-${section.id}`]}
+                  aria-label={`${section.label} секция`}
                   className="flex w-full items-center justify-between px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-muted)] hover:text-[var(--ink-soft)]"
                   onClick={() => toggleSection(`ops-${section.id}`)}
                   type="button"
@@ -398,6 +407,8 @@ export function Sidebar({
       <div className="mt-auto grid gap-3 pt-2">
         <div>
           <button
+            aria-expanded={!collapsedSections.portfolio}
+            aria-label="Portfolio Health секция"
             className="flex w-full items-center justify-between rounded-xl border border-[var(--line)] bg-[linear-gradient(180deg,#16233f_0%,#213b74_100%)] p-4 text-white"
             onClick={() => toggleSection("portfolio")}
             type="button"

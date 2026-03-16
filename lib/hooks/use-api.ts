@@ -39,11 +39,11 @@ export function useProjects(filters?: { status?: string; direction?: string }): 
   mutate: MutateFn<ApiProject[]>;
 } {
   const key = `/api/projects${buildQuery(filters)}`;
-  const { data, error, isLoading, mutate: boundMutate } = useSWR<ApiProject[]>(key, fetcher, {
+  const { data, error, isLoading, mutate: boundMutate } = useSWR<{ projects: ApiProject[] }>(key, fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 5000,
   });
-  const projects = useMemo(() => data?.map(normalizeProject) ?? [], [data]);
+  const projects = useMemo(() => data?.projects?.map(normalizeProject) ?? [], [data]);
 
   return {
     projects,
@@ -142,13 +142,14 @@ export function useDashboardSnapshot(): {
   const { data, error, isLoading, mutate: boundMutate } = useSWR(
     key,
     async () => {
-      const [projects, tasks, team, risks] = await Promise.all([
-        fetcher<ApiProject[]>("/api/projects"),
+      const [projectsResponse, tasks, team, risks] = await Promise.all([
+        fetcher<{ projects: ApiProject[] }>("/api/projects"),
         fetcher<ApiTask[]>("/api/tasks"),
         fetcher<ApiTeamMember[]>("/api/team"),
         fetcher<ApiRisk[]>("/api/risks"),
       ]);
 
+      const projects = projectsResponse.projects ?? [];
       return buildDashboardStateFromApi({ projects, tasks, team, risks });
     },
     {

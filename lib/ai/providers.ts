@@ -163,17 +163,130 @@ export class OpenAIProvider implements AIProvider {
 }
 
 // ============================================
+// Polza.ai Provider (Российский агрегатор)
+// ============================================
+
+export class PolzaProvider implements AIProvider {
+  name = 'polza';
+  models = [
+    'gpt-5',
+    'gpt-4o-mini',
+    'claude-4.5-sonnet',
+    'claude-4.5-haiku',
+    'deepseek-r1',
+    'deepseek-v3.2-exp',
+    'qwen3-coder',
+    'gemini-2.5-flash',
+  ];
+
+  private apiKey: string;
+  private baseUrl = 'https://api.polza.ai/v1';
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.POLZA_API_KEY || '';
+  }
+
+  async chat(messages: Message[], options?: ChatOptions): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('POLZA_API_KEY not set');
+    }
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: options?.model || 'gpt-4o-mini',
+        messages,
+        temperature: options?.temperature || 0.7,
+        max_tokens: options?.maxTokens || 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Polza.ai API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ============================================
+// Bothub Provider (Российский агрегатор)
+// ============================================
+
+export class BothubProvider implements AIProvider {
+  name = 'bothub';
+  models = [
+    'gpt-5',
+    'gpt-4o-mini',
+    'claude-4.5-sonnet',
+    'deepseek-r1',
+    'qwen3-coder',
+    'yandexgpt',
+  ];
+
+  private apiKey: string;
+  private baseUrl = 'https://api.bothub.chat/v1';
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.BOTHUB_API_KEY || '';
+  }
+
+  async chat(messages: Message[], options?: ChatOptions): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('BOTHUB_API_KEY not set');
+    }
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: options?.model || 'gpt-4o-mini',
+        messages,
+        temperature: options?.temperature || 0.7,
+        max_tokens: options?.maxTokens || 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Bothub API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ============================================
 // AI Router
 // ============================================
 
 export class AIRouter {
   private providers: Map<string, AIProvider> = new Map();
   private defaultProvider = 'openrouter';
+  private providerPriority: string[] = ['polza', 'openrouter', 'bothub', 'zai', 'openai'];
 
   constructor() {
-    // Initialize providers from env
+    // Initialize providers from env (in priority order)
+    if (process.env.POLZA_API_KEY) {
+      this.providers.set('polza', new PolzaProvider());
+    }
+
     if (process.env.OPENROUTER_API_KEY) {
       this.providers.set('openrouter', new OpenRouterProvider());
+    }
+
+    if (process.env.BOTHUB_API_KEY) {
+      this.providers.set('bothub', new BothubProvider());
     }
 
     if (process.env.ZAI_API_KEY) {
@@ -184,15 +297,17 @@ export class AIRouter {
       this.providers.set('openai', new OpenAIProvider());
     }
 
-    // Set default provider
+    // Set default provider (highest priority available)
     if (process.env.DEFAULT_AI_PROVIDER) {
       this.defaultProvider = process.env.DEFAULT_AI_PROVIDER;
-    } else if (this.providers.has('openrouter')) {
-      this.defaultProvider = 'openrouter';
-    } else if (this.providers.has('zai')) {
-      this.defaultProvider = 'zai';
-    } else if (this.providers.has('openai')) {
-      this.defaultProvider = 'openai';
+    } else {
+      // Use first available from priority list
+      for (const provider of this.providerPriority) {
+        if (this.providers.has(provider)) {
+          this.defaultProvider = provider;
+          break;
+        }
+      }
     }
   }
 

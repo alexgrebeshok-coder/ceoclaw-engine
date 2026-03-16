@@ -38,7 +38,8 @@ export function isDatabaseConfigured(env: RuntimeEnv = process.env): boolean {
   if (!databaseUrl) return false;
 
   // The Prisma datasource is PostgreSQL (Neon), so the URL must start with postgresql:// or postgres://
-  return databaseUrl.startsWith("postgresql://") || databaseUrl.startsWith("postgres://");
+  // For development (SQLite), allow file: uri scheme
+  return databaseUrl.startsWith("postgresql://") || databaseUrl.startsWith("postgres://") || databaseUrl.startsWith("file:");
 }
 
 export function shouldServeMockData(env: RuntimeEnv = process.env): boolean {
