@@ -163,6 +163,55 @@ export class OpenAIProvider implements AIProvider {
 }
 
 // ============================================
+// AIJora Provider (Российский агрегатор)
+// ============================================
+
+export class AIJoraProvider implements AIProvider {
+  name = 'aijora';
+  models = [
+    'gpt-5',
+    'grok-4',
+    'chatgpt',
+    // TODO: Уточнить список моделей на https://www.aijora.ru/
+  ];
+
+  private apiKey: string;
+  private baseUrl = 'https://api.aijora.ru/v1'; // TODO: Уточнить endpoint
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.AIJORA_API_KEY || '';
+  }
+
+  async chat(messages: Message[], options?: ChatOptions): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('AIJORA_API_KEY not set');
+    }
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: options?.model || 'gpt-5',
+        messages,
+        temperature: options?.temperature || 0.7,
+        max_tokens: options?.maxTokens || 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`AIJora API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ============================================
 // Polza.ai Provider (Российский агрегатор)
 // ============================================
 
@@ -273,10 +322,14 @@ export class BothubProvider implements AIProvider {
 export class AIRouter {
   private providers: Map<string, AIProvider> = new Map();
   private defaultProvider = 'openrouter';
-  private providerPriority: string[] = ['polza', 'openrouter', 'bothub', 'zai', 'openai'];
+  private providerPriority: string[] = ['aijora', 'polza', 'openrouter', 'bothub', 'zai', 'openai'];
 
   constructor() {
     // Initialize providers from env (in priority order)
+    if (process.env.AIJORA_API_KEY) {
+      this.providers.set('aijora', new AIJoraProvider());
+    }
+
     if (process.env.POLZA_API_KEY) {
       this.providers.set('polza', new PolzaProvider());
     }
