@@ -3,6 +3,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -30,7 +31,7 @@ import { useLocale } from "@/contexts/locale-context";
 import { useDashboardSnapshot } from "@/lib/hooks/use-api";
 import { usePortfolioHealth } from "@/lib/hooks/use-portfolio-health";
 import { Project } from "@/lib/types";
-import { leadingLabel, safePercent } from "@/lib/utils";
+import { leadingLabel, safePercent, cn } from "@/lib/utils";
 
 const DashboardTrendChart = dynamic(
   () => import("@/components/dashboard/dashboard-trend-chart").then((module) => module.DashboardTrendChart),
@@ -292,20 +293,51 @@ export function DashboardHome() {
 
             {/* Team Load */}
             <Card className="p-3">
-              <h3 className="text-xs font-medium mb-2">{t("dashboard.teamLoad")}</h3>
-              <div className="space-y-1.5">
-                {team.slice(0, 4).map((member) => (
-                  <div key={member.id} className="flex items-center gap-2 p-2 rounded border bg-[var(--panel-soft)]/40">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{member.name}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Progress value={member.allocated} className="flex-1 h-1" />
-                        <span className="text-[10px] text-muted-foreground w-8">{member.allocated}%</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-medium">{t("dashboard.teamLoad")}</h3>
+                <span className="text-[10px] text-muted-foreground">{team.length} {t("dashboard.teamMembers")}</span>
               </div>
+              {team.length === 0 ? (
+                <div className="flex items-center justify-center h-[100px] text-xs text-muted-foreground">
+                  {t("dashboard.noTeamMembers")}
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {team.slice(0, 4).map((member) => {
+                    const loadLevel = member.allocated >= 90 ? "critical" : member.allocated >= 70 ? "warning" : "normal";
+                    return (
+                      <div key={member.id} className="flex items-center gap-2 p-2 rounded border bg-[var(--panel-soft)]/40 hover:bg-[var(--panel-soft)]/60 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-medium truncate">{member.name}</p>
+                            <span className={cn(
+                              "text-[10px] font-medium",
+                              loadLevel === "critical" && "text-rose-500",
+                              loadLevel === "warning" && "text-amber-500",
+                              loadLevel === "normal" && "text-muted-foreground"
+                            )}>
+                              {member.allocated}%
+                            </span>
+                          </div>
+                          <div className="mt-1">
+                            <div className="h-1.5 rounded-full bg-[var(--line)] overflow-hidden">
+                              <div
+                                className={cn(
+                                  "h-full rounded-full transition-all duration-300",
+                                  loadLevel === "critical" && "bg-rose-500",
+                                  loadLevel === "warning" && "bg-amber-500",
+                                  loadLevel === "normal" && "bg-[var(--brand)]"
+                                )}
+                                style={{ width: `${member.allocated}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </Card>
 
             {/* Risk Mix */}

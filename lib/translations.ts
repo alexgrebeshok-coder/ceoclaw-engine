@@ -117,6 +117,8 @@ export const messages = {
     "dashboard.teamLoad": "Загрузка команды",
     "dashboard.teamLoadDescription":
       "Кто уже на грани capacity и кого можно подключить на следующий спринт.",
+    "dashboard.teamMembers": "участников",
+    "dashboard.noTeamMembers": "Нет участников команды",
     "dashboard.riskMix": "Распределение рисков",
     "dashboard.riskMixDescription":
       "Сводный объём критичных, warning и info событий.",
@@ -887,6 +889,8 @@ export const messages = {
     "dashboard.teamLoad": "Team load",
     "dashboard.teamLoadDescription":
       "Who is at the limit and who can take the next sprint.",
+    "dashboard.teamMembers": "members",
+    "dashboard.noTeamMembers": "No team members",
     "dashboard.riskMix": "Risk mix",
     "dashboard.riskMixDescription":
       "Aggregate volume of critical, warning and info events.",
@@ -1648,6 +1652,8 @@ export const messages = {
     "dashboard.criticalFeedDescription": "无需进入详情即可看到红色与黄色信号。",
     "dashboard.teamLoad": "团队负载",
     "dashboard.teamLoadDescription": "谁已接近上限，谁还能承担下一轮冲刺。",
+    "dashboard.teamMembers": "名成员",
+    "dashboard.noTeamMembers": "暂无团队成员",
     "dashboard.riskMix": "风险分布",
     "dashboard.riskMixDescription": "关键、预警与信息事件的总体分布。",
     "dashboard.quickLinks": "快速入口",

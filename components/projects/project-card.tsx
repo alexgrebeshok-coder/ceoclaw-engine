@@ -29,7 +29,16 @@ function ProjectCardComponent({
 
   return (
     <Link href={`/projects/${project.id}`}>
-      <Card className="group relative h-full min-h-[220px] overflow-hidden transition-all duration-150 hover:border-[var(--brand)] hover:shadow-md cursor-pointer">
+      <Card className="group relative h-full min-h-[220px] overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-[var(--brand)]/10 cursor-pointer border-2 hover:border-[var(--brand)]/50">
+        {/* Gradient border effect based on status */}
+        <div className={cn(
+          "absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none",
+          "bg-gradient-to-br",
+          project.status === "active" && "from-emerald-500/5 via-transparent to-emerald-500/5",
+          project.status === "planning" && "from-blue-500/5 via-transparent to-blue-500/5",
+          project.status === "at-risk" && "from-amber-500/5 via-transparent to-amber-500/5",
+          project.status === "completed" && "from-violet-500/5 via-transparent to-violet-500/5"
+        )} />
         {/* Status bar at top */}
         <div className={cn("h-1.5 w-full opacity-80", statusMeta.className)} />
 
