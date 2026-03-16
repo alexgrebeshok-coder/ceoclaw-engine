@@ -30,6 +30,103 @@ export interface NavigationItem {
   labelKey?: MessageKey;
 }
 
+export interface NavigationSection {
+  id: string;
+  label: string;
+  items: NavigationItem[];
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
+}
+
+export interface OperationsSection {
+  id: string;
+  label: string;
+  description: string;
+  items: NavigationItem[];
+}
+
+export const operationsSections: OperationsSection[] = [
+  {
+    id: "data",
+    label: "Data & Intake",
+    description: "Import and process data",
+    items: [
+      { href: "/imports", label: "Imports", icon: Database },
+      { href: "/briefs", label: "Executive Briefs", icon: FileText },
+      { href: "/meetings", label: "Meeting to Action", icon: MessageSquareText },
+    ],
+  },
+  {
+    id: "governance",
+    label: "Governance",
+    description: "Control and compliance",
+    items: [
+      { href: "/command-center", label: "Command Center", icon: AlertTriangle },
+      { href: "/audit-packs", label: "Audit Packs", icon: FileText },
+      { href: "/pilot-controls", label: "Pilot Controls", icon: ShieldCheck },
+      { href: "/pilot-feedback", label: "Pilot Feedback", icon: MessageSquareText },
+      { href: "/pilot-review", label: "Pilot Review", icon: FileText },
+    ],
+  },
+  {
+    id: "rollout",
+    label: "Rollout",
+    description: "Tenant deployment",
+    items: [
+      { href: "/tenant-readiness", label: "Tenant Readiness", icon: ListChecks },
+      { href: "/tenant-onboarding", label: "Tenant Onboarding", icon: FileText },
+      { href: "/tenant-rollout-packet", label: "Rollout Packet", icon: FileText },
+      { href: "/work-reports", label: "Work Reports", icon: RefreshCcw },
+      { href: "/integrations", label: "Connector Health", icon: Wrench },
+    ],
+  },
+];
+
+export const navigationSections: NavigationSection[] = [
+  {
+    id: "main",
+    label: "Overview",
+    collapsible: false,
+    items: [
+      { href: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
+      { href: "/projects", labelKey: "nav.projects", icon: BriefcaseBusiness },
+      { href: "/tasks", labelKey: "nav.tasks", icon: Workflow },
+    ],
+  },
+  {
+    id: "analytics",
+    label: "Planning & Analytics",
+    collapsible: true,
+    defaultCollapsed: false,
+    items: [
+      { href: "/kanban", labelKey: "nav.kanban", icon: Columns3 },
+      { href: "/calendar", labelKey: "nav.calendar", icon: CalendarDays },
+      { href: "/gantt", labelKey: "nav.gantt", icon: LineChart },
+      { href: "/analytics", labelKey: "nav.analytics", icon: Sparkles },
+    ],
+  },
+  {
+    id: "team",
+    label: "Team & Risks",
+    collapsible: true,
+    defaultCollapsed: false,
+    items: [
+      { href: "/team", labelKey: "nav.team", icon: Users },
+      { href: "/risks", labelKey: "nav.risks", icon: AlertTriangle },
+    ],
+  },
+  {
+    id: "ai",
+    label: "AI",
+    collapsible: true,
+    defaultCollapsed: false,
+    items: [
+      { href: "/chat", labelKey: "nav.chat", icon: MessageSquareText },
+    ],
+  },
+];
+
+// Keep for backward compatibility
 export const navigation: NavigationItem[] = [
   { href: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { href: "/projects", labelKey: "nav.projects", icon: BriefcaseBusiness },

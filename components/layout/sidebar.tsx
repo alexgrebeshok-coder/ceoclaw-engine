@@ -10,7 +10,7 @@ import {
   footerNavigation,
   getProjectTone,
   navigation,
-  operationsNavigation,
+  operationsSections,
   type NavigationItem,
 } from "@/components/layout/navigation-config";
 import { Input } from "@/components/ui/field";
@@ -41,6 +41,15 @@ export function Sidebar({
   const workspaceItemsRef = useRef<HTMLDivElement | null>(null);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    planning: true,
+    team: true,
+    ops: true,
+    opsData: true,
+    opsGovernance: true,
+    opsRollout: true,
+    portfolio: false,
+  });
   const { projects, risks: cachedRisks, tasks: cachedTasks } = useDashboard();
   const { risks: liveRisks, isLoading: risksLoading } = useRisks();
   const { tasks: liveTasks, isLoading: tasksLoading } = useTasks();
@@ -92,8 +101,45 @@ export function Sidebar({
     router.push(`/projects?query=${encodeURIComponent(search.trim())}`);
   };
 
+  const toggleSection = (section: string) => {
+    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
   const getItemLabel = (item: NavigationItem): string =>
     item.label ?? (item.labelKey ? t(item.labelKey) : item.href);
+
+  const renderNavItem = (item: NavigationItem, badgeValue?: number, compact = false) => {
+    const Icon = item.icon;
+    const active = item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
+    
+    return (
+      <Link
+        key={item.href}
+        className={cn(
+          "app-shell-nav-link group flex items-center gap-3 rounded-md text-sm font-medium text-[var(--ink-soft)] transition hover:bg-[var(--panel-soft)] hover:text-[var(--ink)]",
+          compact ? "px-3 py-2" : "px-4 py-2.5",
+          active && "bg-[var(--brand)] text-white hover:bg-[var(--brand)] hover:text-white"
+        )}
+        href={item.href}
+        onClick={onNavigate}
+      >
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="min-w-0 flex-1 truncate">{getItemLabel(item)}</span>
+        {badgeValue && badgeValue > 0 ? (
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-xs font-semibold",
+              active
+                ? "bg-white/20 text-white"
+                : "bg-[var(--panel-soft)] text-[var(--brand)]"
+            )}
+          >
+            {badgeValue}
+          </span>
+        ) : null}
+      </Link>
+    );
+  };
 
   return (
     <div
@@ -103,6 +149,7 @@ export function Sidebar({
         boxShadow: "var(--sidebar-shadow)",
       }}
     >
+      {/* Workspace Selector */}
       <Popover onOpenChange={setWorkspaceOpen} open={workspaceOpen}>
         <PopoverTrigger asChild>
           <button
@@ -192,6 +239,7 @@ export function Sidebar({
         </PopoverContent>
       </Popover>
 
+      {/* Search */}
       <div className="relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]" />
         <Input
@@ -210,84 +258,110 @@ export function Sidebar({
         </span>
       </div>
 
+      {/* Main Navigation - Always Visible */}
       <nav className="grid gap-1">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          const active = item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
-          const badgeValue =
-            item.href === "/tasks"
-              ? totalTaskCount
-              : item.href === "/risks"
-                ? totalRiskCount
-                : 0;
-
-          return (
-            <Link
-              key={item.href}
-              className={cn(
-                "app-shell-nav-link group flex items-center gap-3 rounded-md px-4 py-2.5 text-sm font-medium text-[var(--ink-soft)] transition hover:bg-[var(--panel-soft)] hover:text-[var(--ink)]",
-                active && "bg-[var(--brand)] text-white hover:bg-[var(--brand)] hover:text-white"
-              )}
-              href={item.href}
-              onClick={onNavigate}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="min-w-0 flex-1 truncate">{getItemLabel(item)}</span>
-              {badgeValue > 0 ? (
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-semibold",
-                    active
-                      ? "bg-white/20 text-white"
-                      : "bg-[var(--panel-soft)] text-[var(--brand)]"
-                  )}
-                >
-                  {badgeValue}
-                </span>
-              ) : null}
-            </Link>
-          );
-        })}
+        {renderNavItem(navigation[0])}
+        {renderNavItem(navigation[1])}
+        {renderNavItem(navigation[2], totalTaskCount)}
       </nav>
 
+      {/* Planning Section - Collapsible */}
       <div className="mt-2">
-        <p className="px-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)]">
-          Executive Ops
-        </p>
-        <p className="mt-1 px-2 text-xs leading-5 text-[var(--ink-muted)]">
-          New shell routes ready for backend contracts.
-        </p>
+        <button
+          className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)] hover:text-[var(--ink-soft)]"
+          onClick={() => toggleSection("planning")}
+          type="button"
+        >
+          <span>Планирование</span>
+          <ChevronRight
+            className={cn(
+              "h-4 w-4 transition-transform",
+              !collapsedSections.planning && "rotate-90"
+            )}
+          />
+        </button>
+        {!collapsedSections.planning && (
+          <div className="grid gap-1">
+            {navigation.slice(3, 7).map((item) => renderNavItem(item, undefined, true))}
+          </div>
+        )}
       </div>
 
-      <div className="grid gap-1">
-        {operationsNavigation.map((item) => {
-          const Icon = item.icon;
-          const active = item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
-
-          return (
-            <Link
-              key={item.href}
-              className={cn(
-                "app-shell-nav-link group flex items-center gap-3 rounded-md px-4 py-2.5 text-sm font-medium text-[var(--ink-soft)] transition hover:bg-[var(--panel-soft)] hover:text-[var(--ink)]",
-                active && "bg-[var(--panel-soft)] text-[var(--ink)] ring-1 ring-[var(--line-strong)]"
-              )}
-              href={item.href}
-              onClick={onNavigate}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="min-w-0 flex-1 truncate">{getItemLabel(item)}</span>
-              <ChevronRight className="h-4 w-4 text-[var(--ink-muted)]" />
-            </Link>
-          );
-        })}
+      {/* Team & Risks - Collapsible */}
+      <div className="mt-2">
+        <button
+          className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)] hover:text-[var(--ink-soft)]"
+          onClick={() => toggleSection("team")}
+          type="button"
+        >
+          <span>Команда</span>
+          <ChevronRight
+            className={cn(
+              "h-4 w-4 transition-transform",
+              !collapsedSections.team && "rotate-90"
+            )}
+          />
+        </button>
+        {!collapsedSections.team && (
+          <div className="grid gap-1">
+            {renderNavItem(navigation[7], undefined, true)}
+            {renderNavItem(navigation[8], totalRiskCount, true)}
+          </div>
+        )}
       </div>
 
+      {/* AI - Single item */}
+      <div className="mt-2">
+        {renderNavItem(navigation[9], undefined, true)}
+      </div>
+
+      {/* Executive Ops - Collapsible */}
+      <div className="mt-2">
+        <button
+          className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)] hover:text-[var(--ink-soft)]"
+          onClick={() => toggleSection("ops")}
+          type="button"
+        >
+          <span>Executive Ops</span>
+          <ChevronRight
+            className={cn(
+              "h-4 w-4 transition-transform",
+              !collapsedSections.ops && "rotate-90"
+            )}
+          />
+        </button>
+        {!collapsedSections.ops && (
+          <div className="space-y-2">
+            {operationsSections.map((section) => (
+              <div key={section.id}>
+                <button
+                  className="flex w-full items-center justify-between px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-muted)] hover:text-[var(--ink-soft)]"
+                  onClick={() => toggleSection(`ops-${section.id}`)}
+                  type="button"
+                >
+                  <span>{section.label}</span>
+                  <ChevronRight
+                    className={cn(
+                      "h-3 w-3 transition-transform",
+                      !collapsedSections[`ops-${section.id}`] && "rotate-90"
+                    )}
+                  />
+                </button>
+                {!collapsedSections[`ops-${section.id}`] && (
+                  <div className="grid gap-0.5">
+                    {section.items.map((item) => renderNavItem(item, undefined, true))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Featured Projects */}
       <div className="mt-2">
         <p className="px-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)]">
           {t("sidebar.projectsTitle")}
-        </p>
-        <p className="mt-1 px-2 text-xs leading-5 text-[var(--ink-muted)]">
-          {t("sidebar.projectsDescription")}
         </p>
       </div>
 
@@ -320,37 +394,54 @@ export function Sidebar({
         )}
       </div>
 
+      {/* Portfolio Health - Collapsible */}
       <div className="mt-auto grid gap-3 pt-2">
-        <div className="rounded-xl border border-[var(--line)] bg-[linear-gradient(180deg,#16233f_0%,#213b74_100%)] p-4 text-white">
-          <p className="text-xs uppercase tracking-[0.18em] text-white/70">{t("dashboard.portfolioHealth")}</p>
-          <p className="mt-1 text-xs leading-5 text-white/70">{t("sidebar.portfolioHint")}</p>
-          <p className="mt-3 text-5xl font-semibold tracking-[-0.08em]">{portfolioHealth}%</p>
-          <div className="mt-4 grid gap-2 text-sm">
-            <Link
-              className="flex items-center justify-between rounded-md border border-white/10 bg-white/6 px-3 py-2 transition hover:bg-white/10"
-              href="/projects"
-              onClick={onNavigate}
-            >
-              <span className="text-white/80">{t("dashboard.activeProjectsLabel")}</span>
-              <span className="flex items-center gap-2 font-semibold text-white">
-                {activeProjectCount}
-                <ChevronRight className="h-4 w-4 text-white/60" />
-              </span>
-            </Link>
-            <Link
-              className="flex items-center justify-between rounded-md border border-white/10 bg-white/6 px-3 py-2 transition hover:bg-white/10"
-              href="/risks"
-              onClick={onNavigate}
-            >
-              <span className="text-white/80">{t("dashboard.atRiskProjectsLabel")}</span>
-              <span className="flex items-center gap-2 font-semibold text-white">
-                {atRiskProjectCount}
-                <ChevronRight className="h-4 w-4 text-white/60" />
-              </span>
-            </Link>
-          </div>
+        <div>
+          <button
+            className="flex w-full items-center justify-between rounded-xl border border-[var(--line)] bg-[linear-gradient(180deg,#16233f_0%,#213b74_100%)] p-4 text-white"
+            onClick={() => toggleSection("portfolio")}
+            type="button"
+          >
+            <div className="flex-1 text-left">
+              <p className="text-xs uppercase tracking-[0.18em] text-white/70">{t("dashboard.portfolioHealth")}</p>
+              <p className="mt-3 text-4xl font-semibold tracking-[-0.08em]">{portfolioHealth}%</p>
+            </div>
+            <ChevronRight
+              className={cn(
+                "h-5 w-5 text-white/60 transition-transform",
+                !collapsedSections.portfolio && "rotate-90"
+              )}
+            />
+          </button>
+          {!collapsedSections.portfolio && (
+            <div className="mt-2 grid gap-2 text-sm">
+              <Link
+                className="flex items-center justify-between rounded-md border border-[var(--line)] bg-[var(--panel-soft)] px-3 py-2 transition hover:bg-[var(--panel-soft-strong)]"
+                href="/projects"
+                onClick={onNavigate}
+              >
+                <span className="text-[var(--ink-soft)]">{t("dashboard.activeProjectsLabel")}</span>
+                <span className="flex items-center gap-2 font-semibold text-[var(--ink)]">
+                  {activeProjectCount}
+                  <ChevronRight className="h-4 w-4 text-[var(--ink-muted)]" />
+                </span>
+              </Link>
+              <Link
+                className="flex items-center justify-between rounded-md border border-[var(--line)] bg-[var(--panel-soft)] px-3 py-2 transition hover:bg-[var(--panel-soft-strong)]"
+                href="/risks"
+                onClick={onNavigate}
+              >
+                <span className="text-[var(--ink-soft)]">{t("dashboard.atRiskProjectsLabel")}</span>
+                <span className="flex items-center gap-2 font-semibold text-[var(--ink)]">
+                  {atRiskProjectCount}
+                  <ChevronRight className="h-4 w-4 text-[var(--ink-muted)]" />
+                </span>
+              </Link>
+            </div>
+          )}
         </div>
 
+        {/* Footer Navigation */}
         <div className="grid gap-1">
           {footerNavigation.map((item) => {
             const Icon = item.icon;
