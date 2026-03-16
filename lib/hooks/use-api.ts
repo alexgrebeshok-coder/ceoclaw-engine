@@ -36,7 +36,7 @@ export function useProjects(filters?: { status?: string; direction?: string }): 
   projects: ReturnType<typeof normalizeProject>[];
   isLoading: boolean;
   error: unknown;
-  mutate: MutateFn<ApiProject[]>;
+  mutate: KeyedMutator<{ projects: ApiProject[] }>;
 } {
   const key = `/api/projects${buildQuery(filters)}`;
   const { data, error, isLoading, mutate: boundMutate } = useSWR<{ projects: ApiProject[] }>(key, fetcher, {

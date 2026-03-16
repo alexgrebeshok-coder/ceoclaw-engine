@@ -242,7 +242,6 @@ export async function GET() {
           updatedAt: new Date(),
         },
       ],
-      skipDuplicates: true,
     });
     results.push('Memory: Initial facts created');
 
