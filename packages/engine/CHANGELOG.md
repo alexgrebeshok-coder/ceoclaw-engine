@@ -1,5 +1,25 @@
 # Changelog — Pyrfor Runtime
 
+## 0.2.0
+
+### Minor Changes
+
+- d5a11cf: Initial release of @pyrfor/engine v0.1.0
+
+  Core platform modules extracted from ceoclaw-dev monolith:
+
+  - ai/: OpenRouter, ZAI, OpenAI, GigaChat, YandexGPT providers
+  - memory/: Bounded Memory + GBrain implementations
+  - orchestration/: Intent routing + agent orchestration
+  - skills/: MCP-server skill registry
+  - auth/: Telegram OAuth + email authentication
+  - voice/: ASR/TTS base abstractions
+  - transport/: Telegram + SSE + notifications
+  - observability/: Logger + Sentry integration
+  - cache/: Rate limiting + cache layer
+  - db/: Prisma client + migration helpers
+  - utils/: Date, string, and general utilities
+
 > **Project:** `@ceoclaw/engine` — Pyrfor Runtime
 >
 > Pyrfor Runtime is the packaged, library-grade successor to the legacy **CEOClaw daemon**
@@ -23,6 +43,7 @@ This project uses **Unreleased** until the first tagged release is cut.
 ### Added
 
 #### Runtime core
+
 - `src/runtime/index.ts` — `PyrforRuntime` class: top-level orchestrator that wires all
   sub-systems (config, health, cron, gateway, Telegram, hot-reload) and exposes a clean
   `start()` / `stop()` lifecycle (TASK-10/11/12).
@@ -48,6 +69,7 @@ This project uses **Unreleased** until the first tagged release is cut.
   isolation level to prevent data leakage across contexts.
 
 #### HTTP Gateway
+
 - `src/runtime/gateway.ts` — HTTP gateway server exposing an OpenAI-compatible `/v1/chat`
   endpoint, `/health`, and `/metrics`; bearer-token auth; configurable port (TASK-06).
 - `src/runtime/gateway.test.ts` — unit tests for gateway routing and auth middleware.
@@ -55,6 +77,7 @@ This project uses **Unreleased** until the first tagged release is cut.
   covering all routes, request/response schemas, and security definitions.
 
 #### Telegram
+
 - `src/runtime/telegram/handlers.ts` — grammY middleware chain: `/start`, `/help`,
   `/status`, `/tasks`, `/projects`, `add_task` PM handler, AI query dispatch, ACL
   enforcement (TASK-07).
@@ -63,6 +86,7 @@ This project uses **Unreleased** until the first tagged release is cut.
   handler options.
 
 #### Cron
+
 - `src/runtime/cron.ts` — `CronService`: typed cron scheduler built on `croner`; runs
   registered handlers on CRON expressions; execution-history tracking (TASK-03).
 - `src/runtime/cron/handlers.ts` — concrete cron handlers: agent heartbeat (TASK-05),
@@ -71,30 +95,35 @@ This project uses **Unreleased** until the first tagged release is cut.
 - `src/runtime/cron/handlers.test.ts` — unit tests for individual cron handlers.
 
 #### Health
+
 - `src/runtime/health.ts` — `HealthMonitor`: tracks subsystem liveness (Telegram, cron,
   gateway, Prisma), exposes `/health` JSON endpoint, configurable failure thresholds
   (TASK-02).
 - `src/runtime/health.test.ts` — unit tests for `HealthMonitor`.
 
 #### Voice
+
 - `src/runtime/voice.ts` — voice transcription module: downloads Telegram voice OGG,
   converts via `ffmpeg`, transcribes with local `whisper-cli`; Whisper language is
   configurable (TASK-08).
 - `src/runtime/voice.test.ts` — unit tests for voice transcription pipeline.
 
 #### OS Service
+
 - `src/runtime/service.ts` — OS service manager: installs/removes the runtime as a macOS
   LaunchAgent (`dev.pyrfor.runtime.plist`) or Linux systemd user unit
   (`pyrfor-runtime.service`); async-first, ESM-native (TASK-09).
 - `src/runtime/service.test.ts` — unit tests for service manager (macOS + Linux paths).
 
 #### Sessions / Migration
+
 - `src/runtime/migrate-sessions.ts` — `migrateSessionsToPyrfor()`: scans legacy
   `~/.openclaw/sessions/*.sqlite|*.db` and `~/.ceoclaw/sessions/**/*.json` stores and
   imports them into `~/.pyrfor/sessions/` format; dry-run mode supported.
 - `src/runtime/migrate-sessions.test.ts` — unit tests for session migration.
 
 #### Observability
+
 - `src/runtime/metrics.ts` — hand-written Prometheus text-format exposition (no external
   libs): exposes runtime uptime, cron job counts, health-check states, session counts.
 - `src/runtime/metrics.test.ts` — unit tests for metrics serialisation.
@@ -102,11 +131,13 @@ This project uses **Unreleased** until the first tagged release is cut.
   shared across all packages in the monorepo.
 
 #### Prisma adapter
+
 - `src/runtime/prisma-adapter.ts` — optional Prisma integration for cron handlers and
   Telegram handlers; keeps the runtime usable without a database when Prisma is absent.
 - `src/runtime/prisma-adapter.test.ts` — unit tests for Prisma adapter.
 
 #### Tooling
+
 - `scripts/install.sh` — one-button installer: detects platform, checks Node ≥ 20 / pnpm,
   creates `~/.pyrfor/`, generates `runtime.json`, optionally registers background service;
   supports `--non-interactive` flag.
@@ -122,6 +153,7 @@ This project uses **Unreleased** until the first tagged release is cut.
   `packages/engine` workspace.
 
 #### Docs
+
 - `src/runtime/README.md` — comprehensive user-facing README: overview, installation,
   manual setup, configuration schema reference, CLI usage, service management, Docker,
   contributing notes.
@@ -157,4 +189,5 @@ This project uses **Unreleased** until the first tagged release is cut.
 ---
 
 <!-- Links -->
+
 [Unreleased]: https://github.com/<owner>/<repo>/compare/HEAD...HEAD
